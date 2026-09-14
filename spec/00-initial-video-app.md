@@ -4,7 +4,7 @@
 
 **Login is last.** Do not treat this as an auth slice. **MVP (2026-09-13):** no auth, no Supabase, no Stitch. Express + dummy provider OK. 5s clips. Video controls stay. Editing environment in scope — feature list not specified in this file.
 
-Product: **Marketing Studio — Your Imagination Engine** (`marketingstudioie.site`). Pixovid is a reference for screens and APIs, not something we already shipped.
+Product: **Marketing Studio — Your Imagination Engine** (`marketingstudioie.site`). the reference product is for screens and APIs only.
 
 ---
 
@@ -45,4 +45,4 @@ Model: **Modal LTX-2.5** (`Lightricks/LTX-2.5-Diffusers`, I2V + T2V). Port `yout
 
 - Checkout.
 - Extra “one step further” feature.
-- A second video farm. LTX is the default. Duration/model filter is spec 09, from **what LTX actually supports**, not a hardcoded Pixovid list unless the provider matches.
+- A second video farm. LTX is the default. Duration/model filter is spec 09, from **what LTX actually supports**, not a hardcoded the reference product list unless the provider matches.

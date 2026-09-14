@@ -194,7 +194,7 @@ Next: **Video studio is in** (`/studio`, spec 22). Empty CapCut-style timeline. 
 | Login | **None for now.** Do not block routes on Google. |
 | Video | **LTX I2V 5s** is still the generate lock — **not this slice.** **FaceFusion video swap** (same CPU `op=swap`, `source_key` = clip) **is** this slice. |
 | Avatar (now) | Upload one face photo. Locked prompt. **Generate → name → Save avatar** (`POST /api/identities`). Pick that saved avatar on image/video/**effects** (`avatar_id`). Default model: **OpenRouter `black-forest-labs/flux.2-klein-4b`**. Muse geo-blocked. Still **Qwen** and **ai33pro Seedream 4.5** when those vendors work. |
-| UX sources | **Both.** `docs/sources/` (Pixovid walkthrough) = **MVP**. [higgsfield.ai](https://higgsfield.ai/) = **destination product**. **Owner override 2026-09-14:** scrape Higgsfield **Effects examples** that FaceFusion can reuse (still person, world moves). Catalog is grouped by effect name on `/effects`. Local `effects-template/`, R2 `templates/effects/`. Do not hotlink their CDN. Morph effects (werewolf, hair, eyes-in) stay out. Landing wall remains spec 17. |
+| UX sources | **Both.** `docs/sources/` (reference walkthrough) = **MVP**. [higgsfield.ai](https://higgsfield.ai/) = **destination product**. **Owner override 2026-09-14:** scrape Higgsfield **Effects examples** that FaceFusion can reuse (still person, world moves). Catalog is grouped by effect name on `/effects`. Local `effects-template/`, R2 `templates/effects/`. Do not hotlink their CDN. Morph effects (werewolf, hair, eyes-in) stay out. Landing wall remains spec 17. |
 | GPU | Do not burn H200 or Krea while the provider is dummy. |
 | This slice | **User video studio** (`/studio`, spec 22): empty NLE, template/library/audio media, RunPod stitch export. **Audio studio** already shipped (spec 21). Function first; **UI polish later.** Test face: `avatar.jpeg`. Do not start LTX generate / Stitch polish / login. **No lip-sync.** |
 
@@ -241,17 +241,17 @@ Full Modal lock: [docs/MODAL.md](docs/MODAL.md).
 - **Landing (Stitch, owner 2026-09-13):** cinema lobby, not a SaaS marketing site. Full lock: [spec/16-frontend-overhaul.md](spec/16-frontend-overhaul.md) § Landing. Headline: **Imagine it. Then be in it.** CTA: **Start creating**. Clip action: **Remix**. No pricing, login, feature grid, model names, or lip-sync on this page.
 - **This repo:** `/home/farhann-saleem/Desktop/github/projects/hiigsfiled/marketing-studio-ie`
 - **What we are cloning:** Higgsfield-style generative-media SaaS.
-- **MVP source:** `docs/sources/` (Pixovid walkthrough + pitfalls). Product surface from those specs.
+- **MVP source:** `docs/sources/` (reference walkthrough + pitfalls). Product surface from those specs.
 - **Destination product:** [higgsfield.ai](https://higgsfield.ai/) — match that feel later. Do not copy their assets or hosted stack.
 
 ---
 
 ## Assignment framing
 
-- Hiring assignment. Owner mentioned **ATX** in kickoff. There is **no written brief in this repo**. Do not ask for an ATX PDF or a YouTube URL again unless the owner volunteers them. **MVP** follows Pixovid + `docs/sources/`. **Later** we aim at live Higgsfield.
+- Hiring assignment. Owner mentioned **ATX** in kickoff. There is **no written brief in this repo**. Do not ask for an ATX PDF or a YouTube URL again unless the owner volunteers them. **MVP** follows the reference product + `docs/sources/`. **Later** we aim at live Higgsfield.
 - Revenue is one-time.
 - **“One step further”:** not chosen yet. We will pick an extra feature later. Do not invent one.
-- **Feature scope:** all Pixovid features — video, image, face-swap, avatars, Premiere-style templates, landing, credits.
+- **Feature scope:** all the reference feature set — video, image, face-swap, avatars, Premiere-style templates, landing, credits.
 
 ---
 
@@ -278,7 +278,7 @@ Full Modal lock: [docs/MODAL.md](docs/MODAL.md).
 
 ## Specs (current working copies)
 
-**Path:** this repo `spec/`. Start at `spec/README.md` — that is the workflow + build-order guide. Pixovid **code** is read-only reference.
+**Path:** this repo `spec/`. Start at `spec/README.md` — that is the workflow + build-order guide. the reference product **code** is read-only reference.
 
 ---
 
@@ -296,9 +296,9 @@ Full Modal lock: [docs/MODAL.md](docs/MODAL.md).
 - Voice: **ai33pro** (owner lock). Same product as **OpenSpeaker** (`ai33.pro` / `openspeaker.ai`). Chatterbox exists in the goldmine but is not the default. Higgsfield-like Audio tab + extra OpenSpeaker tools: [spec/21-audio-studio.md](spec/21-audio-studio.md). **Library** is CapCut-style (cover preview, **+** to use). Voices play catalog **`preview_url`** (0 credits). SFX/Suno have no preview catalog. Mapping: [docs/sources/FROM-HIGGSFIELD-AUDIO.md](docs/sources/FROM-HIGGSFIELD-AUDIO.md). **No video lip-sync.** Do not spend the $30 LTX budget on TTS.
 - Hugging Face: owner has **accepted LTX-2.5 and Krea-2 licenses**.
 - Goldmine (GPU contracts): `/home/farhann-saleem/Desktop/github/youtube/automation` — [docs/sources/FROM-AUTOMATION.md](docs/sources/FROM-AUTOMATION.md).
-- Goldmine (Higgsfield clone walkthrough): [docs/sources/pixovid-walkthrough.md](docs/sources/pixovid-walkthrough.md) → [docs/sources/FROM-REFERENCE-VIDEO.md](docs/sources/FROM-REFERENCE-VIDEO.md). YouTube: https://www.youtube.com/watch?v=LuCXiNxZ1Dw (Pixovid). Product UX + pitfalls. **Not** our stack.
+- Goldmine (Higgsfield walkthrough): [docs/sources/reference-walkthrough.md](docs/sources/reference-walkthrough.md) → [docs/sources/FROM-REFERENCE-VIDEO.md](docs/sources/FROM-REFERENCE-VIDEO.md). YouTube: https://www.youtube.com/watch?v=LuCXiNxZ1Dw (the reference product). Product UX + pitfalls. **Not** our stack.
 - Owner vendor notes: [docs/apis/](docs/apis/README.md) (ai33pro, OpenRouter, CPU worker). Read before wiring.
-- Landing wall: Higgsfield catalog via Pixovid `landing_videos.json`. **Download mp4s once to R2.** Spec 17.
+- Landing wall: Higgsfield catalog via the reference `landing_videos.json`. **Download mp4s once to R2.** Spec 17.
 - Payments: **SwichNow**, **PKR**. Spec 19. Wire it last. Sandbox keys exist (paste later; never commit). Pack amounts not set.
 - Auth: exists (Google). Details last.
 - Domain: `marketingstudioie.site`
@@ -397,7 +397,7 @@ R2 prefixes (bucket `comfy`, reuse — do not re-download from HF):
 
 FaceFusion on CPU: seconds-to-minutes per still, billed per second, scale to zero. Cents, not dollars, if you do not leave a worker idle. **Do not put FaceFusion on an A5000/4090.** GPU swap is faster but it eats the $100 that Qwen/Krea need.
 
-ffmpeg on that same CPU worker: template long-form is **not a video model**. Clips already exist on R2. The worker downloads keys, runs ffmpeg (scale/pad/concat/audio mix — Pixovid `stitchTimeline`), uploads the mp4. A 3–4 min 720p stitch is typically **under a few minutes of CPU**. Execution timeout **≥ 10 min**. Laptop CPU is out of the path.
+ffmpeg on that same CPU worker: template long-form is **not a video model**. Clips already exist on R2. The worker downloads keys, runs ffmpeg (scale/pad/concat/audio mix — the reference `stitchTimeline`), uploads the mp4. A 3–4 min 720p stitch is typically **under a few minutes of CPU**. Execution timeout **≥ 10 min**. Laptop CPU is out of the path.
 
 If a live demo ever needs GPU FaceFusion: cheapest 8GB+ community GPU, start/stop, cap ~$5. Default stays CPU serverless.
 
@@ -479,7 +479,7 @@ A 4s 720p/1080p clip with audio is several times more. Kling/Veo/Sora will empty
 ## Operating rules
 
 1. Keep this file and `docs/STATUS.md` accurate. Decisions go into markdown, not only chat.
-2. Do not scaffold, copy Pixovid code, install, commit, or spend credits until the owner says go.
+2. Do not scaffold, copy the reference code, install, commit, or spend credits until the owner says go.
 3. Frontend: wait for Stitch. Backend: write only when told.
 4. Never commit `.env` or keys. Never paste RunPod/R2 secrets into markdown.
 5. If unknown, ask. Do not nag login or payment.

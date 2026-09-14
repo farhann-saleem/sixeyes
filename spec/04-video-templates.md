@@ -31,7 +31,7 @@ Up front, admin sets how many avatars the template uses: **1 or 2**.
 - Avatars CRUD.
 - Admin template + block CRUD, export job.
 - User list published templates, start render job, list renders.
-- ffmpeg on **RunPod serverless CPU** to stitch + thumbnail (Pixovid proved the filtergraph). Stitch runs **after** block jobs complete. Not inside the HTTP request. Not on the laptop.
+- ffmpeg on **RunPod serverless CPU** to stitch + thumbnail (the reference proved the filtergraph). Stitch runs **after** block jobs complete. Not inside the HTTP request. Not on the laptop.
 
 ## Fight
 

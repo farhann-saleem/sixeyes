@@ -9,7 +9,7 @@ separate worker repositories and one Modal app, documented in [The four reposito
 | | |
 | --- | --- |
 | **Assignment** | 8x — build a generative-media product end to end, self-hosting the models where it makes sense |
-| **Clone target** | Higgsfield's product surface (Pixovid's walkthrough was the MVP reference, not its hosted stack) |
+| **Product reference** | Higgsfield's product surface (the reference walkthrough was the MVP reference, not its hosted stack) |
 | **This repo** | `farhann-saleem/sixeyes` — Express + TypeScript backend, React + Vite frontend, Modal LTX app |
 | **Language split** | Backend/frontend TypeScript. GPU/CPU workers Python. No Python in the web tier. |
 | **State** | Phases A–E shipped except Stitch UI polish, Supabase, and recurring auto-debit |
@@ -480,7 +480,7 @@ Knowledge lives in markdown in this repo, not in chat history. Read in this orde
 | [docs/ENV.md](docs/ENV.md) | Env catalog — names and notes only. |
 | [docs/COST.md](docs/COST.md) | Measured per-job costs. The source for any future pricing. |
 | [docs/apis/](docs/apis/README.md) | Owner-written vendor notes. Read the file for a vendor before calling it. |
-| [docs/sources/](docs/sources/FROM-AUTOMATION.md) | Inherited GPU contracts and the Pixovid walkthrough. |
+| [docs/sources/](docs/sources/FROM-AUTOMATION.md) | Inherited GPU contracts and the reference walkthrough. |
 | [apps/modal/README.md](apps/modal/README.md) | The Modal app in one page. |
 
 Worker documentation lives in the worker repos: [Krea](https://github.com/farhann-saleem/Krea-2-Turbo#readme)

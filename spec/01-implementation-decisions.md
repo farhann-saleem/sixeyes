@@ -10,7 +10,7 @@ Companion to [00](./00-initial-video-app.md). **Target**, not shipped. Phase **D
 | --- | --- | --- |
 | Frontend | Owner via **Stitch** | Owner owns UI. |
 | Auth | Google later | **No login for MVP.** Do not block A–D0. |
-| Backend | TypeScript + Express | Pixovid shape is reference, not copy-paste. |
+| Backend | TypeScript + Express | the reference shape is reference, not copy-paste. |
 | DB | **MVP:** local job store. **Later:** Prisma + **Supabase** (`packages/db`) | Owner: Supabase at the end. |
 | Storage | **Cloudflare R2** (S3 API) | Owner has R2. |
 | Video | **Modal LTX-2.5** (phase C) | Locked. Not TBD. |
@@ -21,7 +21,7 @@ Companion to [00](./00-initial-video-app.md). **Target**, not shipped. Phase **D
 
 Runtime (bun vs node, turborepo vs not) is a code-level choice when we write the backend. Do not invent a third monorepo style.
 
-### Do not copy from Pixovid
+### Do not copy from the reference product
 
 - Blocking HTTP until the model finishes.
 - OpenRouter as the farm.
@@ -31,7 +31,7 @@ Runtime (bun vs node, turborepo vs not) is a code-level choice when we write the
 ### Still copy (when we write backend)
 
 - Zod-validated env, fail fast.
-- Shared `GenerationStatus`: `PENDING`, `IN_PROGRESS`, `COMPLETED`, `FAILED` (Pixovid burned a destructive enum rename).
+- Shared `GenerationStatus`: `PENDING`, `IN_PROGRESS`, `COMPLETED`, `FAILED` (the reference burned a destructive enum rename).
 - CORS credentials against `FRONTEND_URL`.
 - Charge/refund later via spec 19; **meter `duration_ms` + `estimated_usd` on every job from the first generate.**
 

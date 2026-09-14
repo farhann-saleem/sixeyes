@@ -1,6 +1,6 @@
 # 13 — Timeline editor fixes (crop, context menu, snap, drag)
 
-**When:** with the admin timeline. Bugs to prevent (Pixovid hit all four):
+**When:** with the admin timeline. Bugs to prevent (the reference hit all four):
 
 1. Cropping: cursor changes but drag does not shorten the clip in the UI.
 2. Right-click on the timeline is hijacked: Copy, Paste, Delete (not the browser menu).

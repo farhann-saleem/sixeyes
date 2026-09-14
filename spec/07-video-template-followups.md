@@ -8,7 +8,7 @@ Changes on top of 04:
 2. When creating a video block, the admin picks **Avatar 1** or **Avatar 2** as the reference image. Face-swap start/end still only picks which avatar slot — **no per-block face upload** (that would make the template non-generic). Admin still uploads the block’s base start/end frames.
 3. The admin can **play the timeline and preview**, like Premiere (program monitor + play/pause/stop + scrub).
 
-## Also in this slice (from Pixovid 07/08, 08 file missing)
+## Also in this slice (from the reference 07/08, 08 file missing)
 
 - **Bake a single block** to a preview clip (`videoKey` on the block). Export must reuse baked clips (spec 14).
 - Large audio uploads (hundreds of MB) must return a clean 400, not crash.

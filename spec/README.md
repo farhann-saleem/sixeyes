@@ -4,7 +4,7 @@ This folder plus [CONTEXT.md](../CONTEXT.md) is the complete guide. Chat is not.
 
 Product: **Marketing Studio — Your Imagination Engine**  
 Domain: `marketingstudioie.site`  
-Clone target: Higgsfield-style SaaS (Pixovid’s **product surface**, not Pixovid’s hosted stack).
+Product reference: Higgsfield-style SaaS (the reference product’s **product surface**, not the reference hosted stack).
 
 ---
 
@@ -12,7 +12,7 @@ Clone target: Higgsfield-style SaaS (Pixovid’s **product surface**, not Pixovi
 
 Video, image, face-swap, avatars, admin Premiere-style templates, user “generate with my avatar,” credits, dark UI, landing wall.
 
-Do **not** invent an extra “one step further” feature. Do **not** copy Pixovid blocking-HTTP generate. Every job is async: row `IN_PROGRESS` → worker → poll.
+Do **not** invent an extra “one step further” feature. Do **not** use blocking-HTTP generate. Every job is async: row `IN_PROGRESS` → worker → poll.
 
 ---
 
@@ -27,7 +27,7 @@ Do **not** invent an extra “one step further” feature. Do **not** copy Pixov
 1. Requirement specs (00, 02, 04, 07, 09–11, 13–17, 19, 20) = **WHAT** to build. TODO until that slice ships.
 2. Decisions specs (01, 03, 05) = **HOW**. Target until shipped, then rewrite with what we actually did.
 3. Inherited pitfalls (06, 12, 18, notes in 13–15) + [docs/RUNPOD.md](../docs/RUNPOD.md) = **failures we already paid for. Do not delete, squash, or “clean up.”** Read before building. Do not re-learn.
-4. Pixovid paths (`apps/frontend/src/…`) are hints, not our code.
+4. the reference paths (`apps/frontend/src/…`) are hints, not our code.
 
 Never commit `.env`. Never paste keys into markdown.
 
@@ -35,7 +35,7 @@ Never commit `.env`. Never paste keys into markdown.
 
 ## Build order (locked 2026-09-12)
 
-This is **our** order. Ignore Pixovid’s “slice 00 = auth + video first.”
+This is **our** order. Ignore the reference product’s “slice 00 = auth + video first.”
 
 | Phase | What | Status |
 | --- | --- | --- |
@@ -63,7 +63,7 @@ Images are **RunPod**, not Modal. Modal’s $30 is **video only**. Do not put Kr
 | Pay (phase E) | SwichNow, PKR |
 | Image/video fallback | OpenRouter Muse / Seedance 1.5 Pro 480p silent — option only, $1.50 cap |
 
-OpenRouter is **not** the farm. Landing wall = Higgsfield catalog via Pixovid `landing_videos.json`, **download mp4s once to R2** (spec 17).
+OpenRouter is **not** the farm. Landing wall = Higgsfield catalog via the reference `landing_videos.json`, **download mp4s once to R2** (spec 17).
 
 RunPod worker rules: [docs/RUNPOD.md](../docs/RUNPOD.md). Min workers 0, max 1, volume DC = endpoint DC (**EU-RO-1** only).
 
@@ -99,7 +99,7 @@ RunPod worker rules: [docs/RUNPOD.md](../docs/RUNPOD.md). Min workers 0, max 1, 
 | [23](./23-mcp.md) | MCP agent connector | D | Owner go 2026-09-14. JSON-RPC on `/mcp`. Our desks only. |
 | [24](./24-r2-artifacts.md) | Artifacts on R2 + presigned URLs | D/E infra | Owner go 2026-09-14. Kills the `readFileSync`→`send` memory risk and all backend media egress. Makes the host disposable. Deploy context: [docs/DEPLOY.md](../docs/DEPLOY.md). |
 
-Walkthrough of Pixovid screens (not our stack): [FROM-REFERENCE-VIDEO.md](../docs/sources/FROM-REFERENCE-VIDEO.md). GPU contracts + Modal pitfalls: [FROM-AUTOMATION.md](../docs/sources/FROM-AUTOMATION.md). Owner vendor APIs: [docs/apis/](../docs/apis/README.md).
+Walkthrough of the reference product screens (not our stack): [FROM-REFERENCE-VIDEO.md](../docs/sources/FROM-REFERENCE-VIDEO.md). GPU contracts + Modal pitfalls: [FROM-AUTOMATION.md](../docs/sources/FROM-AUTOMATION.md). Owner vendor APIs: [docs/apis/](../docs/apis/README.md).
 
 ---
 

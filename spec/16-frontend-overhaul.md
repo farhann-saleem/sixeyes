@@ -12,9 +12,9 @@ Do not copy Higgsfield assets **except** the owner-locked Effects catalog (Incli
 
 ## Landing (copy + composition lock — 2026-09-13)
 
-**Visual override (2026-09-14, owner):** live `/` is the Stitch Higgsfield clone in `stitch_higgsfield_ai_landing_clone/` (Kinetic Console + cream/midnight polarity). CTA **Start Creating** → `/projects`. Spec 17 R2 wall is not this slice.
+**Visual override (2026-09-14, owner):** live `/` is the Stitch Higgsfield landing in `stitch_higgsfield_landing/` (Kinetic Console + cream/midnight polarity). CTA **Start Creating** → `/projects`. Spec 17 R2 wall is not this slice.
 
-The page is a **cinema lobby**. The wall is the product. Copy is tiny. Do not design a 8-section SaaS homepage. Live Higgsfield has become a promo dump (MCP, GPT-6, signup discount) — we clone the **Pixovid-era** Higgsfield: wall + remix + one button. Spec 17 fills the wall.
+The page is a **cinema lobby**. The wall is the product. Copy is tiny. Do not design a 8-section SaaS homepage. Live Higgsfield has become a promo dump (MCP, GPT-6, signup discount) — we match the earlier Higgsfield: wall + remix + one button. Spec 17 fills the wall.
 
 **Brand on the page**
 
@@ -25,7 +25,7 @@ The page is a **cinema lobby**. The wall is the product. Copy is tiny. Do not de
 | Headline | **Imagine it. Then be in it.** |
 | Tagline (under headline, smaller) | Your Imagination Engine |
 | Primary CTA | **Start creating** → `/studio` |
-| On a clip | **Remix** (opens that prompt in generate — Pixovid remix, not a new feature) |
+| On a clip | **Remix** (opens that prompt in generate — the reference remix, not a new feature) |
 
 Do not use “intelligence engine.” Locked tagline is **Imagination**.
 
