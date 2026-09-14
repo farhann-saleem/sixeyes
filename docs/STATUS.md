@@ -2,7 +2,7 @@
 
 Owner locked **Vercel frontend + EC2 backend**. Frontend uses `https://api.marketingstudioie.site` with credentialed requests; backend accepts the Vercel origin and binds to localhost behind Caddy. Google OAuth keeps `https://www.marketingstudioie.site/callback`. Local verification: 34 backend tests and the frontend production build pass.
 
-Friend controls Hostinger DNS. Remaining DNS action: keep `www` and `@` on Vercel and add only `A api -> 13.49.134.103`. Public TLS/login cannot be verified until that resolves. Code push and live deployment are in progress. Shared CPU timeline-v1 export remains a separate gate.
+Commit `83614b9` passed GitHub Actions, Vercel deployed the frontend, and EC2 installed the matching backend revision. API localhost health passes; Caddy is active on 80/443. Friend controls Hostinger DNS. Remaining DNS action: keep `www` and `@` on Vercel and add only `A api -> 13.49.134.103`. Public TLS/login and two-account isolation cannot be verified until that resolves. Shared CPU timeline-v1 export remains a separate gate.
 
 ---
 

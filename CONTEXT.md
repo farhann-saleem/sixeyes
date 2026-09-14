@@ -2,7 +2,7 @@
 
 Owner locked **Vercel frontend + EC2 backend**. Frontend API/media URLs now resolve to `https://api.marketingstudioie.site`, every fetch includes credentials, backend credentialed CORS accepts only `https://www.marketingstudioie.site`, and the API binds to localhost behind Caddy. Google OAuth keeps the registered `https://www.marketingstudioie.site/callback`; that page forwards the code/state to the API. The two hostnames are different origins but the same site, so the API's host-only Secure `SameSite=Lax` cookie is sent when frontend fetches use `credentials: include`.
 
-34 backend tests and the frontend production build pass locally. DNS is the external blocker: friend controls Hostinger and must add `A api -> 13.49.134.103`, keeping existing `www` and `@` Vercel records. Do not start/claim public Caddy TLS until that resolves. Code commit/push, EC2 unit/config update, automatic deployment and Vercel verification are still pending in this turn. Personal `.commandcode` and `.agent-logs` changes remain untouched.
+Commit `83614b9e9bd8bc947e69fa63dd04afcbab6c8223` is pushed. GitHub Actions passed, Vercel deployed the frontend, and EC2 installed that exact backend revision. `/health` passes; the API listens only on `127.0.0.1:3001`; Caddy is active on 80/443 and will obtain TLS automatically once DNS resolves. 34 backend tests, both typechecks and the frontend production build pass. DNS is the only current external blocker: friend controls Hostinger and must add `A api -> 13.49.134.103`, keeping existing `www` and `@` Vercel records. Public HTTPS, Google login and two-account live isolation remain unverified until then. Personal `.commandcode`, `.gitignore` and `.agent-logs` changes remain untouched.
 
 ---
 
