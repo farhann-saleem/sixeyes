@@ -1,0 +1,169 @@
+// Marketing Studio — Supabase Postgres. Media binaries stay on disk/R2.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum GenerationStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model Profile {
+  id                   String    @id @default(uuid()) @db.Uuid
+  email                String    @unique
+  name                 String    @default("")
+  picture              String    @default("")
+  tier                 String    @default("free")
+  tierExpiresAt        DateTime? @map("tier_expires_at")
+  monthKey             String    @default("") @map("month_key")
+  usageAvatars         Int       @default(0) @map("usage_avatars")
+  usageImages          Int       @default(0) @map("usage_images")
+  usageVideos          Int       @default(0) @map("usage_videos")
+  usageDocumentaries   Int       @default(0) @map("usage_documentaries")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  sessions             Session[]
+  orders               BillingOrder[]
+
+  @@map("profiles")
+}
+
+model Session {
+  id        String   @id @db.Uuid
+  profileId String   @map("profile_id") @db.Uuid
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model BillingOrder {
+  id        String   @id @db.Uuid
+  profileId String?  @map("profile_id") @db.Uuid
+  profile   Profile? @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  email     String
+  tier      String
+  amountPkr Int      @map("amount_pkr")
+  status    String   @default("pending")
+  orderId   String?  @map("order_id")
+  granted   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([email])
+  @@map("billing_orders")
+}
+
+model AvatarJob {
+  id         String            @id @db.Uuid
+  ownerEmail String            @map("owner_email")
+  status     GenerationStatus
+  payload    Json
+  createdAt  DateTime          @default(now()) @map("created_at")
+  updatedAt  DateTime          @updatedAt @map("updated_at")
+
+  @@index([ownerEmail, updatedAt])
+  @@map("avatar_jobs")
+}
+
+model SwapJob {
+  id         String            @id @db.Uuid
+  ownerEmail String            @map("owner_email")
+  status     GenerationStatus
+  payload    Json
+  createdAt  DateTime          @default(now()) @map("created_at")
+  updatedAt  DateTime          @updatedAt @map("updated_at")
+
+  @@index([ownerEmail, updatedAt])
+  @@map("swap_jobs")
+}
+
+model AudioJob {
+  id         String            @id @db.Uuid
+  ownerEmail String            @map("owner_email")
+  status     GenerationStatus
+  payload    Json
+  createdAt  DateTime          @default(now()) @map("created_at")
+  updatedAt  DateTime          @updatedAt @map("updated_at")
+
+  @@index([ownerEmail, updatedAt])
+  @@map("audio_jobs")
+}
+
+model Identity {
+  id         String   @id @db.Uuid
+  ownerEmail String   @map("owner_email")
+  payload    Json
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([ownerEmail, createdAt])
+  @@map("identities")
+}
+
+model StudioProject {
+  id         String   @id @db.Uuid
+  ownerEmail String   @map("owner_email")
+  payload    Json
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([ownerEmail, updatedAt])
+  @@map("studio_projects")
+}
+
+model StudioUpload {
+  id         String   @id @db.Uuid
+  ownerEmail String   @map("owner_email")
+  projectId  String?  @map("project_id")
+  payload    Json
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([ownerEmail, createdAt])
+  @@index([projectId])
+  @@map("studio_uploads")
+}
+
+model StudioRender {
+  id         String            @id @db.Uuid
+  ownerEmail String            @map("owner_email")
+  projectId  String            @map("project_id")
+  status     GenerationStatus
+  payload    Json
+  createdAt  DateTime          @default(now()) @map("created_at")
+  updatedAt  DateTime          @updatedAt @map("updated_at")
+
+  @@index([ownerEmail, createdAt])
+  @@index([projectId])
+  @@map("studio_renders")
+}
+
+model CostLedger {
+  id         String   @id @default(uuid()) @db.Uuid
+  ownerEmail String   @map("owner_email")
+  payload    Json
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([ownerEmail, createdAt])
+  @@map("cost_ledger")
+}
+
+// Tenant-owned provider resources; API-key-wide catalogs are never ownership proof.
+model UserResource {
+  id          String
+  kind        String
+  owner_email String
+  payload     Json
+
+  @@id([kind, id])
+  @@index([owner_email, kind])
+  @@map("user_resources")
+}

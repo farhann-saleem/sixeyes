@@ -1,3 +1,45 @@
+# Active handoff — EC2 deployment and automatic updates (2026-09-14)
+
+Owner supplied EC2 access and authorized automatic deployment on GitHub pushes. Actual instance is Amazon Linux 2023 x86_64 with approximately 2 GB RAM and one 20 GB root disk (the earlier t3.micro request is superseded by observed hardware). Node 24, Caddy, FFmpeg and 2 GB swap installed. Same-origin EC2 serves both frontend and API; Vercel is no longer the production host. DNS still points to Vercel and needs A records for `www` and `@` to `13.49.134.103`.
+
+Automation: GitHub Actions tests/builds main and publishes an allowlisted release; EC2 polls public releases every two minutes, checks checksum, installs dependencies as msapp, restarts and checks revision health, with rollback. Secrets/data stay in `/opt/marketing-studio/shared`; neither enters GitHub releases. First release, service startup and live HTTPS smoke are pending. 33 backend tests previously passed; final regression rerun in progress. CPU timeline-v1 export and two-account live smoke remain gates. See docs/DEPLOY.md.
+
+---
+
+# Active handoff — Multi-user isolation + same-origin/R2 fixes (2026-09-14)
+
+Owner GO: fix deployment, media memory/egress and cross-user data access. Implemented Express SPA serving, private GET/HEAD + owner checks, Studio source ownership, audio clone/dictionary ownership, browser-bound OAuth state, async error handling, multipart quota ordering, MCP metering, and R2 authorised redirects with streaming legacy fallback. Artifact key manifests persist on avatar/identity/audio payloads; CPU outputs and Studio uploads use existing R2 keys. Local cache is retained through migration; no claim of scratch-only disk or a 1 GB load test.
+
+**Database hardening applied by owner and verified live:** all 12 tables deny anon access and allow the backend service role; usage RPC verified. New SQL: `supabase/migrations/20260914160000_tenant_hardening.sql`. Direct SQL password failed, but REST works. Production checks require this migration before serving. **33 backend tests passed.** Details, migration commands, verification and remaining deployment checks: [docs/SECURITY-HARDENING.md](docs/SECURITY-HARDENING.md). Do not automatically assign legacy anonymous data to a user. No paid generation or worker/server deployment.
+
+---
+
+# Active handoff — Hosting: one AWS box (2026-09-14)
+
+Owner scope: **one month**, new AWS account, **$100 credit**. Lock: **one AWS Lightsail instance ($5/mo, 1 GB Ubuntu) serves the API and the built SPA from a single origin** behind Caddy TLS, systemd `Restart=always`, `DATA_DIR` on the instance disk. Full runbook incl. smoke order and teardown: [docs/DEPLOY.md](docs/DEPLOY.md).
+
+**Same-origin is mandatory, not a preference.** `apps/frontend/src/auth.ts:13` and `studio.ts:53` use bare `fetch()` on relative `/api/…` (defaults to `credentials: "same-origin"`), and the session cookie is `SameSite=Lax` with no `Domain` (`google-auth.ts:260`). Split the origins and login silently reads as logged out. `apps/frontend/vercel.json` also has **no `/api` rewrite**, so Vercel would 404 the API. One code change needed: `express.static(apps/frontend/dist)` + SPA fallback, registered **last**, excluding `/api/`, `/mcp/`, `/health`.
+
+Do not: host the backend on RunPod (~$21/mo and the pod-id proxy URL changes on rebuild, breaking the Google redirect + SwichNow callback); use EC2 at this size (~$21/mo, mostly the $0.005/hr public-IPv4 charge); proxy `/api` through a Vercel rewrite (17 MB media exceeds its limits); size the host for libx264 — the five heavy encoders in `ffmpeg-local.ts` have **zero callers** and export is cloud-only. Keep media on R2, never S3 (R2 egress is $0). **Teardown is in scope:** delete the instance *and* release the static IP.
+
+Spec 24 written (not implemented): [spec/24-r2-artifacts.md](spec/24-r2-artifacts.md) — artifacts to R2, 302 to a 5-min presigned URL, ownership checked before presigning. Removes the `readFileSync`→`send` OOM risk and all backend media egress. Easiest first win: `swap-runner.ts:182-185` already holds the worker's `output_key`.
+
+---
+
+# Active handoff — Supabase multi-user (2026-09-14)
+
+Owner GO: multi-user on Supabase Postgres. Google login stays; upserts `profiles` + `sessions`. Jobs/projects/identities/billing scoped by `owner_email`. Runtime: PostgREST (`apps/backend/src/db.ts`) with `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`. File JSON fallback for tests only. Schema SQL applied via SQL Editor (2026-09-14) — 11/11 tables live; profile smoke OK. Host Express separately (not Neon/Supabase Functions) — ~~Railway/Render~~ **superseded same day: one AWS Lightsail box, see the handoff above**. Next: restart backend, Google sign-in, confirm your row in Table Editor → `profiles`.
+
+---
+
+# Active handoff — Repo READMEs (2026-09-14)
+
+Owner GO: proper structured documentation across all four repos, READMEs only, **no code change**, plus a credential sweep. Done: [README.md](README.md) (root, reviewer-facing, 8x assignment framing, architecture, job/host matrix, decisions with the money behind them, async job contract, setup, env names, tests, deploy, security, known gaps, docs index) and one matching README in each of `Krea-2-Turbo`, `Qwen-and-QwenEdit`, `Faceswap-and-FF`. All four cross-link. Detail in [docs/STATUS.md](docs/STATUS.md) § READMEs.
+
+Sweep result: **no credential in any tracked file or git history** in the four repos. Blocked push `7bc7dd73` is dangling locally only — remote `main` has the redacted rewrite. Endpoint ids stay in the READMEs (not secrets); examples read `RUNPOD_API_KEY` from the environment. **Still to do (owner):** rotate the Google OAuth client secret in `client_secret_*.json` sitting in the parent projects folder (gitignored, never committed, but it is a live secret on disk), rotate the RunPod key once pasted in chat, and raise the worker `runpod` pins to `>=1.10.1,<2`.
+
+---
+
 # Active handoff — Pricing tiers + SwichNow (2026-09-14)
 
 Owner GO: Free / **Pro ($20/mo)** / **Premium ($150/mo)** pricing, monthly quotas, per-minute rate limits, and **SwichNow hosted checkout** wired. Policy pages shipped.

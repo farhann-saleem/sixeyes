@@ -1,3 +1,4 @@
+import { restoreArtifacts } from "./artifacts.js";
 import { readFileSync, writeFileSync } from "node:fs";
 import { appendLedger, getJob, inputPath, listJobs, outputPath, saveJob } from "./store.js";
 import { extFromMime } from "./media.js";
@@ -34,16 +35,16 @@ function isStopped(job: AvatarJob) {
   return job.status === "CANCELLED" || job.phase === "cancelled";
 }
 
-function setPhase(job: AvatarJob, phase: JobPhase, phase_label: string) {
-  const latest = getJob(job.id);
+async function setPhase(job: AvatarJob, phase: JobPhase, phase_label: string) {
+  const latest = await getJob(job.id);
   if (latest && isStopped(latest)) return;
   job.phase = phase;
   job.phase_label = phase_label;
-  saveJob(job);
+  await saveJob(job);
 }
 
-function fail(job: AvatarJob, message: string) {
-  const latest = getJob(job.id);
+async function fail(job: AvatarJob, message: string) {
+  const latest = await getJob(job.id);
   if (latest && (isStopped(latest) || latest.status === "COMPLETED")) return;
   job.status = "FAILED";
   job.phase = "failed";
@@ -55,12 +56,12 @@ function fail(job: AvatarJob, message: string) {
     job.usd_per_hour_assumed = job.usd_per_hour_assumed ?? 0.69;
     job.estimated_usd = Number(((job.duration_ms / 1000 / 3600) * job.usd_per_hour_assumed).toFixed(6));
   }
-  saveJob(job);
-  appendLedger(ledgerFrom(job));
+  await saveJob(job);
+  await appendLedger(ledgerFrom(job));
 }
 
 export async function cancelAvatarJob(jobId: string): Promise<AvatarJob> {
-  const job = getJob(jobId);
+  const job = await getJob(jobId);
   if (!job) throw new Error("not found");
   if (job.status === "COMPLETED") throw new Error("already completed");
   if (isStopped(job)) return job;
@@ -71,7 +72,7 @@ export async function cancelAvatarJob(jobId: string): Promise<AvatarJob> {
   job.error = "Stopped by you";
   job.suggest_provider = "ai33pro";
   job.duration_ms = Date.now() - Date.parse(job.created_at);
-  saveJob(job);
+  await saveJob(job);
 
   if (job.provider_job_id) {
     try {
@@ -88,22 +89,23 @@ export async function cancelAvatarJob(jobId: string): Promise<AvatarJob> {
         vendor_cancel_error: err instanceof Error ? err.message : String(err),
       };
     }
-    saveJob(job);
+    await saveJob(job);
   }
-  appendLedger(ledgerFrom(job));
-  return getJob(jobId) ?? job;
+  await appendLedger(ledgerFrom(job));
+  return await getJob(jobId) ?? job;
 }
 
 export async function runAvatarJob(jobId: string, imagePath: string) {
-  const job = getJob(jobId);
+  const job = await getJob(jobId);
   if (!job) return;
   job.status = "IN_PROGRESS";
   job.error = null;
   job.suggest_provider = null;
-  setPhase(job, "queued", "Starting…");
+  await setPhase(job, "queued", "Starting…");
   const started = Date.parse(job.created_at) || Date.now();
 
   try {
+    await restoreArtifacts(job);
     const raw = readFileSync(imagePath);
     if (job.provider === "qwen") {
       await runQwen(job, raw, started);
@@ -114,8 +116,8 @@ export async function runAvatarJob(jobId: string, imagePath: string) {
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    const latest = getJob(jobId);
-    if (latest && latest.status !== "COMPLETED" && !isStopped(latest)) fail(latest, message);
+    const latest = await getJob(jobId);
+    if (latest && latest.status !== "COMPLETED" && !isStopped(latest)) await fail(latest, message);
   }
 }
 
@@ -132,7 +134,10 @@ function shouldResumeVendorPoll(job: AvatarJob) {
 
 /** After a process restart, keep polling jobs that already have a vendor id. Never resubmit Seedream. */
 export async function resumeInFlightJobs() {
-  for (const job of listJobs()) {
+  for (const job of await listJobs()) {
+    if (["PENDING", "IN_PROGRESS"].includes(job.status) && !job.provider_job_id) {
+      await fail(job, "Backend restarted before a provider id was saved. Check the vendor queue before retrying; no automatic resubmission."); continue;
+    }
     if (!shouldResumeVendorPoll(job)) continue;
     if (job.status === "FAILED") {
       job.status = "IN_PROGRESS";
@@ -140,7 +145,7 @@ export async function resumeInFlightJobs() {
       job.suggest_provider = null;
       job.phase = "generating";
       job.phase_label = "Resuming vendor poll — same Seedream task, no new charge";
-      saveJob(job);
+      await saveJob(job);
       console.log("reopen crashed poll", job.id, job.provider_job_id);
     }
     console.log("resume", job.id, job.provider, job.provider_job_id);
@@ -156,11 +161,11 @@ async function continueJob(job: AvatarJob) {
       return;
     }
     if (isOpenRouterProvider(job.provider)) {
-      fail(job, "OpenRouter image jobs are not polled. Start a new generate if this one did not finish.");
+      await fail(job, "OpenRouter image jobs are not polled. Start a new generate if this one did not finish.");
       return;
     }
     if (!job.provider_job_id) {
-      fail(
+      await fail(
         job,
         "Interrupted before Seedream accepted the task. No vendor id — do not assume a charge.",
       );
@@ -170,25 +175,25 @@ async function continueJob(job: AvatarJob) {
     await pollAi33UntilDone(job, started);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    const latest = getJob(job.id);
-    if (latest && latest.status === "IN_PROGRESS") fail(latest, message);
+    const latest = await getJob(job.id);
+    if (latest && latest.status === "IN_PROGRESS") await fail(latest, message);
   }
 }
 
 async function runQwen(job: AvatarJob, raw: Buffer, started: number) {
-  setPhase(job, "checking_runpod", "Checking RunPod…");
+  await setPhase(job, "checking_runpod", "Checking RunPod…");
   const health = await qwenHealth();
   job.provider_meta = { health };
-  saveJob(job);
+  await saveJob(job);
   const blocked = qwenBlockedReason(health);
   if (blocked) {
-    fail(job, blocked);
+    await fail(job, blocked);
     return;
   }
 
   const b64 = raw.toString("base64");
 
-  setPhase(
+  await setPhase(
     job,
     "loading_model",
     "RunPod active — loading model. First wake can take a few minutes.",
@@ -196,12 +201,12 @@ async function runQwen(job: AvatarJob, raw: Buffer, started: number) {
   console.log("qwen ping (wake worker)");
   const woke = await qwenPing();
   job.provider_meta = { ...job.provider_meta, ping: woke.ping, ping_job_id: woke.jobId };
-  saveJob(job);
+  await saveJob(job);
 
-  setPhase(job, "generating", "RunPod active — generating your avatar…");
+  await setPhase(job, "generating", "RunPod active — generating your avatar…");
   const providerJobId = await qwenSubmit(b64, job.prompt);
   job.provider_job_id = providerJobId;
-  saveJob(job);
+  await saveJob(job);
   await pollQwenUntilDone(job, started);
 }
 
@@ -210,22 +215,22 @@ async function pollQwenUntilDone(job: AvatarJob, started: number) {
   if (!providerJobId) throw new Error("Qwen job missing provider_job_id");
   const deadline = Date.now() + 12 * 60 * 1000;
   while (Date.now() < deadline) {
-    const latest = getJob(job.id);
+    const latest = await getJob(job.id);
     if (latest && isStopped(latest)) return;
     const poll = await qwenPoll(providerJobId);
     if (poll.status === "IN_QUEUE") {
-      setPhase(job, "waking_runpod", "RunPod active — waiting for a GPU…");
+      await setPhase(job, "waking_runpod", "RunPod active — waiting for a GPU…");
     } else if (poll.status === "IN_PROGRESS") {
-      setPhase(job, "generating", "RunPod active — generating your avatar…");
+      await setPhase(job, "generating", "RunPod active — generating your avatar…");
     }
     if (poll.status === "FAILED" || poll.status === "CANCELLED" || poll.status === "TIMED_OUT") {
-      fail(job, poll.error || poll.output?.error || `Qwen ${poll.status}`);
+      await fail(job, poll.error || poll.output?.error || `Qwen ${poll.status}`);
       return;
     }
     if (poll.status === "COMPLETED") {
       const out = poll.output || {};
       if (out.ok === false || !out.png_b64) {
-        fail(job, out.error || "Qwen completed without png_b64");
+        await fail(job, out.error || "Qwen completed without png_b64");
         return;
       }
       writeFileSync(outputPath(job.id, ".png"), Buffer.from(out.png_b64, "base64"));
@@ -237,19 +242,19 @@ async function pollQwenUntilDone(job: AvatarJob, started: number) {
       job.estimated_usd = out.estimated_usd ?? null;
       job.usd_per_hour_assumed = out.usd_per_hour_assumed ?? 0.69;
       job.provider_meta = { ...out, png_b64: "[omitted]" };
-      saveJob(job);
-      appendLedger(ledgerFrom(job));
+      await saveJob(job);
+      await appendLedger(ledgerFrom(job));
       return;
     }
     await sleep(4000);
   }
-  fail(job, "Qwen poll timed out (12 min)");
+  await fail(job, "Qwen poll timed out (12 min)");
 }
 
 async function runOpenRouter(job: AvatarJob, raw: Buffer, started: number) {
   if (!isOpenRouterProvider(job.provider)) throw new Error("not an OpenRouter provider");
   const label = job.provider === "openrouter-flux" ? "FLUX.2 Klein 4B" : "Muse";
-  setPhase(job, "generating", `${label} — editing your photo…`);
+  await setPhase(job, "generating", `${label} — editing your photo…`);
   const out = await openrouterGenerate(job.provider, raw, job.input_mime, job.prompt);
   const ext = extFromMime(out.mime);
   writeFileSync(outputPath(job.id, ext), out.buffer);
@@ -261,11 +266,11 @@ async function runOpenRouter(job: AvatarJob, raw: Buffer, started: number) {
   job.estimated_usd = out.cost_usd;
   job.provider_job_id = out.generation_id;
   job.provider_meta = { model: out.model, generation_id: out.generation_id };
-  saveJob(job);
-  appendLedger(ledgerFrom(job));
+  await saveJob(job);
+  await appendLedger(ledgerFrom(job));
 }
 
-function applyAi33Poll(job: AvatarJob, task: Awaited<ReturnType<typeof ai33Poll>>, pollCount: number) {
+async function applyAi33Poll(job: AvatarJob, task: Awaited<ReturnType<typeof ai33Poll>>, pollCount: number) {
   const url = extractImageUrl(task);
   const status = (task.status || "unknown").toLowerCase();
   const progress = typeof task.progress === "number" ? task.progress : null;
@@ -294,13 +299,13 @@ function applyAi33Poll(job: AvatarJob, task: Awaited<ReturnType<typeof ai33Poll>
   };
 
   const pct = progress == null ? "no % from vendor" : `${progress}%`;
-  setPhase(job, "generating", `Seedream 4.5 — vendor ${status} · ${pct}`);
+  await setPhase(job, "generating", `Seedream 4.5 — vendor ${status} · ${pct}`);
 }
 
 async function finishAi33(job: AvatarJob, task: Awaited<ReturnType<typeof ai33Poll>>, started: number) {
   const url = extractImageUrl(task);
   if (!url) {
-    fail(
+    await fail(
       job,
       `ai33pro ${task.status || "done"} but no image URL. metadata keys: ${Object.keys(task.metadata || {}).join(",")}`,
     );
@@ -308,7 +313,7 @@ async function finishAi33(job: AvatarJob, task: Awaited<ReturnType<typeof ai33Po
   }
   const imgRes = await fetch(url);
   if (!imgRes.ok) {
-    fail(job, `download result HTTP ${imgRes.status}`);
+    await fail(job, `download result HTTP ${imgRes.status}`);
     return;
   }
   const buf = Buffer.from(await imgRes.arrayBuffer());
@@ -330,8 +335,8 @@ async function finishAi33(job: AvatarJob, task: Awaited<ReturnType<typeof ai33Po
     vendor_has_output: true,
   };
   job.estimated_usd = null;
-  saveJob(job);
-  appendLedger(ledgerFrom(job));
+  await saveJob(job);
+  await appendLedger(ledgerFrom(job));
 }
 
 async function pollAi33UntilDone(job: AvatarJob, started: number) {
@@ -341,12 +346,12 @@ async function pollAi33UntilDone(job: AvatarJob, started: number) {
   let pollCount = Number(job.provider_meta?.vendor_poll_count) || 0;
 
   while (Date.now() < deadline) {
-    const latest = getJob(job.id);
+    const latest = await getJob(job.id);
     if (latest && isStopped(latest)) return;
     try {
       const task = await ai33Poll(taskId);
       pollCount += 1;
-      applyAi33Poll(job, task, pollCount);
+      await applyAi33Poll(job, task, pollCount);
       const status = (task.status || "").toLowerCase();
       console.log(
         "ai33 poll",
@@ -360,11 +365,11 @@ async function pollAi33UntilDone(job: AvatarJob, started: number) {
         pollCount,
       );
       if (status === "failed" || status === "error") {
-        fail(job, task.error_message || "ai33pro task failed");
+        await fail(job, task.error_message || "ai33pro task failed");
         return;
       }
       if (status === "done" || status === "completed" || status === "success") {
-        const again = getJob(job.id);
+        const again = await getJob(job.id);
         if (again && isStopped(again)) return;
         await finishAi33(job, task, started);
         return;
@@ -377,14 +382,14 @@ async function pollAi33UntilDone(job: AvatarJob, started: number) {
         vendor_poll_error: message,
         vendor_poll_count: pollCount,
       };
-      saveJob(job);
+      await saveJob(job);
       console.log("ai33 poll error", job.id, message);
       await sleep(8000);
       continue;
     }
     await sleep(4000);
   }
-  fail(job, "ai33pro still doing after 30 min with no output URL. Same task id — do not resubmit.");
+  await fail(job, "ai33pro still doing after 30 min with no output URL. Same task id — do not resubmit.");
 }
 
 async function runAi33(job: AvatarJob, raw: Buffer, started: number) {
@@ -393,15 +398,15 @@ async function runAi33(job: AvatarJob, raw: Buffer, started: number) {
     return;
   }
 
-  setPhase(job, "quoting", "Checking Seedream 4.5 price…");
+  await setPhase(job, "quoting", "Checking Seedream 4.5 price…");
   job.credits_remaining = await ai33Credits();
   job.quoted_credits = await ai33Quote({ aspect_ratio: "16:9", resolution: "2K", assets: 1 });
-  saveJob(job);
+  await saveJob(job);
 
-  setPhase(job, "generating", "Seedream 4.5 — sending photo to vendor…");
+  await setPhase(job, "generating", "Seedream 4.5 — sending photo to vendor…");
   const taskId = await ai33Generate(raw, job.input_filename, job.input_mime);
   job.provider_job_id = taskId;
-  saveJob(job);
+  await saveJob(job);
 
   await pollAi33UntilDone(job, started);
 }

@@ -1,6 +1,9 @@
+import { diskUpload } from "./uploads.js";
+import { resources, saveResource, deleteResource, assertDictionaryOwner, assertVoiceOwner } from "./user-resources.js";
+import { serveArtifact } from "./artifacts.js";
 import { assertSafePrompt } from "./prompt-guard.js";
 import { randomUUID } from "node:crypto";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, copyFileSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { Router } from "express";
 import multer from "multer";
@@ -13,7 +16,6 @@ import {
   ai33CloneVoice,
   ai33Credits,
   ai33DeleteClone,
-  ai33Dictionaries,
   ai33DictionaryCreate,
   ai33DictionaryDelete,
   ai33DictionaryGet,
@@ -21,7 +23,6 @@ import {
   ai33DictionaryUpdate,
   MUSIC_PROMPT_STARTERS,
   SFX_PROMPT_STARTERS,
-  ai33SfxMusicHistory,
   ai33VoiceLibrary,
   ai33Voices,
   asCloneVoiceId,
@@ -29,11 +30,9 @@ import {
 } from "./providers/ai33-audio.js";
 import { extractAudioMp3, ffmpegAvailable, probeDurationSeconds } from "./ffmpeg-local.js";
 import { extFromMime } from "./media.js";
+import { currentUser } from "./google-auth.js";
 
-const mediaUpload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 200 * 1024 * 1024 },
-});
+
 
 const cloneUpload = multer({
   storage: multer.memoryStorage(),
@@ -89,7 +88,7 @@ async function prepareSubmitFile(opts: {
       ? ".bin"
       : ext;
   const stored = audioInputPath(opts.id, inputExt);
-  writeFileSync(stored, opts.file.buffer);
+  copyFileSync(opts.file.path, stored);
 
   if (opts.want === "passthrough") {
     return {
@@ -160,6 +159,11 @@ audioRouter.get("/voices", async (req, res) => {
     for (const [k, v] of Object.entries(req.query)) {
       if (typeof v === "string") q[k] = v;
     }
+    if (q.provider === "clone") {
+      const email = currentUser(req)?.email;
+      const jobs = email ? await listAudioJobs(email) : [];
+      res.json({ data: jobs.filter(j => j.kind === "clone" && !j.params.deleted).map(j => ({ voice_id: j.params.voice_id, name: j.title })), pagination: { total: jobs.filter(j => j.kind === "clone" && !j.params.deleted).length } }); return;
+    }
     res.json(await ai33Voices(q));
   } catch (err) {
     sendErr(res, err);
@@ -174,8 +178,8 @@ audioRouter.get("/voice-library", async (_req, res) => {
   }
 });
 
-function studioClips(kind: "sfx" | "music"): LibraryClip[] {
-  return listAudioJobs()
+async function studioClips(kind: "sfx" | "music", ownerEmail?: string): Promise<LibraryClip[]> {
+  return (await listAudioJobs(ownerEmail))
     .filter((j) => j.kind === kind && j.status === "COMPLETED" && j.output_filename)
     .map((j) => {
       const params = j.params || {};
@@ -197,33 +201,26 @@ function studioClips(kind: "sfx" | "music"): LibraryClip[] {
     });
 }
 
-audioRouter.get("/asset-library", async (_req, res) => {
+audioRouter.get("/asset-library", async (req, res) => {
   try {
-    const history = await ai33SfxMusicHistory();
-    const seen = new Set<string>();
-    for (const job of listAudioJobs()) {
-      seen.add(job.id);
-      if (job.provider_job_id) seen.add(job.provider_job_id);
-    }
-    const vendorSfx = history.sfx.filter((c) => !seen.has(c.id));
-    const vendorMusic = history.music.filter((c) => !seen.has(c.id));
+    const email = currentUser(req)?.email;
     res.json({
       credit_cost: 0,
       note: "SFX and Suno have no vendor preview catalog like voices. Starters only fill the form (0 credits). Playable clips are jobs already generated on this key.",
-      sfx: { starters: SFX_PROMPT_STARTERS, clips: [...studioClips("sfx"), ...vendorSfx] },
-      music: { starters: MUSIC_PROMPT_STARTERS, clips: [...studioClips("music"), ...vendorMusic] },
+      sfx: { starters: SFX_PROMPT_STARTERS, clips: [...(await studioClips("sfx", email))] },
+      music: { starters: MUSIC_PROMPT_STARTERS, clips: [...(await studioClips("music", email))] },
     });
   } catch (err) {
     sendErr(res, err, 500);
   }
 });
 
-audioRouter.get("/jobs", (_req, res) => {
-  res.json({ jobs: listAudioJobs() });
+audioRouter.get("/jobs", async (req, res) => {
+  res.json({ jobs: await listAudioJobs(currentUser(req)?.email) });
 });
 
-audioRouter.get("/jobs/:id", (req, res) => {
-  const job = getAudioJob(req.params.id);
+audioRouter.get("/jobs/:id", async (req, res) => {
+  const job = await getAudioJob(req.params.id, currentUser(req)?.email);
   if (!job) {
     res.status(404).json({ error: "not found" });
     return;
@@ -231,17 +228,12 @@ audioRouter.get("/jobs/:id", (req, res) => {
   res.json(job);
 });
 
-function fileDownload(res: import("express").Response, file: string, mime: string, download?: boolean) {
-  if (!existsSync(file)) {
-    res.status(404).json({ error: "file missing" });
-    return;
-  }
-  if (download) res.setHeader("Content-Disposition", `attachment; filename="${path.basename(file)}"`);
-  res.type(mime).send(readFileSync(file));
+async function fileDownload(res: import("express").Response, job: AudioJob, file: string, mime: string, download?: boolean) {
+  await serveArtifact(res, job, file, mime, undefined, download ? path.basename(file) : undefined);
 }
 
-audioRouter.get("/jobs/:id/input", (req, res) => {
-  const job = getAudioJob(req.params.id);
+audioRouter.get("/jobs/:id/input", async (req, res) => {
+  const job = await getAudioJob(req.params.id, currentUser(req)?.email);
   if (!job || !job.input_mime) {
     res.status(404).json({ error: "input missing" });
     return;
@@ -249,55 +241,56 @@ audioRouter.get("/jobs/:id/input", (req, res) => {
   const ext = extFromMime(job.input_mime);
   const stored = audioInputPath(job.id, ext === ".png" ? ".bin" : ext);
   const cloneMp3 = audioInputPath(job.id, ".clone.mp3");
-  if (existsSync(cloneMp3)) {
-    fileDownload(res, cloneMp3, "audio/mpeg");
+  if (existsSync(cloneMp3) || job.artifacts?.[`audio-uploads/${job.id}.clone.mp3`]) {
+    await fileDownload(res, job, cloneMp3, "audio/mpeg");
     return;
   }
-  fileDownload(res, stored, job.input_mime);
+  await fileDownload(res, job, stored, job.input_mime);
 });
 
-audioRouter.get("/jobs/:id/output", (req, res) => {
-  const job = getAudioJob(req.params.id);
+audioRouter.get("/jobs/:id/output", async (req, res) => {
+  const job = await getAudioJob(req.params.id, currentUser(req)?.email);
   if (!job || job.status !== "COMPLETED") {
     res.status(404).json({ error: "output not ready" });
     return;
   }
   const video = req.query.video === "1" || req.query.video === "true";
   if (video) {
-    fileDownload(res, audioOutputPath(job.id, ".mp4"), "video/mp4", Boolean(req.query.download));
+    await fileDownload(res, job, audioOutputPath(job.id, ".mp4"), "video/mp4", Boolean(req.query.download));
     return;
   }
-  fileDownload(res, audioOutputPath(job.id, ".mp3"), "audio/mpeg", Boolean(req.query.download));
+  await fileDownload(res, job, audioOutputPath(job.id, ".mp3"), "audio/mpeg", Boolean(req.query.download));
 });
 
-audioRouter.get("/jobs/:id/alt", (req, res) => {
-  const job = getAudioJob(req.params.id);
+audioRouter.get("/jobs/:id/alt", async (req, res) => {
+  const job = await getAudioJob(req.params.id, currentUser(req)?.email);
   if (!job || job.status !== "COMPLETED") {
     res.status(404).json({ error: "output not ready" });
     return;
   }
-  fileDownload(res, audioOutputPath(job.id, ".alt.mp3"), "audio/mpeg", Boolean(req.query.download));
+  await fileDownload(res, job, audioOutputPath(job.id, ".alt.mp3"), "audio/mpeg", Boolean(req.query.download));
 });
 
-audioRouter.get("/jobs/:id/srt", (req, res) => {
-  const job = getAudioJob(req.params.id);
+audioRouter.get("/jobs/:id/srt", async (req, res) => {
+  const job = await getAudioJob(req.params.id, currentUser(req)?.email);
   if (!job?.has_srt) {
     res.status(404).json({ error: "no srt" });
     return;
   }
-  fileDownload(res, audioOutputPath(job.id, ".srt"), "application/x-subrip", true);
+  await fileDownload(res, job, audioOutputPath(job.id, ".srt"), "application/x-subrip", true);
 });
 
-audioRouter.get("/jobs/:id/transcript", (req, res) => {
-  const job = getAudioJob(req.params.id);
-  const txt = audioOutputPath(req.params.id, ".txt");
+audioRouter.get("/jobs/:id/transcript", async (req, res) => {
+  const job = await getAudioJob(req.params.id, currentUser(req)?.email);
+  if (!job) { res.status(404).json({ error: "not found" }); return; }
+  const txt = audioOutputPath(job.id, ".txt");
   const jsonFile = audioOutputPath(req.params.id, ".json");
-  if (existsSync(txt)) {
-    fileDownload(res, txt, "text/plain", Boolean(req.query.download));
+  if (existsSync(txt) || job.artifacts?.[`audio-outputs/${job.id}.txt`]) {
+    await fileDownload(res, job, txt, "text/plain", Boolean(req.query.download));
     return;
   }
-  if (existsSync(jsonFile)) {
-    fileDownload(res, jsonFile, "application/json", Boolean(req.query.download));
+  if (existsSync(jsonFile) || job.artifacts?.[`audio-outputs/${job.id}.json`]) {
+    await fileDownload(res, job, jsonFile, "application/json", Boolean(req.query.download));
     return;
   }
   if (job?.transcript) {
@@ -307,19 +300,26 @@ audioRouter.get("/jobs/:id/transcript", (req, res) => {
   res.status(404).json({ error: "no transcript" });
 });
 
-audioRouter.get("/jobs/:id/cover", (req, res) => {
-  fileDownload(res, audioOutputPath(req.params.id, ".cover.jpg"), "image/jpeg");
+audioRouter.get("/jobs/:id/cover", async (req, res) => {
+  const job = await getAudioJob(req.params.id, currentUser(req)?.email);
+  if (!job) { res.status(404).json({ error: "not found" }); return; }
+  await fileDownload(res, job, audioOutputPath(req.params.id, ".cover.jpg"), "image/jpeg");
 });
 
 audioRouter.post("/jobs/:id/cancel", async (req, res) => {
   try {
+    const owned = await getAudioJob(req.params.id, currentUser(req)?.email);
+    if (!owned) {
+      res.status(404).json({ error: "not found" });
+      return;
+    }
     res.json(await cancelAudioJob(req.params.id));
   } catch (err) {
     sendErr(res, err, 400);
   }
 });
 
-export function enqueue(kind: AudioKind, title: string, params: Record<string, unknown>, extra?: Partial<AudioJob>, defer = false) {
+export async function enqueue(kind: AudioKind, title: string, params: Record<string, unknown>, extra?: Partial<AudioJob>, defer = false) {
   const id = extra?.id || randomUUID();
   const job = newJob({
     id,
@@ -349,32 +349,36 @@ export function enqueue(kind: AudioKind, title: string, params: Record<string, u
     params,
     provider_meta: extra?.provider_meta ?? {},
     transcript: extra?.transcript ?? null,
+    owner_email: extra?.owner_email || "anonymous",
     ...extra,
   });
-  saveAudioJob(job);
+  await assertDictionaryOwner(job.owner_email || "anonymous", params.pronunciation_dictionary_id);
+  if (kind !== "clone") await assertVoiceOwner(job.owner_email || "anonymous", params.voice_id);
+  if (kind === "dialogue" && Array.isArray(params.speakers)) for (const speaker of params.speakers) await assertVoiceOwner(job.owner_email || "anonymous", speaker.voice_id);
+  await saveAudioJob(job);
   if (kind !== "clone" && !defer) void runAudioJob(id);
   return job;
 }
 
-audioRouter.post("/tts", (req, res) => {
+audioRouter.post("/tts", async (req, res) => {
   try {
     const text = assertSafePrompt(req.body?.text, "speech");
     const voice_id = String(req.body?.voice_id || "").trim();
     if (!voice_id) throw new Error("voice_id required");
-    const job = enqueue("tts", text.slice(0, 48) || "TTS", {
+    const job = await enqueue("tts", text.slice(0, 48) || "TTS", {
       text,
       voice_id,
       speed: clampSpeed(req.body?.speed),
       with_transcript: Boolean(req.body?.with_transcript),
       pronunciation_dictionary_id: req.body?.pronunciation_dictionary_id || undefined,
-    });
+    }, { owner_email: currentUser(req)?.email || "anonymous" });
     res.status(202).json(job);
   } catch (err) {
     sendErr(res, err);
   }
 });
 
-audioRouter.post("/dialogue", (req, res) => {
+audioRouter.post("/dialogue", async (req, res) => {
   try {
     const text = assertSafePrompt(req.body?.text, "speech");
     const speakers = req.body?.speakers;
@@ -388,13 +392,13 @@ audioRouter.post("/dialogue", (req, res) => {
     if (clean.some((s) => !s.voice_id)) throw new Error("each speaker needs voice_id");
     const delay = Number(req.body?.delay ?? 0);
     if (!Number.isFinite(delay) || delay < 0 || delay > 5) throw new Error("delay must be 0–5");
-    const job = enqueue("dialogue", "Dialogue", {
+    const job = await enqueue("dialogue", "Dialogue", {
       text,
       speakers: clean,
       delay,
       with_transcript: Boolean(req.body?.with_transcript),
       pronunciation_dictionary_id: req.body?.pronunciation_dictionary_id || undefined,
-    });
+    }, { owner_email: currentUser(req)?.email || "anonymous" });
     res.status(202).json(job);
   } catch (err) {
     sendErr(res, err);
@@ -439,7 +443,7 @@ audioRouter.post("/clone", cloneUpload.single("audio"), async (req, res) => {
       filename: submitName,
       mime: submitMime,
     });
-    const job = enqueue(
+    const job = await enqueue(
       "clone",
       name,
       { voice_id: cloned.voice_id, voice_name: name, duration_s: seconds },
@@ -452,6 +456,7 @@ audioRouter.post("/clone", cloneUpload.single("audio"), async (req, res) => {
         input_filename: file.originalname || `sample${ext}`,
         provider_meta: { vendor: cloned.raw },
         duration_ms: 0,
+        owner_email: currentUser(req)?.email || "anonymous",
       },
     );
     res.status(201).json({ ...job, voice_id: cloned.voice_id });
@@ -462,14 +467,17 @@ audioRouter.post("/clone", cloneUpload.single("audio"), async (req, res) => {
 
 audioRouter.delete("/clones/:id", async (req, res) => {
   try {
+    const owned = (await listAudioJobs(currentUser(req)?.email)).find(j => j.kind === "clone" && asCloneVoiceId(String(j.params.voice_id || "")) === asCloneVoiceId(req.params.id));
+    if (!owned) { res.status(404).json({ error: "not found" }); return; }
     await ai33DeleteClone(req.params.id);
+    owned.params.deleted = true; await saveAudioJob(owned);
     res.json({ success: true, voice_id: asCloneVoiceId(req.params.id) });
   } catch (err) {
     sendErr(res, err);
   }
 });
 
-audioRouter.post("/voice-change", mediaUpload.single("file"), async (req, res) => {
+audioRouter.post("/voice-change", diskUpload(200 * 1024 * 1024, "file"), async (req, res) => {
   try {
     const file = req.file;
     if (!file) throw new Error("file required");
@@ -480,7 +488,7 @@ audioRouter.post("/voice-change", mediaUpload.single("file"), async (req, res) =
     }
     const id = randomUUID();
     const prepared = await prepareSubmitFile({ id, file, want: "changer" });
-    const job = enqueue(
+    const job = await enqueue(
       "voice-change",
       "Voice change",
       {
@@ -496,6 +504,7 @@ audioRouter.post("/voice-change", mediaUpload.single("file"), async (req, res) =
         id,
         input_mime: file.mimetype,
         input_filename: file.originalname || `input${prepared.input_ext}`,
+        owner_email: currentUser(req)?.email || "anonymous",
       },
     );
     res.status(202).json(job);
@@ -504,7 +513,7 @@ audioRouter.post("/voice-change", mediaUpload.single("file"), async (req, res) =
   }
 });
 
-audioRouter.post("/dub", mediaUpload.single("file"), async (req, res) => {
+audioRouter.post("/dub", diskUpload(200 * 1024 * 1024, "file"), async (req, res) => {
   try {
     const file = req.file;
     if (!file) throw new Error("file required (mp3/m4a, or video to extract)");
@@ -517,7 +526,7 @@ audioRouter.post("/dub", mediaUpload.single("file"), async (req, res) => {
     }
     const id = randomUUID();
     const prepared = await prepareSubmitFile({ id, file, want: "dub" });
-    const job = enqueue(
+    const job = await enqueue(
       "dub",
       `Dub → ${target_lang}`,
       {
@@ -535,6 +544,7 @@ audioRouter.post("/dub", mediaUpload.single("file"), async (req, res) => {
         id,
         input_mime: file.mimetype,
         input_filename: file.originalname || `input${prepared.input_ext}`,
+        owner_email: currentUser(req)?.email || "anonymous",
       },
     );
     res.status(202).json(job);
@@ -543,13 +553,13 @@ audioRouter.post("/dub", mediaUpload.single("file"), async (req, res) => {
   }
 });
 
-audioRouter.post("/isolate", mediaUpload.single("file"), async (req, res) => {
+audioRouter.post("/isolate", diskUpload(200 * 1024 * 1024, "file"), async (req, res) => {
   try {
     const file = req.file;
     if (!file) throw new Error("file required");
     const id = randomUUID();
     const prepared = await prepareSubmitFile({ id, file, want: "passthrough" });
-    const job = enqueue(
+    const job = await enqueue(
       "isolate",
       "Voice isolate",
       {
@@ -557,7 +567,7 @@ audioRouter.post("/isolate", mediaUpload.single("file"), async (req, res) => {
         submit_mime: prepared.submit_mime,
         submit_filename: prepared.submit_filename,
       },
-      { id, input_mime: file.mimetype, input_filename: file.originalname || "audio" },
+      { id, input_mime: file.mimetype, input_filename: file.originalname || "audio", owner_email: currentUser(req)?.email || "anonymous" },
     );
     res.status(202).json(job);
   } catch (err) {
@@ -565,13 +575,13 @@ audioRouter.post("/isolate", mediaUpload.single("file"), async (req, res) => {
   }
 });
 
-audioRouter.post("/stt", mediaUpload.single("file"), async (req, res) => {
+audioRouter.post("/stt", diskUpload(200 * 1024 * 1024, "file"), async (req, res) => {
   try {
     const file = req.file;
     if (!file) throw new Error("file required");
     const id = randomUUID();
     const prepared = await prepareSubmitFile({ id, file, want: "passthrough" });
-    const job = enqueue(
+    const job = await enqueue(
       "stt",
       "Speech to text",
       {
@@ -580,7 +590,7 @@ audioRouter.post("/stt", mediaUpload.single("file"), async (req, res) => {
         submit_mime: prepared.submit_mime,
         submit_filename: prepared.submit_filename,
       },
-      { id, input_mime: file.mimetype, input_filename: file.originalname || "audio" },
+      { id, input_mime: file.mimetype, input_filename: file.originalname || "audio", owner_email: currentUser(req)?.email || "anonymous" },
     );
     res.status(202).json(job);
   } catch (err) {
@@ -588,7 +598,7 @@ audioRouter.post("/stt", mediaUpload.single("file"), async (req, res) => {
   }
 });
 
-audioRouter.post("/sfx", (req, res) => {
+audioRouter.post("/sfx", async (req, res) => {
   try {
     const text = assertSafePrompt(req.body?.text, "sfx");
     const durationRaw = req.body?.duration_seconds;
@@ -601,28 +611,28 @@ audioRouter.post("/sfx", (req, res) => {
     if (!Number.isFinite(prompt_influence) || prompt_influence < 0 || prompt_influence > 1) {
       throw new Error("prompt_influence 0–1");
     }
-    const job = enqueue("sfx", text.slice(0, 48), {
+    const job = await enqueue("sfx", text.slice(0, 48), {
       text,
       duration_seconds,
       prompt_influence,
       loop: Boolean(req.body?.loop),
-    });
+    }, { owner_email: currentUser(req)?.email || "anonymous" });
     res.status(202).json(job);
   } catch (err) {
     sendErr(res, err);
   }
 });
 
-audioRouter.post("/music", (req, res) => {
+audioRouter.post("/music", async (req, res) => {
   try {
     const mode = req.body?.create_mode === "custom" ? "custom" : "simple";
     if (mode === "simple") {
       const prompt = assertSafePrompt(req.body?.gpt_description_prompt, "music");
-      const job = enqueue("music", prompt.slice(0, 48), {
+      const job = await enqueue("music", prompt.slice(0, 48), {
         create_mode: "simple",
         gpt_description_prompt: prompt,
         make_instrumental: Boolean(req.body?.make_instrumental),
-      });
+      }, { owner_email: currentUser(req)?.email || "anonymous" });
       res.status(202).json(job);
       return;
     }
@@ -631,22 +641,22 @@ audioRouter.post("/music", (req, res) => {
     const tags = assertSafePrompt(String(req.body?.tags || ""), "tags");
     if (!lyrics && !tags) throw new Error("custom mode needs lyrics or tags");
     const gender = req.body?.vocal_gender;
-    const job = enqueue("music", title || "Suno", {
+    const job = await enqueue("music", title || "Suno", {
       create_mode: "custom",
       title,
       lyrics,
       tags,
       vocal_gender: gender === "m" || gender === "f" ? gender : undefined,
-    });
+    }, { owner_email: currentUser(req)?.email || "anonymous" });
     res.status(202).json(job);
   } catch (err) {
     sendErr(res, err);
   }
 });
 
-audioRouter.get("/dictionaries", async (_req, res) => {
+audioRouter.get("/dictionaries", async (req, res) => {
   try {
-    res.json(await ai33Dictionaries());
+    res.json({ data: await Promise.all((await resources(currentUser(req)!.email)).map(r => ai33DictionaryGet(r.id))) });
   } catch (err) {
     sendErr(res, err, 500);
   }
@@ -654,7 +664,11 @@ audioRouter.get("/dictionaries", async (_req, res) => {
 
 audioRouter.post("/dictionaries", async (req, res) => {
   try {
-    res.status(201).json(await ai33DictionaryCreate(req.body));
+    const created = await ai33DictionaryCreate(req.body);
+    const data = (created.data || created) as Record<string, unknown>;
+    if (typeof data.id !== "string") throw new Error("Dictionary created without an id");
+    await saveResource(currentUser(req)!.email, data.id, data);
+    res.status(201).json(created);
   } catch (err) {
     sendErr(res, err);
   }
@@ -670,6 +684,7 @@ audioRouter.post("/dictionaries/preview", async (req, res) => {
 
 audioRouter.get("/dictionaries/:id", async (req, res) => {
   try {
+    await assertDictionaryOwner(currentUser(req)!.email, req.params.id);
     res.json(await ai33DictionaryGet(req.params.id));
   } catch (err) {
     sendErr(res, err);
@@ -678,6 +693,7 @@ audioRouter.get("/dictionaries/:id", async (req, res) => {
 
 audioRouter.put("/dictionaries/:id", async (req, res) => {
   try {
+    await assertDictionaryOwner(currentUser(req)!.email, req.params.id);
     res.json(await ai33DictionaryUpdate(req.params.id, req.body));
   } catch (err) {
     sendErr(res, err);
@@ -686,7 +702,10 @@ audioRouter.put("/dictionaries/:id", async (req, res) => {
 
 audioRouter.delete("/dictionaries/:id", async (req, res) => {
   try {
-    res.json(await ai33DictionaryDelete(req.params.id));
+    await assertDictionaryOwner(currentUser(req)!.email, req.params.id);
+    const result = await ai33DictionaryDelete(req.params.id);
+    await deleteResource(currentUser(req)!.email, req.params.id);
+    res.json(result);
   } catch (err) {
     sendErr(res, err);
   }

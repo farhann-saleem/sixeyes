@@ -1,3 +1,7 @@
+import { quotaOk, recordUsage, effectiveTier } from "./billing-store.js";
+import { allowHit } from "./billing-guard.js";
+import { TIERS } from "./plans.js";
+import { restoreArtifact } from "./artifacts.js";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { createTopicProject } from "./project-workflow.js";
@@ -107,14 +111,15 @@ function str(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
-async function enqueueLook(templateId: string, avatarId: string): Promise<SwapJob> {
+async function enqueueLook(templateId: string, avatarId: string, ownerEmail: string): Promise<SwapJob> {
   const blocked = cpuBlockedReason(await cpuHealthCached());
   if (blocked) throw new Error(blocked);
   const template = getMediaTemplate(templateId);
   if (!template) throw new Error("unknown template_id");
-  const identity = getIdentity(avatarId);
+  const identity = await getIdentity(avatarId, ownerEmail);
   if (!identity) throw new Error("unknown avatar_id");
   const file = identityPath(identity.id, identity.mime);
+  await restoreArtifact(identity, file);
   if (!existsSync(file)) throw new Error("saved avatar file missing");
   const id = randomUUID();
   const ext = extFromMime(identity.mime);
@@ -140,14 +145,20 @@ async function enqueueLook(templateId: string, avatarId: string): Promise<SwapJo
     estimated_usd: null,
     usd_per_hour_assumed: null,
     provider_meta: {},
+    owner_email: ownerEmail,
   };
-  saveSwapJob(job);
+  await saveSwapJob(job);
   void runSwapJob(id);
   return job;
 }
 
-export async function callMcpTool(name: string, rawArgs: unknown): Promise<unknown> {
+export async function callMcpTool(name: string, rawArgs: unknown, ownerEmail = "anonymous"): Promise<unknown> {
   const args = asRecord(rawArgs);
+  if (["create_documentary", "generate_look"].includes(name)) {
+    const kind = name === "create_documentary" ? "documentaries" : getMediaTemplate(str(args.template_id))?.kind === "video" ? "videos" : "images";
+    if (!allowHit(ownerEmail, TIERS[await effectiveTier(ownerEmail)].rate_per_min).allowed) throw new Error("Rate limit reached");
+    if (!(await quotaOk(ownerEmail, kind))) throw new Error("Monthly quota reached");
+  }
   if (name === "list_templates") {
     const kind = str(args.kind) || "image";
     if (kind === "video") {
@@ -164,10 +175,10 @@ export async function callMcpTool(name: string, rawArgs: unknown): Promise<unkno
     return listImageTemplates().map((t) => ({ id: t.id, label: labelFromImageFilename(t.filename), kind: t.kind }));
   }
   if (name === "list_identities") {
-    return listIdentities().map((a) => ({ id: a.id, name: a.name }));
+    return (await listIdentities(ownerEmail)).map((a) => ({ id: a.id, name: a.name }));
   }
   if (name === "list_library") {
-    return listSwapJobs()
+    return (await listSwapJobs(ownerEmail))
       .filter((j) => j.status === "COMPLETED")
       .map((j) => ({
         id: j.id,
@@ -178,7 +189,7 @@ export async function callMcpTool(name: string, rawArgs: unknown): Promise<unkno
       }));
   }
   if (name === "list_films") {
-    return listProjects().map((p) => ({
+    return (await listProjects(ownerEmail)).map((p) => ({
       id: p.id,
       name: p.name,
       topic: p.topic,
@@ -191,11 +202,12 @@ export async function callMcpTool(name: string, rawArgs: unknown): Promise<unkno
     const topic = str(args.topic);
     const name = str(args.name) || undefined;
     const inLibrary = args.in_library === undefined ? true : Boolean(args.in_library);
-    const p = createTopicProject(topic, name, inLibrary, undefined, args.duration_sec);
+    const p = await createTopicProject(topic, name, inLibrary, undefined, args.duration_sec, ownerEmail);
+    await recordUsage(ownerEmail, "documentaries");
     return { id: p.id, name: p.name, phase: p.phase, status: p.status, in_library: p.in_library, target_duration_sec: p.target_duration_sec ?? 60 };
   }
   if (name === "get_film") {
-    const p = getProject(str(args.id));
+    const p = await getProject(str(args.id), ownerEmail);
     if (!p) throw new Error("Project not found");
     return {
       id: p.id,
@@ -210,10 +222,12 @@ export async function callMcpTool(name: string, rawArgs: unknown): Promise<unkno
     };
   }
   if (name === "generate_look") {
-    return enqueueLook(str(args.template_id), str(args.avatar_id));
+    const job = await enqueueLook(str(args.template_id), str(args.avatar_id), ownerEmail);
+    await recordUsage(ownerEmail, job.kind === "video" ? "videos" : "images");
+    return job;
   }
   if (name === "get_generation") {
-    const job = getSwapJob(str(args.id));
+    const job = await getSwapJob(str(args.id), ownerEmail);
     if (!job) throw new Error("Generation not found");
     return {
       id: job.id,

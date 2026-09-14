@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(here, "../../..");
 
-dotenv.config({ path: path.join(REPO_ROOT, ".env"), override: true });
+dotenv.config({ path: path.join(REPO_ROOT, ".env"), override: false });
 
 export const PORT = Number(process.env.PORT || 3001);
 export const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
@@ -16,7 +16,7 @@ export const RUNPOD_QWEN_ENDPOINT_ID =
 export const RUNPOD_CPU_ENDPOINT_ID =
   process.env.RUNPOD_CPU_ENDPOINT_ID || "rydclpv4ta6u4p";
 
-export const R2_BUCKET = process.env.R2_BUCKET || "comfy";
+export const R2_BUCKET = process.env.R2_BUCKET || "";
 export const R2_ENDPOINT = process.env.R2_ENDPOINT || "";
 export const R2_ACCESS_KEY = process.env.R2_ACCESS_KEY || "";
 export const R2_SECRET_KEY = process.env.R2_SECRET_KEY || "";
@@ -45,7 +45,7 @@ export const OPENROUTER_FLUX_MODEL =
   process.env.OPENROUTER_FLUX_MODEL || "black-forest-labs/flux.2-klein-4b";
 
 export const DATA_DIR = process.env.NODE_ENV === "test" && process.env.STUDIO_TEST_DATA_DIR
-  ? path.resolve(process.env.STUDIO_TEST_DATA_DIR) : path.join(here, "..", "data");
+  ? path.resolve(process.env.STUDIO_TEST_DATA_DIR) : path.resolve(process.env.DATA_DIR || path.join(here, "..", "data"));
 
 export const PEXELS_API_KEY = process.env.PEXELS_API_KEY || "";
 export const OPENROUTER_TEXT_MODEL = process.env.OPENROUTER_TEXT_MODEL || "openai/gpt-4o-mini";

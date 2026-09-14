@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, statSync } from "node
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { DATA_DIR, EFFECT_TEMPLATE_DIR, TEMPLATE_DIR, VIDEO_TEMPLATE_DIR } from "./env.js";
-import { r2Has, r2Put } from "./r2.js";
+import { r2Has, r2PutFile } from "./r2.js";
 
 const IMAGE_EXT = new Set([".png", ".jpg", ".jpeg", ".webp"]);
 const VIDEO_EXT = new Set([".mp4", ".mov", ".mkv", ".webm"]);
@@ -292,7 +292,7 @@ async function uploadAll() {
       skipped.push(t.id);
       continue;
     }
-    await r2Put(t.r2_key, readFileSync(t.abs_path), t.mime);
+    await r2PutFile(t.r2_key, t.abs_path, t.mime);
     uploaded.push(t.id);
     console.log("r2 template", t.id, t.r2_key);
   }
@@ -303,8 +303,23 @@ export async function ensureTemplateOnR2(id: string): Promise<MediaTemplate> {
   const t = getMediaTemplate(id);
   if (!t) throw new Error(`unknown template ${id}`);
   if (!(await r2Has(t.r2_key))) {
-    await r2Put(t.r2_key, readFileSync(t.abs_path), t.mime);
+    await r2PutFile(t.r2_key, t.abs_path, t.mime);
     console.log("r2 template", t.id, t.r2_key);
   }
   return t;
+}
+
+/** Only redirect catalog media after existence is verified. Local checkout remains usable. */
+const readyObjects = new Set<string>();
+export async function catalogR2Key(t: MediaTemplate, poster = false): Promise<string | null> {
+  const key = poster ? `templates/posters/${t.id}.jpg` : t.r2_key;
+  if (readyObjects.has(key)) return key;
+  const file = poster && t.kind === "video" ? t.poster_path : t.abs_path;
+  try {
+    if (!(await r2Has(key))) {
+      if (!file || !existsSync(file)) return null;
+      await r2PutFile(key, file, poster ? "image/jpeg" : t.mime);
+    }
+    readyObjects.add(key); return key;
+  } catch { return null; }
 }

@@ -1,11 +1,16 @@
 # Backend
 
-TypeScript + Express. Jobs are **async** (row `IN_PROGRESS` → poll). Never block HTTP on a model.
+TypeScript + Express. Async job rows and polling; production uses Supabase metadata and private R2 media. Express serves the built frontend on the same origin.
 
 ```bash
-cd apps/backend && npm install && npm run dev
+npm ci
+npm run typecheck
+npm test
+npm run dev
 ```
 
-Listens on `http://localhost:3001`. Loads repo-root `.env`. Local jobs in `data/` (gitignored).
+For production, build `apps/frontend`, set the documented environment, apply both Supabase migrations, then run `npm start` as one process. Production startup validates prerequisites. `.env` stays at the repo root and never belongs in git; process environment takes precedence. `DATA_DIR` defaults to `apps/backend/data` and remains a rollback cache until legacy migration is verified.
 
-**Now:** avatar MVP — `POST /api/avatars`, `GET /api/avatars/:id`, `GET /api/costs`. Specs [02](../../spec/02-implement-image-and-faceswap.md), [20](../../spec/20-generation-providers.md). Costs: [docs/COST.md](../../docs/COST.md).
+Private reads and writes require Google login and owner-scoped records. Public catalogs remain browseable. Private media redirects to expiring R2 URLs; legacy files stream with Range support.
+
+See [deployment](../../docs/DEPLOY.md), [multi-user hardening and tests](../../docs/SECURITY-HARDENING.md), [environment names](../../docs/ENV.md), and [artifact migration](../../spec/24-r2-artifacts.md). CPU timeline-v1 export deployment is a separate gate.

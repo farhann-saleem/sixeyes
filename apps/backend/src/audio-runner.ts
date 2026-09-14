@@ -1,7 +1,11 @@
+import { downloadToFile } from "./download.js";
+import path from "node:path";
+import { restoreArtifacts } from "./artifacts.js";
 import { writeFileSync } from "node:fs";
 import { appendLedger } from "./store.js";
 import {
   audioOutputPath,
+  audioInputPath,
   getAudioJob,
   listAudioJobs,
   saveAudioJob,
@@ -19,7 +23,6 @@ import {
   ai33Stt,
   ai33Tts,
   ai33VoiceChanger,
-  downloadUrl,
   extractAudioOutputs,
 } from "./providers/ai33-audio.js";
 import { muxAudioOntoVideo } from "./ffmpeg-local.js";
@@ -49,28 +52,28 @@ function isStopped(job: AudioJob) {
   return job.status === "CANCELLED" || job.phase === "cancelled";
 }
 
-function setPhase(job: AudioJob, phase: JobPhase, phase_label: string) {
-  const latest = getAudioJob(job.id);
+async function setPhase(job: AudioJob, phase: JobPhase, phase_label: string) {
+  const latest = await getAudioJob(job.id);
   if (latest && isStopped(latest)) return;
   job.phase = phase;
   job.phase_label = phase_label;
-  saveAudioJob(job);
+  await saveAudioJob(job);
 }
 
-function fail(job: AudioJob, message: string) {
-  const latest = getAudioJob(job.id);
+async function fail(job: AudioJob, message: string) {
+  const latest = await getAudioJob(job.id);
   if (latest && (isStopped(latest) || latest.status === "COMPLETED")) return;
   job.status = "FAILED";
   job.phase = "failed";
   job.phase_label = "Failed";
   job.error = message;
   job.duration_ms = job.duration_ms ?? Date.now() - Date.parse(job.created_at);
-  saveAudioJob(job);
-  appendLedger(ledgerFrom(job));
+  await saveAudioJob(job);
+  await appendLedger(ledgerFrom(job));
 }
 
 export async function cancelAudioJob(jobId: string): Promise<AudioJob> {
-  const job = getAudioJob(jobId);
+  const job = await getAudioJob(jobId);
   if (!job) throw new Error("not found");
   if (job.status === "COMPLETED") throw new Error("already completed");
   if (isStopped(job)) return job;
@@ -80,7 +83,7 @@ export async function cancelAudioJob(jobId: string): Promise<AudioJob> {
   job.phase_label = "Stopped";
   job.error = "Stopped by you";
   job.duration_ms = Date.now() - Date.parse(job.created_at);
-  saveAudioJob(job);
+  await saveAudioJob(job);
 
   if (job.provider_job_id) {
     try {
@@ -92,43 +95,47 @@ export async function cancelAudioJob(jobId: string): Promise<AudioJob> {
         vendor_cancel_error: err instanceof Error ? err.message : String(err),
       };
     }
-    saveAudioJob(job);
+    await saveAudioJob(job);
   }
-  appendLedger(ledgerFrom(job));
-  return getAudioJob(jobId) ?? job;
+  await appendLedger(ledgerFrom(job));
+  return await getAudioJob(jobId) ?? job;
 }
 
 export async function resumeInFlightAudioJobs() {
-  for (const job of listAudioJobs()) {
+  for (const job of await listAudioJobs()) {
     if (job.kind === "clone") continue;
-    if (!job.provider_job_id) continue;
+    if (!job.provider_job_id && ["PENDING", "IN_PROGRESS"].includes(job.status)) { await fail(job, "Backend restarted before a vendor task id was saved. Check the vendor queue before retrying; no automatic resubmission."); continue; }
     if (job.status !== "IN_PROGRESS" && job.status !== "PENDING") continue;
     console.log("resume audio", job.id, job.kind, job.provider_job_id);
-    void pollUntilDone(job);
+    void runAudioJob(job.id);
   }
 }
 
 export async function runAudioJob(jobId: string) {
-  const job = getAudioJob(jobId);
+  const job = await getAudioJob(jobId);
   if (!job || job.kind === "clone") return;
   job.status = "IN_PROGRESS";
   job.error = null;
-  setPhase(job, "queued", "Starting…");
+  await setPhase(job, "queued", "Starting…");
   try {
+    await restoreArtifacts(job);
+    for (const field of ["submit_path", "video_path"]) {
+      if (typeof job.params[field] === "string") job.params[field] = audioInputPath(job.id, path.basename(String(job.params[field])).slice(job.id.length));
+    }
     if (job.provider_job_id) {
       await pollUntilDone(job);
       return;
     }
     job.credits_remaining = await ai33Credits();
-    saveAudioJob(job);
+    await saveAudioJob(job);
     const taskId = await submit(job);
     job.provider_job_id = taskId;
-    setPhase(job, "generating", "Vendor accepted — polling…");
+    await setPhase(job, "generating", "Vendor accepted — polling…");
     await pollUntilDone(job);
   } catch (err) {
-    const latest = getAudioJob(jobId);
+    const latest = await getAudioJob(jobId);
     if (latest && latest.status !== "COMPLETED" && !isStopped(latest)) {
-      fail(latest, err instanceof Error ? err.message : String(err));
+      await fail(latest, err instanceof Error ? err.message : String(err));
     }
   }
 }
@@ -136,7 +143,7 @@ export async function runAudioJob(jobId: string) {
 async function submit(job: AudioJob): Promise<string> {
   const p = job.params;
   if (job.kind === "tts") {
-    setPhase(job, "generating", "Sending script…");
+    await setPhase(job, "generating", "Sending script…");
     return ai33Tts({
       text: String(p.text || ""),
       voice_id: String(p.voice_id || ""),
@@ -148,7 +155,7 @@ async function submit(job: AudioJob): Promise<string> {
     });
   }
   if (job.kind === "dialogue") {
-    setPhase(job, "generating", "Sending dialogue…");
+    await setPhase(job, "generating", "Sending dialogue…");
     return ai33Dialogue({
       text: String(p.text || ""),
       speakers: Array.isArray(p.speakers) ? (p.speakers as Array<{ voice_id: string; speed?: number }>) : [],
@@ -160,7 +167,7 @@ async function submit(job: AudioJob): Promise<string> {
     });
   }
   if (job.kind === "sfx") {
-    setPhase(job, "generating", "Generating sound effect…");
+    await setPhase(job, "generating", "Generating sound effect…");
     return ai33Sfx({
       text: String(p.text || ""),
       duration_seconds: p.duration_seconds == null ? undefined : Number(p.duration_seconds),
@@ -169,7 +176,7 @@ async function submit(job: AudioJob): Promise<string> {
     });
   }
   if (job.kind === "music") {
-    setPhase(job, "generating", "Suno — requesting two clips…");
+    await setPhase(job, "generating", "Suno — requesting two clips…");
     return ai33Music({
       create_mode: p.create_mode === "custom" ? "custom" : "simple",
       gpt_description_prompt: p.gpt_description_prompt ? String(p.gpt_description_prompt) : undefined,
@@ -184,11 +191,11 @@ async function submit(job: AudioJob): Promise<string> {
   const submitPath = String(p.submit_path || "");
   const submitMime = String(p.submit_mime || "audio/mpeg");
   const submitName = String(p.submit_filename || "audio.mp3");
-  const { readFileSync } = await import("node:fs");
-  const buf = readFileSync(submitPath);
+  const { openAsBlob } = await import("node:fs");
+  const buf = await openAsBlob(submitPath, { type: submitMime });
 
   if (job.kind === "voice-change") {
-    setPhase(job, "generating", "Voice changer…");
+    await setPhase(job, "generating", "Voice changer…");
     return ai33VoiceChanger({
       file: buf,
       filename: submitName,
@@ -205,7 +212,7 @@ async function submit(job: AudioJob): Promise<string> {
     });
   }
   if (job.kind === "dub") {
-    setPhase(job, "generating", "Dubbing…");
+    await setPhase(job, "generating", "Dubbing…");
     const voiceId = p.voice_id ? String(p.voice_id) : "";
     if (voiceId.startsWith("kokoro_")) {
       throw new Error("Kokoro cannot be a dubbing replacement voice (no SRT-to-TTS path).");
@@ -222,11 +229,11 @@ async function submit(job: AudioJob): Promise<string> {
     });
   }
   if (job.kind === "isolate") {
-    setPhase(job, "generating", "Isolating voice…");
+    await setPhase(job, "generating", "Isolating voice…");
     return ai33Isolate({ file: buf, filename: submitName, mime: submitMime });
   }
   if (job.kind === "stt") {
-    setPhase(job, "generating", "Transcribing…");
+    await setPhase(job, "generating", "Transcribing…");
     return ai33Stt({
       file: buf,
       filename: submitName,
@@ -239,14 +246,14 @@ async function submit(job: AudioJob): Promise<string> {
 
 async function pollUntilDone(job: AudioJob) {
   if (!job.provider_job_id) {
-    fail(job, "missing vendor task id");
+    await fail(job, "missing vendor task id");
     return;
   }
   const started = Date.parse(job.created_at) || Date.now();
   const deadline = Date.now() + 30 * 60 * 1000;
   let pollCount = 0;
   while (Date.now() < deadline) {
-    const latest = getAudioJob(job.id);
+    const latest = await getAudioJob(job.id);
     if (!latest || isStopped(latest)) return;
     Object.assign(job, latest);
     pollCount += 1;
@@ -263,12 +270,12 @@ async function pollUntilDone(job: AudioJob) {
         vendor_poll_count: pollCount,
       };
       if (status === "doing" || status === "pending" || status === "queued" || status === "processing") {
-        setPhase(job, "generating", `Vendor ${task.status || "doing"}${task.progress != null ? ` · ${task.progress}%` : ""}`);
+        await setPhase(job, "generating", `Vendor ${task.status || "doing"}${task.progress != null ? ` · ${task.progress}%` : ""}`);
       } else {
-        saveAudioJob(job);
+        await saveAudioJob(job);
       }
       if (status === "failed" || status === "error") {
-        fail(job, task.error_message || "ai33pro task failed");
+        await fail(job, task.error_message || "ai33pro task failed");
         return;
       }
       if (status === "done" || status === "completed" || status === "success") {
@@ -281,17 +288,17 @@ async function pollUntilDone(job: AudioJob) {
         vendor_poll_error: err instanceof Error ? err.message : String(err),
         vendor_poll_count: pollCount,
       };
-      saveAudioJob(job);
+      await saveAudioJob(job);
       await sleep(8000);
       continue;
     }
     await sleep(4000);
   }
-  fail(job, "Still doing after 30 min. Same task id — do not resubmit.");
+  await fail(job, "Still doing after 30 min. Same task id — do not resubmit.");
 }
 
 async function finish(job: AudioJob, task: Ai33Task, started: number) {
-  const latest = getAudioJob(job.id);
+  const latest = await getAudioJob(job.id);
   if (latest && isStopped(latest)) return;
   const out = extractAudioOutputs(task);
   job.transcript = out.transcript;
@@ -310,24 +317,23 @@ async function finish(job: AudioJob, task: Ai33Task, started: number) {
       : out.audioUrls.find((u) => u !== primaryUrl) || null;
 
   if (primaryUrl) {
-    const audio = await downloadUrl(primaryUrl);
-    writeFileSync(audioOutputPath(job.id, ".mp3"), audio);
+    await downloadToFile(primaryUrl, audioOutputPath(job.id, ".mp3"));
     job.output_mime = "audio/mpeg";
     job.output_filename = `${job.id}.mp3`;
   }
 
   if (altUrl) {
-    writeFileSync(audioOutputPath(job.id, ".alt.mp3"), await downloadUrl(altUrl));
+    await downloadToFile(altUrl, audioOutputPath(job.id, ".alt.mp3"));
     job.has_alt = true;
   }
 
   if (out.srtUrl) {
-    writeFileSync(audioOutputPath(job.id, ".srt"), await downloadUrl(out.srtUrl));
+    await downloadToFile(out.srtUrl, audioOutputPath(job.id, ".srt"));
     job.has_srt = true;
   }
 
   if (out.coverUrl) {
-    writeFileSync(audioOutputPath(job.id, ".cover.jpg"), await downloadUrl(out.coverUrl));
+    await downloadToFile(out.coverUrl, audioOutputPath(job.id, ".cover.jpg"));
     job.has_cover = true;
   }
 
@@ -338,20 +344,20 @@ async function finish(job: AudioJob, task: Ai33Task, started: number) {
     writeFileSync(audioOutputPath(job.id, ".txt"), job.transcript);
   }
 
-  const videoIn = job.params.video_path;
+  const videoIn = typeof job.params.video_path === "string" ? audioInputPath(job.id, path.basename(job.params.video_path).slice(job.id.length)) : undefined;
   if (
     (job.kind === "voice-change" || job.kind === "dub") &&
     typeof videoIn === "string" &&
     job.output_filename
   ) {
-    setPhase(job, "generating", "Muxing new audio onto the original video…");
+    await setPhase(job, "generating", "Muxing new audio onto the original video…");
     const muxed = audioOutputPath(job.id, ".mp4");
     await muxAudioOntoVideo(videoIn, audioOutputPath(job.id, ".mp3"), muxed);
     job.has_video = true;
   }
 
   if (job.kind !== "stt" && !job.output_filename && !job.transcript && !job.has_srt) {
-    fail(job, `Vendor done but no audio_url. metadata keys: ${Object.keys(task.metadata || {}).join(",")}`);
+    await fail(job, `Vendor done but no audio_url. metadata keys: ${Object.keys(task.metadata || {}).join(",")}`);
     return;
   }
 
@@ -361,6 +367,6 @@ async function finish(job: AudioJob, task: Ai33Task, started: number) {
   job.duration_ms = Date.now() - started;
   job.credit_cost = typeof task.credit_cost === "number" ? task.credit_cost : job.credit_cost;
   job.credits_remaining = await ai33Credits();
-  saveAudioJob(job);
-  appendLedger(ledgerFrom(job));
+  await saveAudioJob(job);
+  await appendLedger(ledgerFrom(job));
 }

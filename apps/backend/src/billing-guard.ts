@@ -23,13 +23,13 @@ export function allowHit(email: string, limit: number, now = Date.now()): { allo
 }
 
 /** Sliding 60s window on POST requests only. GET/polling is never throttled. */
-export function rateLimitPost(req: Request, res: Response, next: NextFunction) {
+export async function rateLimitPost(req: Request, res: Response, next: NextFunction) {
   if (req.method !== "POST") {
     next();
     return;
   }
   const email = emailOf(req);
-  const tier = TIERS[effectiveTier(email)];
+  const tier = TIERS[await effectiveTier(email)];
   const verdict = allowHit(email, tier.rate_per_min);
   if (!verdict.allowed) {
     res.setHeader("Retry-After", String(verdict.retry_after));
@@ -43,13 +43,13 @@ export function rateLimitPost(req: Request, res: Response, next: NextFunction) {
 
 /** Refuses a request when the caller's monthly quota for `kind` is spent. */
 export function quotaGuard(kind: QuotaKind) {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
     const email = emailOf(req);
-    if (quotaOk(email, kind)) {
+    if (await quotaOk(email, kind)) {
       next();
       return;
     }
-    const tier = TIERS[effectiveTier(email)];
+    const tier = TIERS[await effectiveTier(email)];
     res.status(429).json({
       error: `${tier.name} allows ${tier.quotas[kind]} ${QUOTA_LABELS[kind].toLowerCase()} per month. Upgrade on the Pricing page.`,
     });
@@ -58,7 +58,7 @@ export function quotaGuard(kind: QuotaKind) {
 
 /** POST-only quota guard that resolves the kind from the request body. */
 export function postQuota(resolve: (req: Request) => QuotaKind | null) {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
     if (req.method !== "POST") {
       next();
       return;
@@ -68,7 +68,7 @@ export function postQuota(resolve: (req: Request) => QuotaKind | null) {
       next();
       return;
     }
-    quotaGuard(kind)(req, res, next);
+    await quotaGuard(kind)(req, res, next);
   };
 }
 

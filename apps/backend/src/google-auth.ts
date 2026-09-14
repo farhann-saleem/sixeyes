@@ -1,6 +1,10 @@
 import { randomUUID } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import express from "express";
-import { FRONTEND_URL } from "./env.js";
+import { DATA_DIR, FRONTEND_URL } from "./env.js";
+import { db, dbEnabled, eq, ownerOf } from "./db.js";
+import { effectiveTier, upsertProfile } from "./billing-store.js";
 
 export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
@@ -10,36 +14,128 @@ const GOOGLE_REDIRECT_URI =
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const STATE_TTL_MS = 10 * 60 * 1000;
 
-type Session = {
+export type SessionUser = {
+  id?: string;
   email: string;
   name: string;
   picture: string;
+  tier?: string;
   expires_at: number;
 };
 
-const sessions = new Map<string, Session>();
+type SessionProfile = {
+  id: string;
+  email: string;
+  name: string;
+  picture: string;
+  tier: string;
+  tier_expires_at: string | null;
+};
+
+type SessionRow = {
+  id: string;
+  expires_at: string;
+  profile: SessionProfile | SessionProfile[] | null;
+};
+
+const sessions = new Map<string, SessionUser>();
 const pendingStates = new Map<string, { next: string; created_at: number }>();
+
+const SESSION_FILE = path.join(DATA_DIR, "auth-sessions.json");
+
+function loadSessions() {
+  if (dbEnabled()) return;
+  try {
+    if (existsSync(SESSION_FILE)) {
+      const rows = JSON.parse(readFileSync(SESSION_FILE, "utf8")) as Record<string, SessionUser>;
+      for (const [id, s] of Object.entries(rows)) {
+        if (s.expires_at > Date.now()) sessions.set(id, s);
+      }
+    }
+  } catch {
+    /* corrupt session file = start empty */
+  }
+}
+
+function saveSessions() {
+  if (dbEnabled()) return;
+  try {
+    mkdirSync(DATA_DIR, { recursive: true });
+    writeFileSync(SESSION_FILE, JSON.stringify(Object.fromEntries(sessions)));
+  } catch {
+    /* best effort */
+  }
+}
+
+loadSessions();
 
 function parseCookies(header: string | undefined): Record<string, string> {
   const out: Record<string, string> = {};
   if (!header) return out;
   for (const part of header.split(";")) {
-    const eq = part.indexOf("=");
-    if (eq < 0) continue;
-    out[part.slice(0, eq).trim()] = decodeURIComponent(part.slice(eq + 1).trim());
+    const sep = part.indexOf("=");
+    if (sep < 0) continue;
+    try { out[part.slice(0, sep).trim()] = decodeURIComponent(part.slice(sep + 1).trim()); } catch { /* ignore malformed cookies */ }
   }
   return out;
 }
 
-export function currentUser(req: express.Request): Session | null {
-  const id = parseCookies(req.headers.cookie).ms_session;
-  if (!id) return null;
+function embedProfile(profile: SessionRow["profile"]): SessionProfile | null {
+  if (!profile) return null;
+  return Array.isArray(profile) ? profile[0] ?? null : profile;
+}
+
+async function loadSession(id: string): Promise<SessionUser | null> {
+  if (dbEnabled()) {
+    const data = await db.selectOne<SessionRow>(
+      "sessions",
+      `${eq("id", id)}&select=id,expires_at,profile:profiles(id,email,name,picture,tier,tier_expires_at)`,
+    );
+    const profile = embedProfile(data?.profile ?? null);
+    if (!data || !profile) return null;
+    const expires = new Date(data.expires_at).getTime();
+    if (expires < Date.now()) {
+      await db.delete("sessions", eq("id", id));
+      return null;
+    }
+    const tier =
+      profile.tier !== "free" &&
+      profile.tier_expires_at &&
+      new Date(profile.tier_expires_at).getTime() > Date.now()
+        ? profile.tier
+        : "free";
+    return {
+      id: profile.id,
+      email: profile.email,
+      name: profile.name,
+      picture: profile.picture,
+      tier,
+      expires_at: expires,
+    };
+  }
   const s = sessions.get(id);
   if (!s || s.expires_at < Date.now()) {
     sessions.delete(id);
+    saveSessions();
     return null;
   }
   return s;
+}
+
+/** Sync helper for middleware that already resolved the user onto the request. */
+export function currentUser(req: express.Request): SessionUser | null {
+  return (req as express.Request & { msUser?: SessionUser | null }).msUser ?? null;
+}
+
+export async function resolveUser(req: express.Request): Promise<SessionUser | null> {
+  const id = parseCookies(req.headers.cookie).ms_session;
+  if (!id) {
+    (req as express.Request & { msUser?: SessionUser | null }).msUser = null;
+    return null;
+  }
+  const user = await loadSession(id);
+  (req as express.Request & { msUser?: SessionUser | null }).msUser = user;
+  return user;
 }
 
 function authEnabled(): boolean {
@@ -55,7 +151,9 @@ authRouter.get("/login", (req, res) => {
   }
   const state = randomUUID();
   const rawNext = String(req.query.next || "/");
-  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
+  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.includes("\\") ? rawNext : "/";
+  for (const [id, value] of pendingStates) if (Date.now() - value.created_at > STATE_TTL_MS) pendingStates.delete(id);
+  res.cookie("ms_oauth_state", state, { httpOnly: true, sameSite: "lax", secure: FRONTEND_URL.startsWith("https://"), maxAge: STATE_TTL_MS, path: "/api/auth" });
   pendingStates.set(state, { next, created_at: Date.now() });
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
@@ -74,7 +172,9 @@ authRouter.get("/callback", async (req, res) => {
   const state = String(req.query.state || "");
   const error = String(req.query.error || "");
   const pending = pendingStates.get(state);
-  pendingStates.delete(state);
+  const browserState = parseCookies(req.headers.cookie).ms_oauth_state;
+  res.clearCookie("ms_oauth_state", { path: "/api/auth" });
+  if (browserState === state) pendingStates.delete(state);
   const stale = pending && Date.now() - pending.created_at > STATE_TTL_MS;
   const next = pending && !stale ? pending.next : "/";
 
@@ -86,7 +186,7 @@ authRouter.get("/callback", async (req, res) => {
     res.redirect(`${FRONTEND_URL}/?auth_error=${encodeURIComponent("missing_code")}`);
     return;
   }
-  if (!pending) {
+  if (!pending || !state || browserState !== state) {
     res.redirect(`${FRONTEND_URL}/?auth_error=${encodeURIComponent("bad_state")}`);
     return;
   }
@@ -127,21 +227,41 @@ authRouter.get("/callback", async (req, res) => {
       picture?: string;
       email_verified?: boolean;
     };
-    if (!profile.email) {
+    if (!profile.email || profile.email_verified !== true) {
       res.redirect(`${FRONTEND_URL}/?auth_error=no_email`);
       return;
     }
 
+    const email = ownerOf(profile.email);
+    const name = profile.name || email;
+    const picture = profile.picture || "";
+    const billing = await upsertProfile({ email, name, picture });
+    const tier = await effectiveTier(email);
     const id = randomUUID();
-    sessions.set(id, {
-      email: profile.email,
-      name: profile.name || profile.email,
-      picture: profile.picture || "",
-      expires_at: Date.now() + SESSION_TTL_MS,
-    });
+    const expiresAt = Date.now() + SESSION_TTL_MS;
+
+    if (dbEnabled()) {
+      if (!billing.id) throw new Error("profile missing id after upsert");
+      await db.insert("sessions", {
+        id,
+        profile_id: billing.id,
+        expires_at: new Date(expiresAt).toISOString(),
+      });
+    } else {
+      sessions.set(id, {
+        id: billing.id,
+        email,
+        name,
+        picture,
+        tier,
+        expires_at: expiresAt,
+      });
+      saveSessions();
+    }
+
     res.setHeader(
       "Set-Cookie",
-      `ms_session=${id}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_MS / 1000}`,
+      `ms_session=${id}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_MS / 1000}${FRONTEND_URL.startsWith("https://") ? "; Secure" : ""}`,
     );
     res.redirect(`${FRONTEND_URL}${next.startsWith("/") ? next : "/"}`);
   } catch (err) {
@@ -150,30 +270,57 @@ authRouter.get("/callback", async (req, res) => {
   }
 });
 
-authRouter.get("/me", (req, res) => {
-  const user = currentUser(req);
+authRouter.get("/me", async (req, res) => {
+  res.setHeader("Cache-Control", "private, no-store");
+  const user = await resolveUser(req);
   if (!user) {
     res.status(401).json({ user: null });
     return;
   }
-  res.json({ user: { email: user.email, name: user.name, picture: user.picture } });
+  const tier = user.tier || (await effectiveTier(user.email));
+  res.json({
+    user: {
+      id: user.id || null,
+      email: user.email,
+      name: user.name,
+      picture: user.picture,
+      tier,
+    },
+  });
 });
 
-authRouter.post("/logout", (req, res) => {
+authRouter.post("/logout", async (req, res) => {
   const id = parseCookies(req.headers.cookie).ms_session;
-  if (id) sessions.delete(id);
+  if (id) {
+    if (dbEnabled()) {
+      await db.delete("sessions", eq("id", id));
+    } else {
+      sessions.delete(id);
+      saveSessions();
+    }
+  }
   res.setHeader("Set-Cookie", "ms_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0");
   res.json({ ok: true });
 });
 
-export function requireAuth(
+export async function requireAuth(
   req: express.Request,
   res: express.Response,
   next: express.NextFunction,
 ) {
-  if (currentUser(req)) {
+  const user = await resolveUser(req);
+  if (user) {
     next();
     return;
   }
   res.status(401).json({ error: "sign in with Google first" });
+}
+
+/** Attach resolved user for downstream sync helpers (billing guard, etc.). */
+export async function attachUser(
+  req: express.Request,
+  _res: express.Response,
+  next: express.NextFunction,
+) {
+  try { await resolveUser(req); next(); } catch (err) { next(err); }
 }

@@ -40,7 +40,8 @@ async function peekBusy(res: Response): Promise<boolean> {
   }
 }
 
-function blobFile(buf: Buffer, mime: string, filename: string) {
+function blobFile(buf: Buffer | Blob, mime: string, filename: string) {
+  if (buf instanceof Blob) return buf;
   return new Blob([new Uint8Array(buf)], { type: mime || "application/octet-stream" });
 }
 
@@ -502,7 +503,7 @@ export async function ai33DictionaryPreview(payload: unknown) {
 const DUBBING_RECEIVE_URL = "https://example.com/api/callback";
 
 export async function ai33Dub(opts: {
-  file: Buffer;
+  file: Buffer | Blob;
   filename: string;
   mime: string;
   target_lang: string;
@@ -523,7 +524,7 @@ export async function ai33Dub(opts: {
 }
 
 export async function ai33VoiceChanger(opts: {
-  file: Buffer;
+  file: Buffer | Blob;
   filename: string;
   mime: string;
   voice_id: string;
@@ -540,14 +541,14 @@ export async function ai33VoiceChanger(opts: {
   return createFromForm("/v1/task/voice-changer", form, "voice-changer");
 }
 
-export async function ai33Isolate(opts: { file: Buffer; filename: string; mime: string }): Promise<string> {
+export async function ai33Isolate(opts: { file: Buffer | Blob; filename: string; mime: string }): Promise<string> {
   const form = new FormData();
   form.append("file", blobFile(opts.file, opts.mime, opts.filename), opts.filename);
   return createFromForm("/v1/task/voice-isolate", form, "voice-isolate");
 }
 
 export async function ai33Stt(opts: {
-  file: Buffer;
+  file: Buffer | Blob;
   filename: string;
   mime: string;
   tag_audio_events?: boolean;

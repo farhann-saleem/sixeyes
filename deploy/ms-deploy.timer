@@ -1,0 +1,8 @@
+[Unit]
+Description=Check Marketing Studio GitHub releases every two minutes
+[Timer]
+OnBootSec=2min
+OnUnitInactiveSec=2min
+RandomizedDelaySec=10
+[Install]
+WantedBy=timers.target

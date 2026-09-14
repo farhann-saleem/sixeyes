@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const ENDPOINT = "http://localhost:3001/mcp";
+const ENDPOINT = `${window.location.origin}/api/mcp`;
 
 const CURSOR = `{
   "mcpServers": {
@@ -37,7 +37,7 @@ export function McpDesk() {
             : "Endpoint answered, but the body was unexpected.",
         );
       })
-      .catch(() => setHealth("Backend is not reachable on :3001. Start apps/backend."));
+      .catch(() => setHealth("Endpoint unavailable. Sign in and check the backend."));
   }, []);
 
   async function copy(label: string, text: string) {
@@ -65,7 +65,7 @@ export function McpDesk() {
           <h2>{ENDPOINT}</h2>
           <p className="lede">{health}</p>
           <p className="muted">
-            JSON-RPC POST. Optional <code>MCP_TOKEN</code> in <code>.env</code> as a Bearer token.
+            JSON-RPC POST. Requires your Google session. A shared <code>MCP_TOKEN</code> alone does not identify a user; standalone client sign-in is not configured.
             Values stay in gitignored <code>.env</code>.
           </p>
           <div className="head-side">

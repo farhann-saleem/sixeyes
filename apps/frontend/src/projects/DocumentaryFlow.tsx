@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { ensureAuthed } from "../auth";
 import { FILM_LENGTH_OPTIONS, sceneDurationBounds, type FilmLengthSec } from "../film-length";
 import { promptIssue } from "../prompt-guard";
 import { SecureLine, SecurePrompt } from "../SecurePrompt";
@@ -73,6 +74,7 @@ export function ProjectsHome({ onOpen: _onOpen }: { onOpen: (id: string, step: S
     return () => { alive = false; clearInterval(timer); };
   }, []);
   async function create() {
+    if (!ensureAuthed()) return;
     setBusy(true); setError("");
     try {
       const preset = FILM_PRESETS.find((x) => x.id === presetId);

@@ -1,6 +1,52 @@
+# Active handoff — EC2 deployment and automatic updates (2026-09-14)
+
+Owner supplied EC2 access and authorized automatic deployment on GitHub pushes. Actual instance is Amazon Linux 2023 x86_64 with approximately 2 GB RAM and one 20 GB root disk (the earlier t3.micro request is superseded by observed hardware). Node 24, Caddy, FFmpeg and 2 GB swap installed. Same-origin EC2 serves both frontend and API; Vercel is no longer the production host. DNS still points to Vercel and needs A records for `www` and `@` to `13.49.134.103`.
+
+Automation: GitHub Actions tests/builds main and publishes an allowlisted release; EC2 polls public releases every two minutes, checks checksum, installs dependencies as msapp, restarts and checks revision health, with rollback. Secrets/data stay in `/opt/marketing-studio/shared`; neither enters GitHub releases. First release, service startup and live HTTPS smoke are pending. 33 backend tests previously passed; final regression rerun in progress. CPU timeline-v1 export and two-account live smoke remain gates. See docs/DEPLOY.md.
+
+---
+
+# Active handoff — Multi-user isolation + same-origin/R2 fixes (2026-09-14)
+
+Owner GO: fix deployment, media memory/egress and cross-user data access. Implemented Express SPA serving, private GET/HEAD + owner checks, Studio source ownership, audio clone/dictionary ownership, browser-bound OAuth state, async error handling, multipart quota ordering, MCP metering, and R2 authorised redirects with streaming legacy fallback. Artifact key manifests persist on avatar/identity/audio payloads; CPU outputs and Studio uploads use existing R2 keys. Local cache is retained through migration; no claim of scratch-only disk or a 1 GB load test.
+
+**Database hardening applied by owner and verified live:** all 12 tables deny anon access and allow the backend service role; usage RPC verified. New SQL: `supabase/migrations/20260914160000_tenant_hardening.sql`. Direct SQL password failed, but REST works. Production checks require this migration before serving. **33 backend tests passed.** Details, migration commands, verification and remaining deployment checks: [SECURITY-HARDENING.md](SECURITY-HARDENING.md). Do not automatically assign legacy anonymous data to a user. No paid generation or worker/server deployment.
+
+---
+
 # Status — 2026-09-14
 
+## Hosting decided — 2026-09-14
+
+Owner scope: **one month only**, new AWS account with **$100 credit**. Lock: **one AWS Lightsail box ($5/mo, 1 GB) serving the API and the built SPA from one origin** — not Vercel + split backend. Runbook: [DEPLOY.md](DEPLOY.md).
+
+Forced by code, not preference: the frontend calls relative `/api/…` with bare `fetch()` (`apps/frontend/src/auth.ts:13`, `studio.ts:53`), which defaults to `credentials: "same-origin"`, and the session cookie is `SameSite=Lax` with no `Domain` (`google-auth.ts:260`). A split-origin deploy logs users in and then reads as logged out. Also `apps/frontend/vercel.json` has **no `/api` rewrite** — it only keeps `/api/` out of the SPA fallback, so nothing would serve the API on Vercel. One required code change: `express.static(apps/frontend/dist)` + SPA fallback registered **last** and excluding `/api/`, `/mcp/`, `/health`.
+
+Rejected with reasons: RunPod CPU pod (~$21/mo, and the pod-id proxy URL changes on rebuild, breaking the Google redirect + SwichNow callback); EC2 (~$21/mo, mostly the $0.005/hr public-IPv4 charge); Vercel rewrite proxy (17 MB media responses exceed its limits); any sleeping free tier (survivable — `index.ts:785-789` resumes all five job types on boot — but no persistent disk). Oracle Always Free is the better long-term answer if this outlives the month.
+
+Sizing note: the backend does **no** video encoding. All five heavy encoders in `ffmpeg-local.ts` (`trimVideoSegment`, `burnTexts`, `mixAudioBeds`, `makeStillVideo`, `makeBlackVideo`) have **zero callers** — export is cloud-only (`studio-render.ts:135`). Remaining ffmpeg use is `ffprobe`, an audio-only mp3 transcode, a `-c:v copy` mux and one-frame posters. Do not size a host for libx264.
+
+**Teardown is part of the scope:** delete the instance *and* release the static IP (unattached IPs bill).
+
+## Artifacts → R2 — spec 24 — 2026-09-14
+
+Spec written, not implemented: [../spec/24-r2-artifacts.md](../spec/24-r2-artifacts.md). Nine of thirteen media handlers `readFileSync` then `res.send`, buffering whole files (a swapped clip is ~17 MB) — an OOM risk on 1 GB. Target: `r2Put` on produce, key on the row, **302 to a 5-minute presigned URL** on read; ownership check before presigning. R2 egress is $0, so this removes the media bill and makes the host disposable. Easiest first win: `swap-runner.ts:182-185` already has the worker's `output_key` and needlessly `r2Get`s + writes a local copy. Needs `@aws-sdk/s3-request-presigner`; no new env names.
+
+## Supabase multi-user — 2026-09-14
+
+Code wired: Google login upserts profiles/sessions; stores async + `owner_email`; PostgREST client in `apps/backend/src/db.ts`; Prisma schema + SQL migration in-repo. Billing/projects tests pass on file fallback. **Schema applied** (owner SQL Editor 2026-09-14): all 11 tables REST-OK; profile upsert smoke passed. Env catalog: [ENV.md](ENV.md). Neon/Supabase are Postgres only — Express is hosted separately. **Superseded 2026-09-14:** that host is now one AWS Lightsail box serving API + SPA on one origin, not Railway/Render. See § Hosting decided and [DEPLOY.md](DEPLOY.md).
+
+## READMEs — 2026-09-14
+
+All four repo READMEs rewritten reviewer-facing for the **8x assignment**, one structure each: role → architecture → where each job runs → design decisions → API → setup/build → deploy → env (names only) → troubleshooting → security → known gaps → docs index. Root [README.md](../README.md) is the entry point and cross-links the three worker repos; each worker README links back to `sixeyes` and to its two siblings. **Docs only — no code, no spec, no lock changed.** Facts sourced from CONTEXT / STATUS / RUNPOD / MODAL / COST / spec and the handlers themselves; nothing invented.
+
+Security sweep same pass: no credential in any tracked file or git history in any of the four repos; `.env` never committed. Endpoint ids kept (not secrets, useless without `RUNPOD_API_KEY`); every example reads the key from the environment. Open items flagged in the READMEs: rotate the Google OAuth client secret sitting as `client_secret_*.json` in the parent folder (gitignored, never committed), rotate the RunPod key that was once pasted in chat, and raise the worker `runpod` SDK pins to `>=1.10.1` (krea/qwen say `>=1.7.0`, CPU pins `1.7.13` — inside the bad 1.7.11–1.10.0 range).
+
 Capture: Cursor and Codex desktop verified. Two desktop canary pairs are saved (first recovered, second automatically exported); persistent user service active. Internal review sessions excluded. See [CAPTURE-TEST.md](../CAPTURE-TEST.md). No CLI required; no product changes.
+
+## Multi-user store await + owner scope — 2026-09-14
+
+Backend store APIs are async (Promises). Call sites await them. `app.use(attachUser)` runs early so `currentUser(req)` works. User-facing list/get pass `currentUser(req)?.email`; creates set `owner_email` (or nest under project owner). Internal runners still `get*(id)` without owner. Mutate routes 404 when ownership miss.
 
 ## UI polish — 2026-09-14
 
@@ -18,7 +64,7 @@ Marketing Studio (`marketingstudioie.site`): Higgsfield-style generative-media S
 
 Complete guide: [spec/README.md](../spec/README.md). Lock: [CONTEXT.md](../CONTEXT.md). Env names: [ENV.md](ENV.md).
 
-`.env` has HF, R2, RunPod, ai33pro, Modal tokens (`farhansaleem-342-g`). **OpenRouter key replaced** (owner 2026-09-13). Google login keys filled. SwichNow keys filled (`SWICHNOW_API_KEY` clientId, `SWICHNOW_SECRET` HMAC secret). Supabase empty on purpose (end). Never commit `.env`.
+`.env` has HF, R2, RunPod, ai33pro, Modal tokens (`farhansaleem-342-g`). **OpenRouter key replaced** (owner 2026-09-13). Google login keys filled. SwichNow keys filled (`SWICHNOW_API_KEY` clientId, `SWICHNOW_SECRET` HMAC secret). Supabase URL + anon/service JWTs + `DATABASE_URL`/`DIRECT_URL` filled (pooler); **SQL migration not applied yet**. Never commit `.env`.
 
 ## Build order
 
@@ -28,11 +74,11 @@ Complete guide: [spec/README.md](../spec/README.md). Lock: [CONTEXT.md](../CONTE
 | B | RunPod CPU **FaceFusion** + **ffmpeg** | Endpoint `rydclpv4ta6u4p`. **Still swap verified** on Images Templates. **Video swap verified** on Video Templates (15s handheld + `avatar.jpeg`, job `1fab1e69`, **133.7s**). Library **delete** shipped. **Stitch wired** from `/studio` export (product smoke pending first Export). |
 | C | Modal **LTX-2.5** video (**$25** cap) | App **deployed** on **H200** (no offload, 20 steps). Fast 5s smoke **72s**. H100 offload path is retired (1233s). |
 | D | Express MVP. Avatar, Audio, templates, **Projects documentary** (spec 22-brief). No login. | **Landing** is `/` (Stitch Higgsfield clone). **Projects** is `/projects`. Script → Pexels cast → same-id Studio. Export waits on CPU timeline-v1 deploy. Audio `/audio`. Avatar default **FLUX.2 Klein 4B**. Muse geo-blocked. Costs: [COST.md](COST.md). |
-| E | Stitch UI, login, Supabase, SwichNow | **Login shipped** (Google, all `/api` guarded). **Pricing + SwichNow shipped** (Free/Pro/Premium, quotas, rate limits, hosted checkout, `/pricing`). Left: Stitch UI polish, Supabase, recurring auto-debit. |
+| E | Stitch UI, login, Supabase, SwichNow | **Login shipped.** **Pricing + SwichNow shipped.** **Supabase multi-user code shipped** (SQL apply pending in dashboard). Left: run migration SQL, Stitch polish, recurring auto-debit, host Express. |
 
 Images are RunPod, not Modal. Modal is video only.
 
-**Owner now (2026-09-14):** New film has **How long** — 30 / 45 / **60** / 90 seconds (90s hard cap). Prompt boxes are guarded (topic, script, audio, overlay). MCP `create_documentary` accepts `duration_sec`. `.agent-logs/` stays **in git** (8x assignment). The RunPod key inside one dump is **redacted**. Rotate that RunPod key. Product type is **24px** root (was 20). Navbar is **under the page heading** (14px items, 64px bar). No horizontal page scroll. Page heads are **centered** with space under the bar. Documentaries: four cards are **step nav**. Topic / story / cast / mix render in a **full-width panel** under the cards (Topic navy, readable cream type). Films stay below. Headings and body on `/projects` are larger — do not ship 11–14px copy. Cover stills (no black bars). Short stock queries are padded, not a dead script. Avatar desk: large model cards + tags; empty state says create an avatar first. Audio is the same 50/50 left form / right result. Lightbox close is lime, not dim ink. **MCPs is live** — `/mcp` setup + `POST /mcp` JSON-RPC (spec 23). Tools: films, looks, identities, library, async generate. Optional `MCP_TOKEN`. Library 4-col. Avatars first. FaceFusion wrap. **Google login shipped (2026-09-14, owner go):** every page sits behind a sign-in gate (LoginGate), backend guards all of `/api` and `/mcp` (`requireAuth`), endpoints `/api/auth/login|callback|me|logout` in `apps/backend/src/google-auth.ts`, 7-day HttpOnly cookie session in memory, `FRONTEND_URL` + `GOOGLE_CLIENT_*` filled in `.env`, redirect `https://www.marketingstudioie.site/callback` (add `http://localhost:5173/callback` in the Google console for local testing). LoginGate copy: clicking Create / Generate asks Google to authorize. Logout in navbar badge. Sessions reset on backend restart (no DB yet). `apps/frontend/vercel.json` rewrites `/callback` + SPA routes to `index.html` (filesystem first, `/api` + `/mcp` untouched) — must live in the Vercel project root. `/api` still needs a route to the backend host on Vercel before login completes live.
+**Owner now (2026-09-14):** New film has **How long** — 30 / 45 / **60** / 90 seconds (90s hard cap). Prompt boxes are guarded (topic, script, audio, overlay). MCP `create_documentary` accepts `duration_sec`. `.agent-logs/` stays **in git** (8x assignment). The RunPod key inside one dump is **redacted**. Rotate that RunPod key. Product type is **24px** root (was 20). Navbar is **under the page heading** (14px items, 64px bar). No horizontal page scroll. Page heads are **centered** with space under the bar. Documentaries: four cards are **step nav**. Topic / story / cast / mix render in a **full-width panel** under the cards (Topic navy, readable cream type). Films stay below. Headings and body on `/projects` are larger — do not ship 11–14px copy. Cover stills (no black bars). Short stock queries are padded, not a dead script. Avatar desk: large model cards + tags; empty state says create an avatar first. Audio is the same 50/50 left form / right result. Lightbox close is lime, not dim ink. **MCPs is live** — `/mcp` setup + `POST /mcp` JSON-RPC (spec 23). Tools: films, looks, identities, library, async generate. Optional `MCP_TOKEN`. Library 4-col. Avatars first. FaceFusion wrap. **Google login shipped (2026-09-14, owner go):** every page stays **public for browsing** (all `GET /api/*` open); **Create / Generate asks Google to authorize** (`confirm` + redirect, `ensureAuthed` in TemplateStudio, Avatar, Projects, Audio). Backend: non-GET `/api` and all `/mcp` guarded (`requireAuth`), endpoints `/api/auth/login|callback|me|logout` in `apps/backend/src/google-auth.ts`, 7-day HttpOnly cookie, sessions **persisted to disk** (`data/auth-sessions.json`) so restarts don't log everyone out. `FRONTEND_URL` + `GOOGLE_CLIENT_*` filled in `.env`, redirect `https://www.marketingstudioie.site/callback` (add `http://localhost:5173/callback` in the Google console for local testing). Logout in navbar badge / Sign in button when logged out. `apps/frontend/vercel.json` rewrites `/callback` + SPA routes to `index.html` (filesystem first, `/api` + `/mcp` untouched) — must live in the Vercel project root. `/api` still needs a route to the backend host on Vercel before login completes live.
 
 **Owner (2026-09-13):** Designing landing in Stitch (no code from Cursor). Copy lock: headline **Imagine it. Then be in it.** Tagline **Your Imagination Engine**. CTA **Start creating**. Wall + Remix only — [spec/16](../spec/16-frontend-overhaul.md). OpenRouter key **works**. Avatar default **FLUX.2 Klein 4B**. Krea 2 Medium Turbo off the picker. Muse region-blocked. Qwen still `throttled` — do not generate. Do not resubmit a stuck Seedream task. Do not start LTX generate / login. Video studio Export uses CPU `op=stitch` (not GPU). **Effects** (`/effects`): grouped packs (Incline, Stop World, Clones, …). FaceFusion Recreate + saved avatar. Owner scrape lock 2026-09-14.
 
