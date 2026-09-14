@@ -378,7 +378,7 @@ export function App({ onIdentities }: { onIdentities?: (rows: SavedAvatar[]) => 
                 className={`tile${pickedId === job.id ? " selected" : ""}`}
               >
                 <button type="button" className="tile-open" disabled={working} aria-label="Select unsaved portrait" onClick={() => pickUnsaved(job)}>
-                  <img src={apiUrl(`/api/avatars/${job.id}/output`)} alt="Unsaved portrait" />
+                  <img src={apiUrl(`/api/avatars/${job.id}/output`)} alt="Unsaved portrait" loading="lazy" decoding="async" />
                 </button>
                 <figcaption className="tile-meta">
                   <div className="tile-meta-text">
@@ -394,7 +394,7 @@ export function App({ onIdentities }: { onIdentities?: (rows: SavedAvatar[]) => 
                 className={`tile${pickedId === a.id ? " selected" : ""}`}
               >
                 <button type="button" className="tile-open" disabled={working} aria-label={`Select ${a.name}`} onClick={() => pickIdentity(a)}>
-                  <img src={a.image_url} alt={a.name} />
+                  <img src={a.image_url} alt={a.name} loading="lazy" decoding="async" />
                 </button>
                 <figcaption className="tile-meta">
                   <div className="tile-meta-text">

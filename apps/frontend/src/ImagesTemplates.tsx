@@ -80,7 +80,7 @@ export function ImagesTemplates({
                 style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
               >
                 <button type="button" className="tile-open" onClick={() => onOpen(t.id)}>
-                  <img src={t.image_url} alt={t.label} />
+                  <img src={t.image_url} alt={t.label} loading="lazy" decoding="async" />
                   <span className="tile-scrim" aria-hidden="true" />
                   <span className="tile-cta">{running ? "Generating…" : "Generate"}</span>
                   {made > 0 ? <span className="tile-badge">{made} in library</span> : null}

@@ -6,6 +6,7 @@ import { DOC_SHOT_MODELS } from "../model-catalog";
 import { SecureLine, SecurePrompt } from "../SecurePrompt";
 import { api, type StudioProject, type ProjectScript } from "../video-studio/model";
 import { VideoStudio } from "../video-studio/VideoStudio";
+import { DeferredVideo } from "../viewport-media";
 import { FILM_PRESETS } from "./film-presets";
 import "./documentary.css";
 
@@ -200,7 +201,7 @@ export function ProjectsHome({ onOpen: _onOpen }: { onOpen: (id: string, step: S
         const still = filmStill(p);
         return <article className="project-card" key={p.id}>
         <button className="project-card-open" aria-label={`Open ${p.name}`} onClick={() => { setWorkingId(p.id); setDesk(projectStep(p)); }}>
-        <div className="project-card-art">{still ? still.video ? <video src={still.src} muted loop playsInline autoPlay preload="auto" /> : <img src={still.src} alt="" /> : <span>{p.name.slice(0, 1).toUpperCase()}</span>}<em>{p.phase} · {p.status}</em></div>
+        <div className="project-card-art">{still ? still.video ? <DeferredVideo src={still.src} muted loop playsInline autoPlay /> : <img src={still.src} alt="" loading="lazy" /> : <span>{p.name.slice(0, 1).toUpperCase()}</span>}<em>{p.phase} · {p.status}</em></div>
         <h2>{p.name}</h2></button><p>{p.topic || "Existing Studio project"}</p><footer>{p.target_duration_sec ?? 60}s · {p.clips.length} clips <span>{new Date(p.updated_at).toLocaleDateString()}</span></footer>
         {renamingId === p.id && <input autoFocus aria-label="Rename project" maxLength={80} value={renameValue} onChange={e => setRenameValue(e.target.value)} onBlur={() => void rename(p.id)} onKeyDown={e => { if(e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); } if(e.key === "Escape") setRenamingId(null); }} />}
         <div className="project-card-actions"><button onClick={() => { setWorkingId(p.id); setDesk(projectStep(p)); }}>Edit</button><button disabled={p.status === "running"} onClick={() => { setRenamingId(p.id); setRenameValue(p.name); }}>Rename</button><button disabled={p.status === "running"} onClick={() => void remove(p)}>Delete</button></div>

@@ -11,6 +11,7 @@ import {
   type SwapJob,
 } from "./studio";
 import { api, type StudioProject } from "./video-studio/model";
+import { DeferredVideo } from "./viewport-media";
 
 type FilmStep = "script" | "cast" | "studio";
 
@@ -165,9 +166,9 @@ export function Library({
                 >
                   {still ? (
                     still.video ? (
-                      <video src={still.src} muted playsInline loop autoPlay preload="auto" />
+                      <DeferredVideo src={still.src} muted playsInline loop autoPlay />
                     ) : (
-                      <img src={still.src} alt="" />
+                      <img src={still.src} alt="" loading="lazy" decoding="async" />
                     )
                   ) : (
                     <span className="tile-letter">{film.name.slice(0, 1).toUpperCase()}</span>
@@ -202,9 +203,9 @@ export function Library({
                   aria-label={`Open ${labels.get(job.template_id) ?? (video ? "video" : "image")} full screen`}
                 >
                   {video ? (
-                    <video src={outputUrl(job)} muted playsInline loop autoPlay preload="auto" />
+                    <DeferredVideo src={outputUrl(job)} muted playsInline loop autoPlay />
                   ) : (
-                    <img src={outputUrl(job)} alt={labels.get(job.template_id) ?? "Generated image"} />
+                    <img src={outputUrl(job)} alt={labels.get(job.template_id) ?? "Generated image"} loading="lazy" decoding="async" />
                   )}
                   <span className="tile-scrim" aria-hidden="true" />
                   <span className="tile-zoom" aria-hidden="true">

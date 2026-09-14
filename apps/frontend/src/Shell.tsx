@@ -1,20 +1,21 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AudioStudio } from "./Audio";
-import { App } from "./App";
-import { ImagesTemplates } from "./ImagesTemplates";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+const AudioStudio = lazy(() => import("./Audio").then((module) => ({ default: module.AudioStudio })));
+const App = lazy(() => import("./App").then((module) => ({ default: module.App })));
+const ImagesTemplates = lazy(() => import("./ImagesTemplates").then((module) => ({ default: module.ImagesTemplates })));
 import { Landing } from "./landing/Landing";
-import { Library } from "./Library";
-import { McpDesk } from "./Mcp";
+const Library = lazy(() => import("./Library").then((module) => ({ default: module.Library })));
+const McpDesk = lazy(() => import("./Mcp").then((module) => ({ default: module.McpDesk })));
 import { Footer } from "./Footer";
 import { Nav, pathToRoute, routeToPath, routeTitle, type Route } from "./Nav";
-import { TemplateStudio } from "./TemplateStudio";
-import { VideoTemplates } from "./VideoTemplates";
-import { ProjectsHome, ProjectWorkspace } from "./projects/DocumentaryFlow";
+const TemplateStudio = lazy(() => import("./TemplateStudio").then((module) => ({ default: module.TemplateStudio })));
+const VideoTemplates = lazy(() => import("./VideoTemplates").then((module) => ({ default: module.VideoTemplates })));
+const ProjectsHome = lazy(() => import("./projects/DocumentaryFlow").then((module) => ({ default: module.ProjectsHome })));
+const ProjectWorkspace = lazy(() => import("./projects/DocumentaryFlow").then((module) => ({ default: module.ProjectWorkspace })));
 import { isLive, json, type Catalog, type SavedAvatar, type SwapJob } from "./studio";
 import { fetchUser, googleLogout, setUser as setCachedUser, type User } from "./auth";
 import { AuthBadge, LoginPage } from "./LoginGate";
-import { Pricing } from "./Pricing";
-import { Policy } from "./Policy";
+const Pricing = lazy(() => import("./Pricing").then((module) => ({ default: module.Pricing })));
+const Policy = lazy(() => import("./Policy").then((module) => ({ default: module.Policy })));
 
 export function Shell() {
   const [user, setAuthUser] = useState<User | null | undefined>(undefined);
@@ -74,17 +75,22 @@ export function Shell() {
       .catch(() => undefined);
   }, []);
 
-  useEffect(() => {
-    loadCatalogs();
-    loadJobs();
-    const catalogTimer = window.setInterval(loadCatalogs, 30_000);
-    return () => window.clearInterval(catalogTimer);
-  }, [loadCatalogs, loadJobs]);
+  const needsCatalogs = ["templates", "template", "videos", "video", "effects", "effect", "library"].includes(route.name);
+  const needsJobs = Boolean(user) && route.name !== "landing" && route.name !== "login";
 
   useEffect(() => {
+    if (!needsCatalogs) return;
+    loadCatalogs();
+    const catalogTimer = window.setInterval(loadCatalogs, 30_000);
+    return () => window.clearInterval(catalogTimer);
+  }, [needsCatalogs, loadCatalogs]);
+
+  useEffect(() => {
+    if (!needsJobs) return;
+    loadJobs();
     const id = window.setInterval(() => loadJobs(), live ? 2000 : 12_000);
     return () => window.clearInterval(id);
-  }, [live, loadJobs]);
+  }, [needsJobs, live, loadJobs]);
 
   const go = useCallback((next: Route) => {
     const path = routeToPath(next);
@@ -92,8 +98,7 @@ export function Shell() {
     if (here !== path) window.history.pushState({}, "", path);
     setRoute(next);
     window.scrollTo({ top: 0 });
-    loadJobs();
-  }, [loadJobs]);
+  }, []);
 
   const onJob = useCallback((job: SwapJob) => {
     setJobs((prev) => [job, ...prev.filter((j) => j.id !== job.id)]);
@@ -148,6 +153,7 @@ export function Shell() {
         }
       />
       <div className="app-main">
+      <Suspense fallback={<div role="status" style={{ padding: "48px", textAlign: "center" }}>Loading studio…</div>}>
       {route.name === "landing" ? (
         <Landing onGo={go} />
       ) : route.name === "login" ? (
@@ -247,6 +253,7 @@ export function Shell() {
       ) : (
         <App key="avatar-page" onIdentities={setIdentities} />
       )}
+      </Suspense>
       </div>
       {hideFooter ? null : <Footer onGo={go} />}
     </div>

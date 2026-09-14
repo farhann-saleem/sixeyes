@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { VIDEO_MODELS } from "./model-catalog";
 import { ModelStrip } from "./ModelStrip";
 import { formatClip, isLive, isVideoJob, type Catalog, type SwapJob, type Template } from "./studio";
+import { DeferredVideo } from "./viewport-media";
 
 function effectName(t: Template) {
   if (t.effect) return t.effect;
@@ -76,17 +77,16 @@ export function VideoTemplates({
       >
         <button type="button" className="tile-open" onClick={() => onOpen(t.id)}>
           {t.video_url ? (
-            <video
+            <DeferredVideo
               src={t.video_url}
               poster={t.image_url}
               muted
               playsInline
               loop
               autoPlay
-              preload="auto"
             />
           ) : (
-            <img src={t.image_url} alt={t.label} />
+            <img src={t.image_url} alt={t.label} loading="lazy" decoding="async" />
           )}
           <span className="tile-scrim" aria-hidden="true" />
           <span className="tile-cta">{running ? "Generating…" : "Generate"}</span>

@@ -26,3 +26,14 @@
 
 - **Prefers parallel agents to speed up work** — when asked to do several things quickly, the user explicitly asks to "set parallel agents" to parallelize the work rather than doing everything sequentially. Confidence: 0.8
 dalone Node backend** — the frontend deploys to Vercel (with a `vercel.json` `/api/*` rewrite); the backend is a separate Node/Express service on port 3001 hosted independently (RunPod/Render), wired to the frontend via that rewrite plus a `FRONTEND_URL` env var. Treat them as two deployable units. Confidence: 0.7
+- **Prefers frontend-only changes** — repeatedly scopes work to "only the frontend" (avatar redesign, performance pass) and expects backend, database, and deployment to stay untouched unless explicitly authorized. Confidence: 0.8
+- **Avoids heavy green/lime accents; prefers neutral dark panels** — rejected the avatar redesign's "too much green side on left" and asked for neutral dark tones instead of green-tinted panels. Confidence: 0.7
+- **Matches heading typography to the "Image to image" page** — wants the existing display font (--font-display) for page headings and copy rather than serif/Georgia substitutions; the existing text "was good — there was nothing wrong with it." Confidence: 0.7
+- **Prefers a stepped, horizontal creation flow** — creation UI should start with just setup (model settings + photo upload), then reveal a separate result stage with name/save/delete controls after Generate, not show everything at once. Confidence: 0.7
+- **Wants subtle ambient motion so pages feel "alive"** — sleek entrance, scroll-reveal, and ambient-drift animations that keep copy, layout, colors, and media unchanged ("each and every thing stays same... should feel live... has a soul"). Confidence: 0.8
+- **Performance optimizations that preserve visual quality, frontend-first** — favors lazy loading, deferred offscreen media, API response caching, image/video compression, and JS/CSS code-splitting to speed up the site without degrading quality. Confidence: 0.85
+- **Discusses and plans before large changes** — asks for analysis and a prioritized plan ("no code yet - just discussion", including what's already enabled vs. worth doing) before implementation. Confidence: 0.7
+- **Persists progress in a resumable markdown plan** — wants a markdown file capturing the plan, decisions, checks, and remaining work so the project resumes cleanly after a context/limit reset. Confidence: 0.85
+- **Reports changes as an explicit itemized list** — when asked to enumerate what changed ("tell me all animations you added"), expects a clear bulleted list of each change, not a vague recap. Confidence: 0.7
+ect resumes cleanly after a context/limit reset. Confidence: 0.85
+- **Reports changes as an explicit itemized list** — when asked to enumerate what changed ("tell me all animations you added"), expects a clear bulleted list of each change, not a vague recap. Confidence: 0.7

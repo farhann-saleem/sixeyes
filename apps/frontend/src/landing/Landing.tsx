@@ -2,7 +2,7 @@ import { useEffect, useState, type MouseEvent } from "react";
 import { type Route } from "../Nav";
 import { BrandMark, Icon, Squiggle, Wave } from "./BrandMark";
 import { IMG } from "./media";
-import { ImageCycle, VideoCycle } from "./StudioReel";
+import { DeferredVideo, ImageCycle, VideoCycle } from "./StudioReel";
 import "./landing.css";
 import "./landing-motion.css";
 import { useLandingMotion } from "./useLandingMotion";
@@ -15,30 +15,30 @@ const STUDIO_FILTERS = [
 ] as const;
 
 const I2I_STILLS = [
-  "/landing/studio/still-1.png",
-  "/landing/studio/still-2.jpg",
-  "/landing/studio/still-3.png",
-  "/landing/studio/still-7.jpg",
-  "/landing/studio/still-8.jpg",
-  "/landing/studio/still-14.png",
+  "/landing/studio/still-1.webp",
+  "/landing/studio/still-2.webp",
+  "/landing/studio/still-3.webp",
+  "/landing/studio/still-7.webp",
+  "/landing/studio/still-8.webp",
+  "/landing/studio/still-14.webp",
 ];
 
 const T2I_STILLS = [
-  "/landing/studio/still-4.jpg",
-  "/landing/studio/still-5.jpg",
-  "/landing/studio/still-6.jpg",
-  "/landing/studio/still-9.jpg",
-  "/landing/studio/still-10.jpg",
-  "/landing/studio/still-15.png",
+  "/landing/studio/still-4.webp",
+  "/landing/studio/still-5.webp",
+  "/landing/studio/still-6.webp",
+  "/landing/studio/still-9.webp",
+  "/landing/studio/still-10.webp",
+  "/landing/studio/still-15.webp",
 ];
 
 const LOOK_STILLS = [
-  "/landing/studio/still-11.jpg",
-  "/landing/studio/still-12.jpg",
-  "/landing/studio/still-13.jpg",
-  "/landing/studio/still-16.png",
-  "/landing/studio/still-7.jpg",
-  "/landing/studio/still-4.jpg",
+  "/landing/studio/still-11.webp",
+  "/landing/studio/still-12.webp",
+  "/landing/studio/still-13.webp",
+  "/landing/studio/still-16.webp",
+  "/landing/studio/still-7.webp",
+  "/landing/studio/still-4.webp",
 ];
 
 type StudioTile = {
@@ -296,7 +296,7 @@ const AVATARS = [
     tagClass: "hf-tag-soft",
     meta: "Studio lock",
     interval: 2400,
-    media: ["/landing/avatars/chloe/01.png", "/landing/avatars/chloe/02.png", "/landing/avatars/chloe/03.png", "/landing/avatars/chloe/04.png"],
+    media: ["/landing/avatars/chloe/01.webp", "/landing/avatars/chloe/02.webp", "/landing/avatars/chloe/03.webp", "/landing/avatars/chloe/04.webp"],
   },
   {
     name: "Fox",
@@ -306,11 +306,11 @@ const AVATARS = [
     interval: 2800,
     start: 1,
     media: [
-      "/landing/avatars/fox/01.png",
-      "/landing/avatars/fox/02.png",
-      "/landing/avatars/fox/03.png",
-      "/landing/avatars/fox/04.png",
-      "/landing/avatars/fox/05.png",
+      "/landing/avatars/fox/01.webp",
+      "/landing/avatars/fox/02.webp",
+      "/landing/avatars/fox/03.webp",
+      "/landing/avatars/fox/04.webp",
+      "/landing/avatars/fox/05.webp",
     ],
   },
   {
@@ -320,7 +320,7 @@ const AVATARS = [
     meta: "Multi-angle",
     interval: 2600,
     start: 2,
-    media: ["/landing/avatars/jennie/01.png", "/landing/avatars/jennie/02.png", "/landing/avatars/jennie/03.png", "/landing/avatars/jennie/04.png"],
+    media: ["/landing/avatars/jennie/01.webp", "/landing/avatars/jennie/02.webp", "/landing/avatars/jennie/03.webp", "/landing/avatars/jennie/04.webp"],
   },
   {
     name: "Shawn",
@@ -328,7 +328,7 @@ const AVATARS = [
     tagClass: "hf-tag-dark",
     meta: "ID lock",
     interval: 3000,
-    media: ["/landing/avatars/shawn/01.png", "/landing/avatars/shawn/02.png", "/landing/avatars/shawn/03.png", "/landing/avatars/shawn/04.png"],
+    media: ["/landing/avatars/shawn/01.webp", "/landing/avatars/shawn/02.webp", "/landing/avatars/shawn/03.webp", "/landing/avatars/shawn/04.webp"],
   },
 ];
 
@@ -422,8 +422,9 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
       <div className="hf-hero-band">
         <div className="hf-hero-vids" aria-hidden="true">
           {HERO_CLIPS.map((clip) => (
-            <video
+            <DeferredVideo
               key={clip.src}
+              eager
               src={clip.src}
               muted
               loop
@@ -537,7 +538,7 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
                 onClick={go({ name: "projects" })}
               >
                 <div className="hf-frame hf-a-vid">
-                  <video src={scene.src} muted loop playsInline autoPlay preload="metadata" />
+                  <DeferredVideo src={scene.src} muted loop playsInline autoPlay preload="metadata" />
                 </div>
                 <div className="hf-why-shot-meta">
                   <em>{scene.n}</em>
@@ -733,7 +734,7 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
                 </div>
               </div>
               <div className="hf-screen">
-                <video src="/landing/hero-2.mp4" muted loop playsInline autoPlay preload="metadata" />
+                <DeferredVideo src="/landing/hero-2.mp4" muted loop playsInline autoPlay preload="metadata" />
                 <div className="hf-hud">
                   <div className="hf-hud-row">
                     <span className="hf-hud-chip" style={{ color: "#c2ef4e", border: "1px solid rgba(194,239,78,0.5)" }}>
@@ -920,7 +921,7 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
                     <span style={{ color: "#bdb8c0" }}>{desk.tag}</span>
                   </div>
                   <div className="hf-var-shot hf-audio-shot">
-                    <img src={desk.cover} alt="" />
+                    <img src={desk.cover} alt="" loading="lazy" decoding="async" />
                     <div className="hf-eq hf-eq-lg">
                       <i />
                       <i />
