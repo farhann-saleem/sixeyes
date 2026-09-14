@@ -1,3 +1,4 @@
+import { apiUrl, apiJson } from "./api";
 export type TemplateKind = "image" | "video";
 
 export type Template = {
@@ -49,12 +50,7 @@ export type Catalog = {
   };
 };
 
-export async function json<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init);
-  const body = (await res.json()) as T & { error?: string };
-  if (!res.ok) throw new Error(body.error || res.statusText);
-  return body;
-}
+export const json = apiJson;
 
 export function isLive(job: SwapJob | undefined | null): job is SwapJob {
   return job?.status === "IN_PROGRESS" || job?.status === "PENDING";
@@ -75,11 +71,11 @@ export function formatClip(seconds?: number | null) {
 }
 
 export function outputUrl(job: SwapJob) {
-  return `/api/faceswaps/${job.id}/output`;
+  return apiUrl(`/api/faceswaps/${job.id}/output`);
 }
 
 export function downloadUrl(job: SwapJob) {
-  return `/api/faceswaps/${job.id}/output?download=1`;
+  return apiUrl(`/api/faceswaps/${job.id}/output?download=1`);
 }
 
 /** Progress steps the CPU worker actually walks through, in order. */

@@ -756,11 +756,12 @@ function removeSwapFiles(job: SwapJob) {
   }
 }
 
-installSpa(app, path.join(REPO_ROOT, "apps/frontend/dist"));
+if (process.env.SERVE_FRONTEND !== "false") installSpa(app, path.join(REPO_ROOT, "apps/frontend/dist"));
+else app.use((_req, res) => { res.status(404).json({ error: "not found" }); });
 app.use(errorHandler);
 
 await assertProductionReady();
-if (process.env.NODE_ENV !== "test") app.listen(PORT, () => {
+if (process.env.NODE_ENV !== "test") app.listen(PORT, process.env.HOST || "0.0.0.0", () => {
   console.log(`backend http://localhost:${PORT}`);
   void resumeInFlightJobs();
   void resumeInFlightSwapJobs();

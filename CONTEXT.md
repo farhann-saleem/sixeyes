@@ -1,3 +1,21 @@
+# Current handoff — split hosting locked (2026-09-14)
+
+Owner locked **Vercel frontend + EC2 backend**. Frontend API/media URLs now resolve to `https://api.marketingstudioie.site`, every fetch includes credentials, backend credentialed CORS accepts only `https://www.marketingstudioie.site`, and the API binds to localhost behind Caddy. Google OAuth keeps the registered `https://www.marketingstudioie.site/callback`; that page forwards the code/state to the API. The two hostnames are different origins but the same site, so the API's host-only Secure `SameSite=Lax` cookie is sent when frontend fetches use `credentials: include`.
+
+34 backend tests and the frontend production build pass locally. DNS is the external blocker: friend controls Hostinger and must add `A api -> 13.49.134.103`, keeping existing `www` and `@` Vercel records. Do not start/claim public Caddy TLS until that resolves. Code commit/push, EC2 unit/config update, automatic deployment and Vercel verification are still pending in this turn. Personal `.commandcode` and `.agent-logs` changes remain untouched.
+
+---
+
+# Superseded handoff — EC2 running; hosting decision pending (2026-09-14)
+
+Commit `332319e1ee375ff2ab0f175d03a08657087fe4fb` is pushed to main. GitHub Actions run `34850249715` passed all checks (33 backend tests, backend/frontend typechecks, frontend build), published the deployment release, and EC2 installed it successfully. `/health` on server localhost returned that revision; ms-backend is running, approximately 118 MB at startup. Node 24/Caddy/FFmpeg and 2 GB swap installed. Runtime credentials filtered from local .env and installed securely; no secrets in GitHub. ms-deploy.timer is enabled and active, polling releases every two minutes. First install verified; subsequent automatic update/rollback and full user/generation smokes are not yet verified.
+
+Host `13.49.134.103`, SSH `ec2-user`, key path `/home/farhann-saleem/Downloads/marketing-studioo.pem` (mode 600); Amazon Linux 2023 x86_64, approximately 2 GB RAM, 20 GB root disk. App paths and systemd deployment instructions are in docs/DEPLOY.md. Caddy configuration is installed/validated and service enabled but not started; DNS still points to Vercel. Do not claim public HTTPS/login is live on EC2.
+
+Owner now asks whether Vercel frontend + EC2 backend is possible and wants short answers/conserved credits. It IS possible with API URL, credentialed CORS/fetch and cookie/origin/OAuth configuration changes (prefer api subdomain under the same site); current implemented deployment serves both on EC2. Await owner's hosting choice before changing architecture or DNS. No authorization to infer a final split-host choice from this question. Shared CPU timeline-v1 export remains a separate deployment gate. Personal .commandcode and .agent-logs modifications remain untouched/uncommitted.
+
+---
+
 # Active handoff — EC2 deployment and automatic updates (2026-09-14)
 
 Owner supplied EC2 access and authorized automatic deployment on GitHub pushes. Actual instance is Amazon Linux 2023 x86_64 with approximately 2 GB RAM and one 20 GB root disk (the earlier t3.micro request is superseded by observed hardware). Node 24, Caddy, FFmpeg and 2 GB swap installed. Same-origin EC2 serves both frontend and API; Vercel is no longer the production host. DNS still points to Vercel and needs A records for `www` and `@` to `13.49.134.103`.

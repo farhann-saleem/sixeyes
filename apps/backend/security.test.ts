@@ -80,6 +80,9 @@ test("Studio rejects guessed foreign library, upload and audio ids on add and PA
 test("malformed cookies are harmless and cross-site mutations are rejected", async () => {
   assert.equal((await request("/api/auth/me", undefined, { headers: { Cookie: "ms_session=%ZZ" } })).status, 401);
   assert.equal((await request("/api/auth/logout", "alice", { method: "POST", headers: { Origin: "https://attacker.invalid" } })).status, 403);
+  const preflight = await request("/api/auth/logout", undefined, { method: "OPTIONS", headers: { Origin: "http://localhost:5173", "Access-Control-Request-Method": "POST" } });
+  assert.equal(preflight.headers.get("access-control-allow-origin"), "http://localhost:5173");
+  assert.equal(preflight.headers.get("access-control-allow-credentials"), "true");
 });
 test("OAuth callback needs the initiating browser's state cookie", async () => {
   const login = await request("/api/auth/login");

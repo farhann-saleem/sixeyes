@@ -1,3 +1,4 @@
+import { apiUrl } from "./api";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ensureAuthed } from "./auth";
 import { promptIssue } from "./prompt-guard";
@@ -795,41 +796,41 @@ export function AudioStudio({ desk }: { desk?: AudioDesk } = {}) {
             <section className="compose-panel">
               <p className="kicker">Result</p>
               {current.has_cover ? (
-                <img src={`/api/audio/jobs/${current.id}/cover`} alt="" className="preview" />
+                <img src={apiUrl(`/api/audio/jobs/${current.id}/cover`)} alt="" className="preview" />
               ) : null}
               {current.kind === "clone" ? (
-                <audio controls src={`/api/audio/jobs/${current.id}/input`} />
+                <audio controls src={apiUrl(`/api/audio/jobs/${current.id}/input`)} />
               ) : current.output_filename || (current.kind !== "stt" && current.kind !== "clone") ? (
-                <audio controls src={`/api/audio/jobs/${current.id}/output`} />
+                <audio controls src={apiUrl(`/api/audio/jobs/${current.id}/output`)} />
               ) : null}
               {current.has_alt ? (
-                <audio controls src={`/api/audio/jobs/${current.id}/alt`} />
+                <audio controls src={apiUrl(`/api/audio/jobs/${current.id}/alt`)} />
               ) : null}
-              {current.has_video ? <video controls src={`/api/audio/jobs/${current.id}/output?video=1`} /> : null}
+              {current.has_video ? <video controls src={apiUrl(`/api/audio/jobs/${current.id}/output?video=1`)} /> : null}
               {current.kind === "stt" ? (
                 <p className="muted">
-                  <a href={`/api/audio/jobs/${current.id}/transcript`}>Transcript / JSON</a>
+                  <a href={apiUrl(`/api/audio/jobs/${current.id}/transcript`)}>Transcript / JSON</a>
                 </p>
               ) : null}
               {current.transcript ? <pre className="dict-dump">{current.transcript}</pre> : null}
               <div className="head-side">
                 {current.kind !== "clone" && current.kind !== "stt" ? (
-                  <a className="btn ghost small" href={`/api/audio/jobs/${current.id}/output?download=1`}>
+                  <a className="btn ghost small" href={apiUrl(`/api/audio/jobs/${current.id}/output?download=1`)}>
                     Download audio
                   </a>
                 ) : null}
                 {current.has_alt ? (
-                  <a className="btn ghost small" href={`/api/audio/jobs/${current.id}/alt?download=1`}>
+                  <a className="btn ghost small" href={apiUrl(`/api/audio/jobs/${current.id}/alt?download=1`)}>
                     Second clip
                   </a>
                 ) : null}
                 {current.has_srt ? (
-                  <a className="btn ghost small" href={`/api/audio/jobs/${current.id}/srt`}>
+                  <a className="btn ghost small" href={apiUrl(`/api/audio/jobs/${current.id}/srt`)}>
                     SRT
                   </a>
                 ) : null}
                 {current.has_video ? (
-                  <a className="btn ghost small" href={`/api/audio/jobs/${current.id}/output?video=1&download=1`}>
+                  <a className="btn ghost small" href={apiUrl(`/api/audio/jobs/${current.id}/output?video=1&download=1`)}>
                     Video
                   </a>
                 ) : null}

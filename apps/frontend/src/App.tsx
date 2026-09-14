@@ -1,3 +1,4 @@
+import { apiUrl } from "./api";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ensureAuthed } from "./auth";
 import { SaveNamePanel } from "./SaveNamePanel";
@@ -383,7 +384,7 @@ export function App({ onIdentities }: { onIdentities?: (rows: SavedAvatar[]) => 
         <SaveNamePanel
           key={resultJob.id}
           resultId={resultJob.id}
-          imageSrc={`/api/avatars/${resultJob.id}/output`}
+          imageSrc={apiUrl(`/api/avatars/${resultJob.id}/output`)}
           tag={`${alreadySaved?.name || "Not saved yet"} · ${NAMES[resultJob.provider] || resultJob.provider}`}
           alreadySaved={Boolean(alreadySaved)}
           existingName={alreadySaved?.name ?? ""}
@@ -413,7 +414,7 @@ export function App({ onIdentities }: { onIdentities?: (rows: SavedAvatar[]) => 
                 className={`tile${pickedId === job.id ? " selected" : ""}`}
               >
                 <button type="button" className="tile-open" onClick={() => pickUnsaved(job)}>
-                  <img src={`/api/avatars/${job.id}/output`} alt="Unsaved portrait" />
+                  <img src={apiUrl(`/api/avatars/${job.id}/output`)} alt="Unsaved portrait" />
                 </button>
                 <figcaption className="tile-meta">
                   <div className="tile-meta-text">
