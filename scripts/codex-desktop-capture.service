@@ -1,0 +1,13 @@
+[Unit]
+Description=8x Marketing Studio Codex Desktop prompt and final capture
+
+[Service]
+Type=simple
+WorkingDirectory=/home/farhann-saleem/Desktop/github/projects/hiigsfiled/marketing-studio-ie
+ExecStart=/usr/bin/python3 /home/farhann-saleem/Desktop/github/projects/hiigsfiled/marketing-studio-ie/scripts/codex_desktop_capture.py --since 2026-09-13T09:40:24.229Z
+Restart=on-failure
+RestartSec=5
+UMask=0077
+
+[Install]
+WantedBy=default.target

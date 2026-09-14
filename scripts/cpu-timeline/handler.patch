@@ -1,0 +1,21 @@
+--- ../ms-runpod-cpu/handler.py	2026-09-13 09:03:08.344001257 +0500
++++ /tmp/ms-cpu-timeline-build/handler.py	2026-09-13 22:56:26.235196280 +0500
+@@ -237,6 +237,9 @@
+ 
+ 
+ def stitch(inp, work):
++    if 'timeline' in inp:
++        from timeline_stitch import render
++        return render(inp, work, sys.modules[__name__])
+     keys = inp.get('clip_keys', inp.get('clips'))
+     if not isinstance(keys, list) or not 1 <= len(keys) <= 100:
+         raise ValueError('clip_keys must contain 1–100 R2 video keys')
+@@ -346,7 +349,7 @@
+                     'facefusion_ready': _facefusion is not None, 'volume_mounted': os.path.ismount(VOLUME),
+                     'free_gb': round(shutil.disk_usage(VOLUME if VOLUME.exists() else '/').free / 1e9, 2),
+                     'allow_generate': ALLOW, 'build': BUILD, 'worker_id': os.getenv('RUNPOD_POD_ID'),
+-                    'init_error': _init_error}
++                    'init_error': _init_error, 'timeline_version': 1}
+         if op not in {'swap', 'stitch'}:
+             raise ValueError(f'unknown op {op}. Use ping, swap, or stitch')
+         if not ALLOW:

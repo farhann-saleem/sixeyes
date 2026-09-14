@@ -1,0 +1,2 @@
+# Local Python for Modal CLI only. Workers install their own deps on Modal/RunPod.
+modal>=1.5.5,<2

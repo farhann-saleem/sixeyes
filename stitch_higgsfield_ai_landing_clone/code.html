@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Marketing Studio &amp; Imagination Engine</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&amp;family=Space+Grotesk:wght@300..700&amp;family=Space+Mono:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+  @layer base {
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #150f23;
+    }
+    body {
+      overscroll-behavior: none;
+    }
+  }
+  ::-webkit-scrollbar { display: none; }
+  
+  .lime-glow {
+    filter: drop-shadow(0 0 10px rgba(194, 239, 78, 0.55));
+  }
+  .pink-glow {
+    filter: drop-shadow(0 0 10px rgba(255, 177, 200, 0.45));
+  }
+  .chip-lime-keyword {
+    background-color: #c2ef4e;
+    color: #150f23;
+    padding: 0.15rem 0.65rem;
+    border-radius: 0.4rem;
+    font-weight: 800;
+    box-shadow: 0 4px 0 0 #0e0918;
+    display: inline-block;
+  }
+  
+  /* ANIMATIONS & KEYFRAMES */
+  @keyframes radarSweep {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 0.85; transform: scale(1.08); }
+  }
+  @keyframes shimmerSweep {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  @keyframes soundBar {
+    0%, 100% { height: 4px; }
+    50% { height: 18px; }
+  }
+  @keyframes reticleScan {
+    0% { transform: scale(0.96); opacity: 0.7; }
+    50% { transform: scale(1.04); opacity: 1; }
+    100% { transform: scale(0.96); opacity: 0.7; }
+  }
+  
+  .animate-radar { animation: radarSweep 6s linear infinite; }
+  .animate-glow-pulse { animation: pulseGlow 4s ease-in-out infinite; }
+  .animate-reticle { animation: reticleScan 3s ease-in-out infinite; }
+  
+  .eq-bar {
+    animation: soundBar 1.2s ease-in-out infinite;
+  }
+  .eq-bar:nth-child(2) { animation-delay: 0.15s; }
+  .eq-bar:nth-child(3) { animation-delay: 0.35s; }
+  .eq-bar:nth-child(4) { animation-delay: 0.2s; }
+  .eq-bar:nth-child(5) { animation-delay: 0.45s; }
+  .eq-bar:nth-child(6) { animation-delay: 0.1s; }
+  .eq-bar:nth-child(7) { animation-delay: 0.3s; }
+
+  .shimmer-mask {
+    position: relative;
+    overflow: hidden;
+  }
+  .shimmer-mask::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    transform: translateX(-100%);
+  }
+  .shimmer-mask:hover::after {
+    animation: shimmerSweep 1.2s ease forwards;
+  }
+</style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "surface-night": "#0e0918",
+          "surface-canvas-dark": "#150f23",
+          "surface-canvas-light": "#f7f5f0",
+          "surface-cream": "#fbf9f5",
+          "surface-container-lowest": "#0b0714",
+          "surface-container-low": "#171026",
+          "surface-container": "#1f1633",
+          "surface-container-high": "#2b2042",
+          "surface-container-highest": "#362a52",
+          "primary-container": "#c2ef4e",
+          "primary-fixed": "#c5f251",
+          "primary-fixed-dim": "#aad636",
+          "on-primary-container": "#150f23",
+          "primary": "#f9ffdf",
+          "secondary": "#ffb1c8",
+          "secondary-container": "#821f4a",
+          "accent-violet-deep": "#422082",
+          "accent-violet-mid": "#79628c",
+          "on-surface": "#e9defa",
+          "on-surface-variant": "#c4c9b0",
+          "on-dark-muted": "#bdb8c0",
+          "on-dark-faint": "#4d445c",
+          "hairline-violet": "#362d59",
+          "hairline-cool": "#cfcfdb"
+        },
+        fontFamily: {
+          "display-hero": ["Space Grotesk", "sans-serif"],
+          "display-lg": ["Space Grotesk", "sans-serif"],
+          "headline-xl": ["Space Grotesk", "sans-serif"],
+          "headline-lg": ["Space Grotesk", "sans-serif"],
+          "headline-sm": ["Space Grotesk", "sans-serif"],
+          "code-prompt": ["Space Mono", "monospace"],
+          "code-prompt-bold": ["Space Mono", "monospace"],
+          "body-lg": ["Rubik", "sans-serif"],
+          "body-md": ["Rubik", "sans-serif"],
+          "body-sm": ["Rubik", "sans-serif"],
+          "label-btn": ["Rubik", "sans-serif"],
+          "label-eyebrow": ["Rubik", "sans-serif"]
+        }
+      }
+    }
+  };
+</script>
+</head>
+<body class="bg-[#150f23] font-body-md text-on-surface antialiased selection:bg-primary-container selection:text-surface-night min-h-screen relative overflow-x-hidden">
+<!-- HEADER / NAV -->
+<header class="fixed top-0 w-full z-50 bg-[#150f23]/90 backdrop-blur-xl border-b border-[#362d59]/70 shadow-2xl transition-all">
+<div class="h-16 max-w-[1280px] mx-auto px-6 flex items-center justify-between gap-6">
+<div class="flex items-center gap-4">
+<a class="flex items-center gap-3 group" href="#">
+<!-- MARKETING STUDIO Cyber-Aperture Shutter Brandmark -->
+<div class="relative w-8 h-8 rounded-lg bg-[#150f23] border border-[#362d59] flex items-center justify-center overflow-hidden shadow-[0_0_12px_rgba(194,239,78,0.25)] group-hover:border-[#c2ef4e]/70 transition-colors">
+<svg class="w-7 h-7" fill="none" viewbox="0 0 56 56">
+<circle cx="28" cy="28" r="26" stroke="#362d59" stroke-width="2"></circle>
+<polygon fill="#c2ef4e" points="28,8 39,22 28,28 17,22"></polygon>
+<polygon fill="#fa7faa" points="48,28 34,39 28,28 34,17"></polygon>
+<polygon fill="#c2ef4e" points="28,48 17,34 28,28 39,34"></polygon>
+<polygon fill="#6a5fc1" points="8,28 22,17 28,28 22,39"></polygon>
+<circle cx="28" cy="28" fill="#150f23" r="5" stroke="#c2ef4e" stroke-width="2"></circle>
+<circle cx="28" cy="28" fill="#ffffff" r="2"></circle>
+</svg>
+</div>
+<div class="flex items-baseline gap-1.5">
+<span class="font-headline-sm text-lg font-black tracking-tight text-white">MARKETING<span class="text-[#c2ef4e]">STUDIO</span></span>
+<span class="font-code-prompt text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#c2ef4e] text-[#150f23] leading-none">.AI</span>
+</div>
+</a>
+<span class="hidden sm:inline-flex items-center gap-1.5 font-code-prompt text-[10px] tracking-wider uppercase px-2.5 py-0.5 bg-[#422082]/60 border border-[#79628c]/40 text-[#c7bfff] rounded-full">
+<span class="w-1.5 h-1.5 rounded-full bg-[#c2ef4e] animate-ping"></span>
+        v2.5-PRO
+      </span>
+</div>
+<!-- Category Pill Sub-bar -->
+<nav class="hidden xl:flex items-center gap-1 text-xs font-label-btn bg-[#0e0918]/80 px-3 py-1.5 rounded-full border border-white/5 text-[#bdb8c0]">
+<a class="px-2.5 py-1 rounded-full text-white bg-[#2b2042] font-semibold" href="#">Explore</a>
+<a class="px-2.5 py-1 rounded-full hover:text-[#c2ef4e] transition-colors" href="#visual-effects">Visual Effects</a>
+<a class="px-2.5 py-1 rounded-full hover:text-[#c2ef4e] transition-colors" href="#studio-nodes">Avatars</a>
+<a class="px-2.5 py-1 rounded-full hover:text-[#c2ef4e] transition-colors" href="#">Image</a>
+<a class="px-2.5 py-1 rounded-full hover:text-[#c2ef4e] transition-colors" href="#">Video</a>
+<a class="px-2.5 py-1 rounded-full hover:text-[#c2ef4e] transition-colors" href="#">Motion</a>
+<a class="px-2.5 py-1 rounded-full text-[#c2ef4e] hover:bg-[#c2ef4e]/10 transition-colors" href="#studio-nodes">Seedance 2.5</a>
+<a class="px-2.5 py-1 rounded-full hover:text-[#c2ef4e] transition-colors" href="#director-mode">Lip Sync</a>
+<a class="px-2.5 py-1 rounded-full hover:text-[#c2ef4e] transition-colors" href="#director-mode">Cinema Studio</a>
+<a class="px-2.5 py-1 rounded-full hover:text-[#c2ef4e] transition-colors" href="#pipeline-section">Supercomputer</a>
+</nav>
+<div class="flex items-center gap-3">
+<a class="hidden sm:inline-block text-xs font-label-btn font-semibold text-white/80 hover:text-white px-3 py-1.5" href="#">Sign In</a>
+<a class="inline-flex items-center gap-1.5 bg-[#c2ef4e] hover:bg-[#aad636] text-[#150f23] font-label-btn font-bold text-xs uppercase px-4 py-2 rounded-lg shadow-[0_0_18px_rgba(194,239,78,0.35)] hover:shadow-[0_0_24px_rgba(194,239,78,0.6)] transition-all transform hover:-translate-y-0.5" href="#">
+<span>Start Creating</span>
+<span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+</a>
+</div>
+</div>
+</header>
+<!-- ============================================================== -->
+<!-- 1. HERO SECTION (POLARITY 1: DEEP MIDNIGHT VIOLET #150f23)    -->
+<!-- ============================================================== -->
+<div class="relative z-10 pt-20 bg-[#150f23] overflow-hidden">
+<!-- Ambient background lighting and starfield glow -->
+<div class="absolute top-0 left-0 right-0 h-[850px] pointer-events-none z-0 overflow-hidden">
+<div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[520px] bg-gradient-to-b from-[#422082]/45 via-[#1f1633]/25 to-transparent blur-[140px] rounded-full animate-glow-pulse"></div>
+<div class="absolute top-[20rem] -left-20 w-80 h-80 bg-[#fa7faa]/15 blur-[120px] rounded-full"></div>
+<div class="absolute top-[26rem] -right-24 w-96 h-96 bg-[#c2ef4e]/10 blur-[140px] rounded-full"></div>
+</div>
+<section class="relative w-full pt-16 pb-16 text-center z-10">
+<div class="max-w-[1240px] mx-auto px-6">
+<div class="inline-flex items-center gap-2 mb-6">
+<span class="font-headline-sm text-xs sm:text-sm tracking-widest uppercase text-[#150f23] bg-[#c2ef4e] px-4 py-1 rounded font-black shadow-[0_4px_0_0_#0e0918] border border-[#f9ffdf] transform hover:scale-105 transition-transform">
+          MARKETING STUDIO
+        </span>
+</div>
+<h1 class="font-display-hero text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-tight mb-4">
+        Your <span class="chip-lime-keyword shadow-[0_6px_0_0_#0e0918]">Imagination Engine</span>
+</h1>
+<p class="font-body-lg text-sm sm:text-lg text-[#bdb8c0] max-w-2xl mx-auto leading-relaxed mb-8">
+        Autonomous camera rigs, character-consistent storyboards, and multi-format cinematic advertising videos generated at developer scale.
+      </p>
+<!-- Telemetry badges -->
+<div class="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs font-code-prompt text-[#bdb8c0]/95">
+<span class="flex items-center gap-2 bg-[#171026] hover:border-[#c2ef4e]/40 px-3.5 py-1.5 rounded-full border border-white/10 transition-all shadow-sm">
+<span class="w-2 h-2 rounded-full bg-[#c2ef4e] shadow-[0_0_8px_#c2ef4e]"></span> ZERO MOTION ARTIFACTS
+        </span>
+<span class="flex items-center gap-2 bg-[#171026] hover:border-[#fa7faa]/40 px-3.5 py-1.5 rounded-full border border-white/10 transition-all shadow-sm">
+<span class="w-2 h-2 rounded-full bg-[#fa7faa] shadow-[0_0_8px_#fa7faa]"></span> CAMERA TRANSLATION MATRIX 3.0
+        </span>
+<span class="flex items-center gap-2 bg-[#171026] hover:border-[#c7bfff]/40 px-3.5 py-1.5 rounded-full border border-white/10 transition-all shadow-sm">
+<span class="w-2 h-2 rounded-full bg-[#c7bfff] shadow-[0_0_8px_#c7bfff]"></span> PROMPT-TO-TIMELINE NATIVE
+        </span>
+</div>
+</div>
+</section>
+</div>
+<!-- ============================================================== -->
+<!-- SQUIGGLY / WAVE DIVIDER: MIDNIGHT INTO LIGHT BEIGE             -->
+<!-- ============================================================== -->
+<div class="relative w-full overflow-hidden bg-[#150f23] -mt-1 leading-none select-none z-20">
+<svg class="w-full h-14 sm:h-20 block text-[#f7f5f0]" preserveaspectratio="none" viewbox="0 0 1440 90">
+<path d="M0,24 C320,70 480,4 720,44 C960,84 1200,10 1440,48 L1440,90 L0,90 Z" fill="currentColor"></path>
+<path class="lime-glow" d="M0,24 C320,70 480,4 720,44 C960,84 1200,10 1440,48" fill="none" stroke="#c2ef4e" stroke-width="3"></path>
+</svg>
+</div>
+<!-- ============================================================== -->
+<!-- 2. VISUAL EFFECTS SECTION (POLARITY 2: BEIGE / WARM CREAM)     -->
+<!-- ============================================================== -->
+<section class="relative w-full py-12 bg-[#f7f5f0] text-[#150f23] z-10" id="visual-effects">
+<div class="max-w-[1280px] mx-auto px-6">
+<!-- Header with ink dark typography & Lime CTA -->
+<div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+<div>
+<div class="inline-flex items-center gap-1.5 text-xs font-code-prompt uppercase font-bold text-[#821f4a] tracking-wider mb-1">
+<span class="w-2 h-2 rounded-full bg-[#821f4a] animate-ping"></span>
+          REAL-TIME PRESETS DIRECTORY
+        </div>
+<div class="text-[#150f23] font-display-hero text-3xl sm:text-5xl font-black uppercase tracking-tight">
+          VISUAL EFFECTS
+        </div>
+<p class="font-body-md text-sm text-[#4d445c] mt-1.5 font-medium max-w-xl">
+          Big-budget visual effects, hyper-fluid simulations, and high-velocity camera choreographies.
+        </p>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-6 py-2.5 rounded-lg bg-[#c2ef4e] hover:bg-[#aad636] text-[#150f23] font-label-btn text-xs font-bold uppercase tracking-wider transition-all shadow-[0_6px_20px_rgba(194,239,78,0.4)] transform hover:-translate-y-0.5" type="button">
+          Try for free
+        </button>
+</div>
+</div>
+<!-- Filter bar / sub-nav pills with light-canvas aesthetics -->
+<div class="flex items-center gap-2 overflow-x-auto pb-3 mb-8 scrollbar-none text-xs font-label-btn">
+<button class="px-4 py-2 rounded-full bg-[#150f23] text-[#f9ffdf] font-bold shrink-0 shadow-md">Explore</button>
+<button class="px-4 py-2 rounded-full bg-white text-[#150f23] hover:border-[#150f23] border border-[#cfcfdb] font-semibold shrink-0 transition-all">Visual Effects</button>
+<button class="px-4 py-2 rounded-full bg-white text-[#4d445c] hover:text-[#150f23] border border-[#cfcfdb] font-semibold shrink-0 transition-all">Image</button>
+<button class="px-4 py-2 rounded-full bg-white text-[#4d445c] hover:text-[#150f23] border border-[#cfcfdb] font-semibold shrink-0 transition-all">Video</button>
+<button class="px-4 py-2 rounded-full bg-white text-[#4d445c] hover:text-[#150f23] border border-[#cfcfdb] font-semibold shrink-0 transition-all">Motion</button>
+<button class="px-4 py-2 rounded-full bg-white text-[#821f4a] border border-[#ffb1c8] font-bold shrink-0 shadow-sm hover:bg-[#ffb1c8]/10 transition-all">Seedance 2.5</button>
+<button class="px-4 py-2 rounded-full bg-white text-[#4d445c] hover:text-[#150f23] border border-[#cfcfdb] font-semibold shrink-0 transition-all">Lip Sync</button>
+<button class="px-4 py-2 rounded-full bg-white text-[#4d445c] hover:text-[#150f23] border border-[#cfcfdb] font-semibold shrink-0 transition-all">Cinema Studio</button>
+<button class="px-4 py-2 rounded-full bg-white text-[#4d445c] hover:text-[#150f23] border border-[#cfcfdb] font-semibold shrink-0 transition-all">Supercomputer</button>
+</div>
+<!-- Multi-column Masonry Media Grid with soft elevated shadows & lime/pink badges -->
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 items-start">
+<!-- Col 1 -->
+<div class="flex flex-col gap-4">
+<div class="shimmer-mask group relative rounded-2xl overflow-hidden bg-white border border-[#cfcfdb] shadow-[0_10px_30px_rgba(21,15,35,0.08)] hover:shadow-[0_16px_36px_rgba(21,15,35,0.16)] transform hover:-translate-y-1.5 transition-all duration-300 cursor-pointer">
+<div class="aspect-[9/16] w-full relative overflow-hidden bg-[#0e0918]">
+<img alt="Editorial street fashion model" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVEGBc3hMsOtPYkrROxHuvAyvTf1IhE2Bb5OumpGx1sQ_QPwqAvX2ej_KoPpf1sm-LvydgJQw6MRMshf1DPBI9afPOWedqXMN2xQDAI4dO0W-2vEI5FZuG0zeg_krNCsPvw3CAkNQUGEXK8yq9l2HEqoEJIsYxJ4ScIDoURtz9tWXID-dJk9ZXULG3QH1THSqNrT7v0bWOZob-7qrAYLY4UrL5Qp8MjmCspEPAjfTpb_gcMO6ICdIs"/>
+<span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md bg-[#150f23]/80 backdrop-blur-md text-[10px] font-code-prompt text-[#c2ef4e] border border-[#c2ef4e]/40 font-bold">STREET FASHION</span>
+<div class="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-[#0e0918] via-[#0e0918]/70 to-transparent">
+<span class="text-xs font-code-prompt text-white line-clamp-1 font-semibold">Knitwear Coffee Stroll</span>
+</div>
+</div>
+</div>
+<div class="shimmer-mask group relative rounded-2xl overflow-hidden bg-white border border-[#cfcfdb] shadow-[0_10px_30px_rgba(21,15,35,0.08)] hover:shadow-[0_16px_36px_rgba(21,15,35,0.16)] transform hover:-translate-y-1.5 transition-all duration-300 cursor-pointer">
+<div class="aspect-[4/3] w-full relative overflow-hidden bg-[#0e0918]">
+<img alt="Surreal floating footwear" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWkjJoxYFbw0Ilwoni3tAoXXcml6QnHSQB7xClT8dTz4bwWg5omIaJEv1ECALfrqbFw8ASlS44uBIEbeDvulTQbkaUNbtqA4-BjfZ71dOMF1CbnnljP3dOfraRTcjtOycwqSR5T66g039lcJ8olHpq8EMeE6zIcJ2C_rsen9jKQgJywxNquJ5apetCBL8WnjNCMrVL_eGBO17_FfVI6LI8ITuuDCRsfbwoLHZrpeU6nkOkl5fUrYqW"/>
+<span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md bg-[#821f4a] text-[#ffb1c8] text-[10px] font-code-prompt font-bold">PRODUCT 3D</span>
+</div>
+</div>
+</div>
+<!-- Col 2 -->
+<div class="flex flex-col gap-4">
+<div class="shimmer-mask group relative rounded-2xl overflow-hidden bg-white border border-[#cfcfdb] shadow-[0_10px_30px_rgba(21,15,35,0.08)] hover:shadow-[0_16px_36px_rgba(21,15,35,0.16)] transform hover:-translate-y-1.5 transition-all duration-300 cursor-pointer">
+<div class="aspect-[4/3] w-full relative overflow-hidden bg-[#0e0918]">
+<img alt="Macro studio portrait" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAo0WDND_w9rFIxZ5-EkaBGuj7vs--W95U-jdVRaHucT5oa1h8d7z7zp1unePqCZ7qpmtn2yf7LxQI0nEI5FhnbD5ZazUUtXcIlxPFLMPFEb3jqZLzglx0EOkikQV35JIV1JHsSf4jT1rdwxjcV5IlzIurjdhnbxOORUZXzeML8ItHD1ILOtYFy0Qh3hHjQTIcqbJLSSFKyP31oMzWvAfezrUI6i6Bb5_rVARiBY2TULtxXCec7W7KY"/>
+<span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md bg-[#150f23]/80 backdrop-blur-md text-[10px] font-code-prompt text-white border border-white/20">PORTRAIT 85mm</span>
+</div>
+</div>
+<div class="shimmer-mask group relative rounded-2xl overflow-hidden bg-white border border-[#cfcfdb] shadow-[0_10px_30px_rgba(21,15,35,0.08)] hover:shadow-[0_16px_36px_rgba(21,15,35,0.16)] transform hover:-translate-y-1.5 transition-all duration-300 cursor-pointer">
+<div class="aspect-[3/4] w-full relative overflow-hidden bg-[#0e0918]">
+<img alt="Urban pedestrian crossing" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvy9Q3MtMCjPokmhOtGXfxXeZFXMXyGWcWmBtzLbmPxbwnkjUwKez_yrek6EpQ5WFlwvYClmRherqmDWxnyQhrV-144XNJNrfS-shw-vFWBMxMsvTvHND17FqQNy4GPb4jn6HG_Qx4ZynAPWu3cpLyIi80sLSW4tYJ4lZZP7_pk1bNhFE0GfwY_hdvN7bs-qQP0FdKcIKI5P_SMpX5NKZU1zX3KuZFFaDSWRTtE8CNvrxjUjpne_Ar"/>
+<div class="absolute bottom-2 left-2 right-2 p-2 rounded-lg bg-black/80 backdrop-blur-md text-[10px] font-code-prompt text-[#c2ef4e] font-semibold">
+<span>Tokyo Crosswalk / Cam Drift</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Col 3 -->
+<div class="flex flex-col gap-4">
+<div class="shimmer-mask group relative rounded-2xl overflow-hidden bg-white border border-[#cfcfdb] shadow-[0_10px_30px_rgba(21,15,35,0.08)] hover:shadow-[0_16px_36px_rgba(21,15,35,0.16)] transform hover:-translate-y-1.5 transition-all duration-300 cursor-pointer">
+<div class="aspect-[9/16] w-full relative overflow-hidden bg-[#0e0918]">
+<img alt="Sunlit city model" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJRYI9qjXQyLciq5YpqF6NK5eNUGnT10AaYxmNrzLF6qEAYhRaJMpu7O3FgpU2CsSJHfgHe25r6jmpNdkMpgaPmfTsT5hdX0IFjsQUbQeBs5uzh1P-DquBCuHmZVhlokObESddLxe80Csu62S98fJ6z7sa4sj9SpIisJOKnUxIKegHQW533lKM9WTUr33HcMPz1GpjDuer303jnAQ6ATXGgwCUbv9lwSYolDCRFX_sIZJzUVAFFYzV"/>
+<span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md bg-[#c2ef4e] text-[#150f23] text-[10px] font-code-prompt font-black shadow-sm">CINEMATIC 35mm</span>
+<div class="absolute bottom-2 left-2 right-2 p-2 rounded-lg bg-black/80 backdrop-blur-md text-[10px] font-code-prompt text-white">
+<span>Golden Hour Flare Drift</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Col 4 -->
+<div class="flex flex-col gap-4">
+<div class="shimmer-mask group relative rounded-2xl overflow-hidden bg-white border border-[#cfcfdb] shadow-[0_10px_30px_rgba(21,15,35,0.08)] hover:shadow-[0_16px_36px_rgba(21,15,35,0.16)] transform hover:-translate-y-1.5 transition-all duration-300 cursor-pointer">
+<div class="aspect-[9/16] w-full relative overflow-hidden bg-[#0e0918]">
+<img alt="Car drifting through neon smoke Shibuya" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnUXVXEH32lhyatKtjHlt-L6MHHkuM4bIIyVKaD_w-GtXXdTERFOgXF6GxCXmHBrMUz6zKfAwW_0MAymf7en6BWSLp10x7Pluceo82x5SSo_e1FS4YF9j5ybxCaVALHXIBAoDBsk_jt2n7HEhNVjR1UFI1hg9o7Md_m6d8u1xpJ_Lq-PYEPRu3YK9n37-QA5o_-J4e59cM48gL3ZTYbpZ_Ezzaj9baM6PQYaH_JUtKO3wjS4y7nssU"/>
+<span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md bg-[#821f4a] text-[#ffb1c8] text-[10px] font-code-prompt font-bold">SMOKE &amp; DRIFT</span>
+<div class="absolute bottom-2 left-2 right-2 p-2 rounded-lg bg-black/80 backdrop-blur-md text-[10px] font-code-prompt text-[#c2ef4e] font-semibold">
+<span>Cyberpunk Rig 240°</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Col 5 -->
+<div class="col-span-2 sm:col-span-2 md:col-span-1 flex flex-col gap-4">
+<div class="shimmer-mask group relative rounded-2xl overflow-hidden bg-white border border-[#cfcfdb] shadow-[0_10px_30px_rgba(21,15,35,0.08)] hover:shadow-[0_16px_36px_rgba(21,15,35,0.16)] transform hover:-translate-y-1.5 transition-all duration-300 cursor-pointer">
+<div class="aspect-[3/4] w-full relative overflow-hidden bg-[#0e0918]">
+<img alt="Fluid simulation" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbij--S1JacPQ6uLgGZu_ZYqddkEKfK0bMujyG-qy8s50vdfg-0hqzSWsOB3iBu-Dvkpn0QzAE3jSoT4sQ0BuNWdfm0j-9lWTVOhnlcONO0_idVoAAiAB1ljKiMx1FtF0cl0k0FtxiAXGO3k06e1X0Z0r8SbIX7yTWw2nRfcnhRbYaxwSk1OYSEfuWYunZcRTzfiuQ71UHrcNH3B0IG4tyyOpSeUeUuUiIBEN79fzwb9zc4W6nV01S"/>
+<span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md bg-[#150f23]/80 text-[10px] font-code-prompt text-[#c7bfff] font-bold">ZERO-GRAV FX</span>
+</div>
+</div>
+<div class="shimmer-mask group relative rounded-2xl overflow-hidden bg-white border border-[#cfcfdb] shadow-[0_10px_30px_rgba(21,15,35,0.08)] hover:shadow-[0_16px_36px_rgba(21,15,35,0.16)] transform hover:-translate-y-1.5 transition-all duration-300 cursor-pointer">
+<div class="aspect-video w-full relative overflow-hidden bg-[#0e0918]">
+<img alt="Retro backseat car frame" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvy9Q3MtMCjPokmhOtGXfxXeZFXMXyGWcWmBtzLbmPxbwnkjUwKez_yrek6EpQ5WFlwvYClmRherqmDWxnyQhrV-144XNJNrfS-shw-vFWBMxMsvTvHND17FqQNy4GPb4jn6HG_Qx4ZynAPWu3cpLyIi80sLSW4tYJ4lZZP7_pk1bNhFE0GfwY_hdvN7bs-qQP0FdKcIKI5P_SMpX5NKZU1zX3KuZFFaDSWRTtE8CNvrxjUjpne_Ar"/>
+<span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md bg-[#150f23]/80 text-[10px] font-code-prompt text-white">RETRO SEAT 90s</span>
+</div>
+</div>
+</div>
+</div>
+<!-- View all presets button with ink light polarity theme -->
+<div class="mt-10 flex justify-center">
+<button class="px-7 py-3 bg-[#150f23] hover:bg-[#2b2042] text-white rounded-xl shadow-lg hover:shadow-xl font-label-btn text-xs uppercase tracking-wider transition-all flex items-center gap-2 font-bold transform hover:-translate-y-0.5" type="button">
+<span>View all presets</span>
+<span class="material-symbols-outlined text-[16px] text-[#c2ef4e]">arrow_forward</span>
+</button>
+</div>
+</div>
+</section>
+<!-- ============================================================== -->
+<!-- SQUIGGLY / WAVE DIVIDER: LIGHT BEIGE BACK INTO DEEP MIDNIGHT   -->
+<!-- ============================================================== -->
+<div class="relative w-full overflow-hidden bg-[#f7f5f0] -mt-1 leading-none select-none z-20">
+<svg class="w-full h-14 sm:h-20 block text-[#150f23]" preserveaspectratio="none" viewbox="0 0 1440 90">
+<path d="M0,48 C240,10 480,84 720,44 C960,4 1200,70 1440,24 L1440,90 L0,90 Z" fill="currentColor"></path>
+<path class="pink-glow" d="M0,48 C240,10 480,84 720,44 C960,4 1200,70 1440,24" fill="none" stroke="#fa7faa" stroke-width="2.5"></path>
+</svg>
+</div>
+<!-- ============================================================== -->
+<!-- 3. STUDIO AI MOTION, AVATARS & CLUSTERS (POLARITY 3: MIDNIGHT) -->
+<!-- ============================================================== -->
+<section class="relative w-full py-16 bg-[#150f23] text-on-surface z-10" id="studio-nodes">
+<div class="max-w-[1280px] mx-auto px-6">
+<!-- FEATURE OVERHAUL: CREATE YOUR OWN AVATAR HERO TITLE & AMBIENT SURROUNDING GRID -->
+<div class="relative mb-14">
+<!-- Center Hero Title Block -->
+<div class="text-center max-w-3xl mx-auto mb-12 relative z-10">
+<div class="inline-flex items-center gap-2 mb-4">
+<span class="font-headline-sm text-xs sm:text-sm tracking-widest uppercase text-[#150f23] bg-[#c2ef4e] px-4 py-1 rounded font-black shadow-[0_4px_0_0_#0e0918] border border-[#f9ffdf] transform hover:scale-105 transition-transform">
+            IDENTITY ENGINE 3.0
+          </span>
+</div>
+<h2 class="font-display-hero text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight mb-4">
+          Create Your Own <span class="chip-lime-keyword shadow-[0_6px_0_0_#0e0918]">AVATAR</span>
+</h2>
+<p class="font-body-lg text-sm sm:text-base text-[#bdb8c0] max-w-2xl mx-auto leading-relaxed">
+          Train custom hyper-realistic digital twins, motion-locked characters, and multi-angle cinematic portraits with zero facial warping.
+        </p>
+</div>
+<!-- Expansive Surrounding Avatar Grid Orbiting the Capability Set -->
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
+<!-- Avatar 1: Cyberpunk Operator -->
+<div class="shimmer-mask group relative rounded-2xl overflow-hidden bg-[#171026] border border-[#362d59] hover:border-[#c2ef4e]/60 transition-all duration-300 transform hover:-translate-y-1.5 shadow-xl">
+<div class="aspect-[3/4] w-full relative overflow-hidden bg-[#0e0918]">
+<img alt="Cyberpunk avatar model" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnUXVXEH32lhyatKtjHlt-L6MHHkuM4bIIyVKaD_w-GtXXdTERFOgXF6GxCXmHBrMUz6zKfAwW_0MAymf7en6BWSLp10x7Pluceo82x5SSo_e1FS4YF9j5ybxCaVALHXIBAoDBsk_jt2n7HEhNVjR1UFI1hg9o7Md_m6d8u1xpJ_Lq-PYEPRu3YK9n37-QA5o_-J4e59cM48gL3ZTYbpZ_Ezzaj9baM6PQYaH_JUtKO3wjS4y7nssU"/>
+<span class="absolute top-2 left-2 px-2 py-0.5 rounded bg-[#150f23]/90 text-[9px] font-code-prompt text-[#c2ef4e] border border-[#c2ef4e]/40 font-bold backdrop-blur-md">CYBER::RIG</span>
+<div class="absolute bottom-0 inset-x-0 p-2.5 bg-gradient-to-t from-[#0e0918] via-[#0e0918]/80 to-transparent">
+<span class="text-[11px] font-code-prompt text-white font-bold block truncate">Aiden V4 (Recon)</span>
+<span class="text-[9px] font-code-prompt text-[#aad636]">100% ID Lock</span>
+</div>
+</div>
+</div>
+<!-- Avatar 2: Streetwear Twin -->
+<div class="shimmer-mask group relative rounded-2xl overflow-hidden bg-[#171026] border border-[#362d59] hover:border-[#fa7faa]/60 transition-all duration-300 transform hover:-translate-y-1.5 shadow-xl">
+<div class="aspect-[3/4] w-full relative overflow-hidden bg-[#0e0918]">
+<img alt="Streetwear fashion avatar" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVEGBc3hMsOtPYkrROxHuvAyvTf1IhE2Bb5OumpGx1sQ_QPwqAvX2ej_KoPpf1sm-LvydgJQw6MRMshf1DPBI9afPOWedqXMN2xQDAI4dO0W-2vEI5FZuG0zeg_krNCsPvw3CAkNQUGEXK8yq9l2HEqoEJIsYxJ4ScIDoURtz9tWXID-dJk9ZXULG3QH1THSqNrT7v0bWOZob-7qrAYLY4UrL5Qp8MjmCspEPAjfTpb_gcMO6ICdIs"/>
+<span class="absolute top-2 left-2 px-2 py-0.5 rounded bg-[#821f4a] text-[9px] font-code-prompt text-[#ffb1c8] font-bold">STREETWEAR</span>
+<div class="absolute bottom-0 inset-x-0 p-2.5 bg-gradient-to-t from-[#0e0918] via-[#0e0918]/80 to-transparent">
+<span class="text-[11px] font-code-prompt text-white font-bold block truncate">Mia Z (Knitwear)</span>
+<span class="text-[9px] font-code-prompt text-[#ffb1c8]">Multi-Wardrobe</span>
+</div>
+</div>
+</div>
+<!-- Avatar 3: 85mm Portrait Twin -->
+<div class="shimmer-mask group relative rounded-2xl overflow-hidden bg-[#171026] border border-[#362d59] hover:border-[#c2ef4e]/60 transition-all duration-300 transform hover:-translate-y-1.5 shadow-xl">
+<div class="aspect-[3/4] w-full relative overflow-hidden bg-[#0e0918]">
+<img alt="Photorealistic macro avatar portrait" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAo0WDND_w9rFIxZ5-EkaBGuj7vs--W95U-jdVRaHucT5oa1h8d7z7zp1unePqCZ7qpmtn2yf7LxQI0nEI5FhnbD5ZazUUtXcIlxPFLMPFEb3jqZLzglx0EOkikQV35JIV1JHsSf4jT1rdwxjcV5IlzIurjdhnbxOORUZXzeML8ItHD1ILOtYFy0Qh3hHjQTIcqbJLSSFKyP31oMzWvAfezrUI6i6Bb5_rVARiBY2TULtxXCec7W7KY"/>
+<span class="absolute top-2 left-2 px-2 py-0.5 rounded bg-[#150f23]/90 text-[9px] font-code-prompt text-white border border-white/20">PORTRAIT 85mm</span>
+<div class="absolute bottom-0 inset-x-0 p-2.5 bg-gradient-to-t from-[#0e0918] via-[#0e0918]/80 to-transparent">
+<span class="text-[11px] font-code-prompt text-white font-bold block truncate">Dr. Sophia Chen</span>
+<span class="text-[9px] font-code-prompt text-[#c2ef4e]">Micro-Pore Res</span>
+</div>
+</div>
+</div>
+<!-- Avatar 4: Cinematic Golden Flare -->
+<div class="shimmer-mask group relative rounded-2xl overflow-hidden bg-[#171026] border border-[#362d59] hover:border-[#c2ef4e]/60 transition-all duration-300 transform hover:-translate-y-1.5 shadow-xl">
+<div class="aspect-[3/4] w-full relative overflow-hidden bg-[#0e0918]">
+<img alt="Golden hour cinematic avatar" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJRYI9qjXQyLciq5YpqF6NK5eNUGnT10AaYxmNrzLF6qEAYhRaJMpu7O3FgpU2CsSJHfgHe25r6jmpNdkMpgaPmfTsT5hdX0IFjsQUbQeBs5uzh1P-DquBCuHmZVhlokObESddLxe80Csu62S98fJ6z7sa4sj9SpIisJOKnUxIKegHQW533lKM9WTUr33HcMPz1GpjDuer303jnAQ6ATXGgwCUbv9lwSYolDCRFX_sIZJzUVAFFYzV"/>
+<span class="absolute top-2 left-2 px-2 py-0.5 rounded bg-[#c2ef4e] text-[9px] font-code-prompt text-[#150f23] font-black">LIP-SYNC READY</span>
+<div class="absolute bottom-0 inset-x-0 p-2.5 bg-gradient-to-t from-[#0e0918] via-[#0e0918]/80 to-transparent">
+<span class="text-[11px] font-code-prompt text-white font-bold block truncate">Evelyn Shaw</span>
+<span class="text-[9px] font-code-prompt text-[#c7bfff]">40+ Dialects</span>
+</div>
+</div>
+</div>
+<!-- Avatar 5: Tokyo Urban Drift -->
+<div class="shimmer-mask group relative rounded-2xl overflow-hidden bg-[#171026] border border-[#362d59] hover:border-[#fa7faa]/60 transition-all duration-300 transform hover:-translate-y-1.5 shadow-xl">
+<div class="aspect-[3/4] w-full relative overflow-hidden bg-[#0e0918]">
+<img alt="Urban stylized character" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvy9Q3MtMCjPokmhOtGXfxXeZFXMXyGWcWmBtzLbmPxbwnkjUwKez_yrek6EpQ5WFlwvYClmRherqmDWxnyQhrV-144XNJNrfS-shw-vFWBMxMsvTvHND17FqQNy4GPb4jn6HG_Qx4ZynAPWu3cpLyIi80sLSW4tYJ4lZZP7_pk1bNhFE0GfwY_hdvN7bs-qQP0FdKcIKI5P_SMpX5NKZU1zX3KuZFFaDSWRTtE8CNvrxjUjpne_Ar"/>
+<span class="absolute top-2 left-2 px-2 py-0.5 rounded bg-[#150f23]/90 text-[9px] font-code-prompt text-[#ffb1c8] border border-[#ffb1c8]/40 font-bold">FULL BODY</span>
+<div class="absolute bottom-0 inset-x-0 p-2.5 bg-gradient-to-t from-[#0e0918] via-[#0e0918]/80 to-transparent">
+<span class="text-[11px] font-code-prompt text-white font-bold block truncate">Ren (Street Beat)</span>
+<span class="text-[9px] font-code-prompt text-[#aad636]">Dynamic Locomotion</span>
+</div>
+</div>
+</div>
+<!-- Avatar 6: 3D Volumetric Mesh -->
+<div class="shimmer-mask group relative rounded-2xl overflow-hidden bg-[#171026] border border-[#362d59] hover:border-[#c2ef4e]/60 transition-all duration-300 transform hover:-translate-y-1.5 shadow-xl">
+<div class="aspect-[3/4] w-full relative overflow-hidden bg-[#0e0918]">
+<img alt="Volumetric face avatar mesh" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWkjJoxYFbw0Ilwoni3tAoXXcml6QnHSQB7xClT8dTz4bwWg5omIaJEv1ECALfrqbFw8ASlS44uBIEbeDvulTQbkaUNbtqA4-BjfZ71dOMF1CbnnljP3dOfraRTcjtOycwqSR5T66g039lcJ8olHpq8EMeE6zIcJ2C_rsen9jKQgJywxNquJ5apetCBL8WnjNCMrVL_eGBO17_FfVI6LI8ITuuDCRsfbwoLHZrpeU6nkOkl5fUrYqW"/>
+<span class="absolute top-2 left-2 px-2 py-0.5 rounded bg-[#422082] text-[9px] font-code-prompt text-[#c7bfff] font-bold">VOLUMETRIC</span>
+<div class="absolute bottom-0 inset-x-0 p-2.5 bg-gradient-to-t from-[#0e0918] via-[#0e0918]/80 to-transparent">
+<span class="text-[11px] font-code-prompt text-white font-bold block truncate">Latent Mesh 3D</span>
+<span class="text-[9px] font-code-prompt text-[#c2ef4e]">Zero Warp Metric</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Trio of Wide Promo Banners -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+<!-- Card 1: AI Motion Designer -->
+<div class="shimmer-mask bg-[#171026] border border-[#362d59] hover:border-[#c2ef4e]/60 rounded-2xl p-5 relative overflow-hidden group transform hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between shadow-xl">
+<div class="relative h-44 rounded-xl overflow-hidden bg-[#0e0918] mb-4 border border-white/5">
+<div class="absolute inset-0 bg-gradient-to-br from-[#422082] via-[#221c31] to-[#0e0918] p-4 flex flex-col justify-between">
+<span class="text-[10px] font-code-prompt text-[#c7bfff] uppercase tracking-wider flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-[#c2ef4e] animate-pulse"></span>
+              AE COMPOSITION ENGINE
+            </span>
+<div class="space-y-1">
+<div class="font-headline-sm text-lg font-black text-white">STUDIO AI MOTION DESIGNER</div>
+<div class="font-code-prompt text-[11px] text-[#c2ef4e]">After Effects Direct Connector</div>
+</div>
+</div>
+</div>
+<div>
+<h4 class="font-headline-sm text-sm font-bold text-white mb-1 group-hover:text-[#c2ef4e] transition-colors">STUDIO AI MOTION DESIGNER</h4>
+<p class="font-body-sm text-xs text-[#bdb8c0]">Prompt-to-keyframes directly mapped into After Effects compositions.</p>
+</div>
+</div>
+<!-- Card 2: Seedance 2.5 Spotlight -->
+<div class="shimmer-mask bg-[#171026] border border-[#c2ef4e]/40 hover:border-[#c2ef4e] rounded-2xl p-5 relative overflow-hidden group transform hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between shadow-[0_0_24px_rgba(194,239,78,0.15)]">
+<div class="relative h-44 rounded-xl overflow-hidden bg-[#0e0918] mb-4 border border-white/5">
+<img alt="Seedance wild ride drift" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJRYI9qjXQyLciq5YpqF6NK5eNUGnT10AaYxmNrzLF6qEAYhRaJMpu7O3FgpU2CsSJHfgHe25r6jmpNdkMpgaPmfTsT5hdX0IFjsQUbQeBs5uzh1P-DquBCuHmZVhlokObESddLxe80Csu62S98fJ6z7sa4sj9SpIisJOKnUxIKegHQW533lKM9WTUr33HcMPz1GpjDuer303jnAQ6ATXGgwCUbv9lwSYolDCRFX_sIZJzUVAFFYzV"/>
+<span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded bg-[#c2ef4e] text-[#150f23] text-[10px] font-code-prompt font-black shadow-md">/WILD RIDE</span>
+<span class="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-[10px] font-code-prompt text-white">OCT '87 19:45</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-sm font-bold text-[#c2ef4e] mb-1">STUDIO EFFECTS :: SEEDANCE 2.5</h4>
+<p class="font-body-sm text-xs text-[#bdb8c0]">Viral video presets, high-momentum physics, and free instant generations.</p>
+</div>
+</div>
+<!-- Card 3: Genjutsu Free -->
+<div class="shimmer-mask bg-[#171026] border border-[#362d59] hover:border-[#fa7faa]/60 rounded-2xl p-5 relative overflow-hidden group transform hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between shadow-xl">
+<div class="relative h-44 rounded-xl overflow-hidden bg-[#0e0918] mb-4 border border-white/5">
+<img alt="Lip sync keep card" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVEGBc3hMsOtPYkrROxHuvAyvTf1IhE2Bb5OumpGx1sQ_QPwqAvX2ej_KoPpf1sm-LvydgJQw6MRMshf1DPBI9afPOWedqXMN2xQDAI4dO0W-2vEI5FZuG0zeg_krNCsPvw3CAkNQUGEXK8yq9l2HEqoEJIsYxJ4ScIDoURtz9tWXID-dJk9ZXULG3QH1THSqNrT7v0bWOZob-7qrAYLY4UrL5Qp8MjmCspEPAjfTpb_gcMO6ICdIs"/>
+<span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded bg-[#821f4a] text-[#ffb1c8] text-[10px] font-code-prompt font-bold">LIP SYNC FREE</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-sm font-bold text-white mb-1 group-hover:text-[#ffb1c8] transition-colors">GENJUTSU FREE ENGINE</h4>
+<p class="font-body-sm text-xs text-[#bdb8c0]">One upload in. Infinite angles, wardrobe remaps, and stylized visions out.</p>
+</div>
+</div>
+</div>
+<!-- Task Completion Promo Banner + Quick Utility Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+<!-- Task Completion Reward Card (5 Cols) -->
+<div class="lg:col-span-5 bg-gradient-to-br from-[#1b1030] via-[#150f23] to-[#0e0918] border border-[#fa7faa]/30 rounded-2xl p-6 shadow-2xl flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between gap-2 mb-3">
+<span class="px-2.5 py-1 rounded bg-[#821f4a]/60 text-[#ffb1c8] border border-[#fa7faa]/30 font-code-prompt text-[10px] flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-[#ffb1c8] animate-pulse"></span>
+              Tasks expire in <span class="font-bold text-white tracking-wider" id="countdown-timer">19h 06m 20s</span>
+</span>
+<span class="text-xs font-code-prompt text-[#c2ef4e] font-bold px-2 py-0.5 bg-[#c2ef4e]/15 rounded border border-[#c2ef4e]/30">55% OFF</span>
+</div>
+<h3 class="font-headline-sm text-lg font-bold text-white tracking-tight leading-snug mb-1">
+            COMPLETE TASKS &amp; GET 55% OFF PREMIERE TIER
+          </h3>
+<p class="font-body-sm text-xs text-[#bdb8c0] mb-4">
+            Complete 3 quick sandbox evaluations to unlock your studio developer discount.
+          </p>
+<div class="space-y-2 mb-6 text-xs font-code-prompt">
+<label class="flex items-center gap-2.5 text-white/90 bg-[#1f1633]/80 p-2.5 rounded-lg border border-white/5 cursor-pointer hover:border-[#c2ef4e]/40 transition-all">
+<input checked="" class="rounded text-[#c2ef4e] bg-[#0e0918] border-white/20 focus:ring-0" type="checkbox"/>
+<span>Evaluate Nano Banana Pro (Image Engine)</span>
+</label>
+<label class="flex items-center gap-2.5 text-white/90 bg-[#1f1633]/80 p-2.5 rounded-lg border border-white/5 cursor-pointer hover:border-[#c2ef4e]/40 transition-all">
+<input checked="" class="rounded text-[#c2ef4e] bg-[#0e0918] border-white/20 focus:ring-0" type="checkbox"/>
+<span>Test Seedance 2.5 Multi-Frame Consistency</span>
+</label>
+<label class="flex items-center gap-2.5 text-[#bdb8c0] bg-[#1f1633]/50 p-2.5 rounded-lg border border-white/5 cursor-pointer hover:border-[#c2ef4e]/40 transition-all">
+<input class="rounded text-[#c2ef4e] bg-[#0e0918] border-white/20 focus:ring-0" type="checkbox"/>
+<span>Deploy Marketing Studio Trajectory Preset</span>
+</label>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-5 py-2.5 bg-[#c2ef4e] text-[#150f23] font-label-btn text-xs font-bold uppercase rounded-lg hover:bg-[#aad636] shadow-[0_0_15px_rgba(194,239,78,0.3)] transition-all transform hover:-translate-y-0.5" type="button">
+            Complete Tasks
+          </button>
+<button class="px-4 py-2.5 bg-[#1f1633] text-white font-label-btn text-xs font-semibold rounded-lg hover:bg-white/10 transition-colors border border-white/10" type="button">
+            See Plans
+          </button>
+</div>
+</div>
+<!-- Quick Utility Tiles 2x2 (7 Cols) -->
+<div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div class="shimmer-mask bg-[#171026] border border-[#362d59] rounded-xl p-4 hover:border-[#c2ef4e]/60 transition-all flex flex-col justify-between transform hover:-translate-1 shadow-lg">
+<div class="flex items-center justify-between text-xs font-code-prompt text-[#bdb8c0] mb-2">
+<span class="material-symbols-outlined text-[#c2ef4e]">speed</span>
+<span class="px-2 py-0.5 rounded bg-[#c2ef4e]/20 text-[#c2ef4e] text-[10px] font-bold">VIDEO TOP</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-sm font-bold text-white">Seedance 2.5</h4>
+<p class="font-body-sm text-xs text-[#bdb8c0] mt-0.5">The flagship neural video generation model for high velocity scenes.</p>
+</div>
+</div>
+<div class="shimmer-mask bg-[#171026] border border-[#362d59] rounded-xl p-4 hover:border-[#fa7faa]/60 transition-all flex flex-col justify-between transform hover:-translate-1 shadow-lg">
+<div class="flex items-center justify-between text-xs font-code-prompt text-[#bdb8c0] mb-2">
+<span class="material-symbols-outlined text-[#fa7faa]">photo_camera</span>
+<span class="px-2 py-0.5 rounded bg-[#fa7faa]/20 text-[#ffb1c8] text-[10px] font-bold">IMAGE</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-sm font-bold text-white">Nano Banana Pro</h4>
+<p class="font-body-sm text-xs text-[#bdb8c0] mt-0.5">Ultra-clean photorealistic visual synthesis with zero facial warping.</p>
+</div>
+</div>
+<div class="shimmer-mask bg-[#171026] border border-[#362d59] rounded-xl p-4 hover:border-white/40 transition-all flex flex-col justify-between transform hover:-translate-1 shadow-lg">
+<div class="flex items-center justify-between text-xs font-code-prompt text-[#bdb8c0] mb-2">
+<span class="material-symbols-outlined text-white">terminal</span>
+<span class="px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-bold">DEV CLI</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-sm font-bold text-white">MCP &amp; CLI Tooling</h4>
+<p class="font-body-sm text-xs text-[#bdb8c0] mt-0.5">Turn Claude and cursor-based IDEs into direct creative engines.</p>
+</div>
+</div>
+<div class="shimmer-mask bg-[#171026] border border-[#362d59] rounded-xl p-4 hover:border-[#c2ef4e]/60 transition-all flex flex-col justify-between transform hover:-translate-1 shadow-lg">
+<div class="flex items-center justify-between text-xs font-code-prompt text-[#bdb8c0] mb-2">
+<span class="material-symbols-outlined text-[#c2ef4e]">memory</span>
+<span class="px-2 py-0.5 rounded bg-[#c2ef4e]/20 text-[#c2ef4e] text-[10px] font-bold">CLUSTER</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-sm font-bold text-white">Supercomputer Nodes</h4>
+<p class="font-body-sm text-xs text-[#bdb8c0] mt-0.5">Autonomous creative agents with dedicated 80GB VRAM pipeline allocations.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ============================================================== -->
+<!-- SQUIGGLY / WAVE DIVIDER: MIDNIGHT INTO WARM BEIGE              -->
+<!-- ============================================================== -->
+<div class="relative w-full overflow-hidden bg-[#150f23] -mt-1 leading-none select-none z-20">
+<svg class="w-full h-14 sm:h-20 block text-[#f7f5f0]" preserveaspectratio="none" viewbox="0 0 1440 90">
+<path d="M0,20 C280,68 560,0 840,48 C1120,96 1280,24 1440,50 L1440,90 L0,90 Z" fill="currentColor"></path>
+<path class="lime-glow" d="M0,20 C280,68 560,0 840,48 C1120,96 1280,24 1440,50" fill="none" stroke="#c2ef4e" stroke-width="3"></path>
+</svg>
+</div>
+<!-- ============================================================== -->
+<!-- 4. CAMERA CONTROL & DIRECTOR MODE (POLARITY 4: BEIGE / CREAM)  -->
+<!-- ============================================================== -->
+<section class="relative w-full pt-10 pb-16 bg-[#f7f5f0] text-[#150f23] z-10" id="director-mode">
+<div class="max-w-[1240px] mx-auto px-6">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+<div>
+<div class="inline-flex items-center gap-2 text-[#821f4a] font-label-eyebrow text-xs uppercase tracking-widest font-bold mb-2">
+<span class="material-symbols-outlined text-[18px]">videocam</span>
+          DIRECTOR COMMAND INTERFACE
+        </div>
+<h2 class="font-headline-xl text-3xl sm:text-5xl font-bold text-[#150f23] tracking-tight">
+          Camera Control &amp; Director Mode
+        </h2>
+</div>
+<p class="font-body-md text-sm sm:text-base text-[#4d445c] max-w-md leading-relaxed font-medium">
+        Manipulate synthetic optics in 3D Cartesian coordinates. Execute buttery camera sweeps, dolly zooms, and dynamic lighting rigs directly via code or trajectory widgets.
+      </p>
+</div>
+<!-- 3D Camera Rig Viewport + Editor Bento -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Viewport Column (7 Cols) with Light Mode Exterior Framing Dark Viewport -->
+<div class="lg:col-span-7 bg-white rounded-2xl p-5 sm:p-6 border border-[#cfcfdb] shadow-[0_12px_36px_rgba(21,15,35,0.08)] flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-center justify-between border-b border-[#e5e7eb] pb-3 mb-4">
+<div class="flex items-center gap-2 sm:gap-3">
+<span class="font-code-prompt-bold text-xs sm:text-sm text-[#150f23] flex items-center gap-1.5 font-bold">
+<span class="w-2.5 h-2.5 rounded-full bg-[#aad636] ring-4 ring-[#c2ef4e]/30 animate-pulse"></span>
+              RIG_VIEWPORT::ACTIVE
+            </span>
+<span class="px-2.5 py-0.5 bg-[#150f23] text-[#c2ef4e] rounded text-[10px] font-code-prompt font-bold tracking-wider">
+              ORBIT 240°
+            </span>
+</div>
+<div class="flex items-center gap-2 text-[#4d445c] font-code-prompt text-[11px] font-medium">
+<span class="text-[#150f23] font-bold">FOV: 35mm</span>
+<span>•</span>
+<span class="text-[#273500] font-bold bg-[#c2ef4e]/40 px-2 py-0.5 rounded">f/1.4 CinePrime</span>
+</div>
+</div>
+<!-- High-Contrast Dark Viewport screen inside the cream section -->
+<div class="relative w-full h-80 sm:h-96 rounded-xl overflow-hidden bg-[#0b0714] border border-[#362d59] group shadow-inner">
+<img alt="Futuristic neon city corridor with cinematic drone camera and cyber protagonist" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnUXVXEH32lhyatKtjHlt-L6MHHkuM4bIIyVKaD_w-GtXXdTERFOgXF6GxCXmHBrMUz6zKfAwW_0MAymf7en6BWSLp10x7Pluceo82x5SSo_e1FS4YF9j5ybxCaVALHXIBAoDBsk_jt2n7HEhNVjR1UFI1hg9o7Md_m6d8u1xpJ_Lq-PYEPRu3YK9n37-QA5o_-J4e59cM48gL3ZTYbpZ_Ezzaj9baM6PQYaH_JUtKO3wjS4y7nssU"/>
+<div class="absolute inset-0 p-4 flex flex-col justify-between pointer-events-none">
+<div class="flex justify-between items-start">
+<div class="px-2.5 py-1 bg-[#0e0918]/90 border border-[#c2ef4e]/50 rounded font-code-prompt text-[11px] text-[#c2ef4e] flex items-center gap-1.5 backdrop-blur-md shadow-sm">
+<span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                REC ● [00:04:18:12]
+              </div>
+<div class="px-2.5 py-1 bg-[#0e0918]/90 border border-[#ffb1c8]/50 rounded font-code-prompt text-[11px] text-[#ffb1c8] backdrop-blur-md">
+                TILT: -14.2° | ROLL: 0.0°
+              </div>
+</div>
+<!-- Animated Center Crosshair Reticle -->
+<div class="flex justify-center items-center">
+<div class="relative w-16 h-16 flex items-center justify-center animate-reticle">
+<svg class="text-[#c2ef4e] opacity-90" fill="none" height="64" viewbox="0 0 48 48" width="64">
+<circle class="animate-radar" cx="24" cy="24" r="18" stroke="currentColor" stroke-dasharray="4 4" stroke-width="1.5"></circle>
+<path d="M24 2V10M24 38V46M2 24H10M38 24H46" stroke="currentColor" stroke-width="1.5"></path>
+<circle cx="24" cy="24" fill="currentColor" r="3"></circle>
+</svg>
+</div>
+</div>
+<div class="flex justify-between items-end text-[11px] font-code-prompt">
+<span class="text-white bg-[#0e0918]/90 border border-white/20 px-2.5 py-1 rounded backdrop-blur-md">
+                PAN: LEFT &gt;&gt; SMOOTH 1.2s
+              </span>
+<span class="text-[#150f23] bg-[#c2ef4e] border border-[#f9ffdf] px-2.5 py-1 rounded backdrop-blur-sm font-bold shadow-md">
+                FOCAL LOCK: TARGET_01
+              </span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-3 mt-4 pt-1">
+<div class="bg-[#f7f5f0] border border-[#cfcfdb] rounded-lg p-3">
+<div class="flex justify-between text-[11px] font-code-prompt text-[#4d445c] mb-1.5 font-semibold">
+<span>ORBIT AZIMUTH</span>
+<span class="text-[#150f23] font-bold">184°</span>
+</div>
+<div class="w-full bg-[#e5e7eb] h-2 rounded-full overflow-hidden">
+<div class="bg-[#aad636] h-full w-[65%] rounded-full shadow-[0_0_8px_#aad636]"></div>
+</div>
+</div>
+<div class="bg-[#f7f5f0] border border-[#cfcfdb] rounded-lg p-3">
+<div class="flex justify-between text-[11px] font-code-prompt text-[#4d445c] mb-1.5 font-semibold">
+<span>DOLLY ZOOM</span>
+<span class="text-[#821f4a] font-bold">+2.4m</span>
+</div>
+<div class="w-full bg-[#e5e7eb] h-2 rounded-full overflow-hidden">
+<div class="bg-[#fa7faa] h-full w-[45%] rounded-full shadow-[0_0_8px_#fa7faa]"></div>
+</div>
+</div>
+<div class="bg-[#f7f5f0] border border-[#cfcfdb] rounded-lg p-3">
+<div class="flex justify-between text-[11px] font-code-prompt text-[#4d445c] mb-1.5 font-semibold">
+<span>SHUTTER ANGLE</span>
+<span class="text-[#150f23] font-bold">180°</span>
+</div>
+<div class="w-full bg-[#e5e7eb] h-2 rounded-full overflow-hidden">
+<div class="bg-[#422082] h-full w-[80%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Code & Trajectory Parameters Column (5 Cols) -->
+<div class="lg:col-span-5 flex flex-col justify-between gap-6">
+<!-- Pristine Dark JSON Terminal Block with Neon Highlights -->
+<div class="bg-[#150f23] border border-[#362d59] rounded-2xl p-5 shadow-2xl flex-1 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-[#c2ef4e]">terminal</span>
+<span class="font-code-prompt text-xs text-[#ffb1c8] uppercase font-bold tracking-wider">camera_trajectory.json</span>
+</div>
+<button class="text-[#bdb8c0] hover:text-[#c2ef4e] transition-colors text-[11px] flex items-center gap-1 font-code-prompt active:scale-95" type="button">
+<span class="material-symbols-outlined text-[14px]">content_copy</span> COPY
+              </button>
+</div>
+<pre class="font-code-prompt text-xs text-[#c4c9b0] overflow-x-auto leading-relaxed p-3.5 bg-[#0e0918] rounded-xl border border-white/5 shadow-inner"><code>{
+  <span class="text-[#ffb1c8]">"director_profile"</span>: <span class="text-[#c2ef4e]">"CinePrime_v2"</span>,
+  <span class="text-[#ffb1c8]">"rig_control"</span>: {
+    <span class="text-[#bdb8c0]">"type"</span>: <span class="text-[#c2ef4e]">"OrbitalTrack"</span>,
+    <span class="text-[#bdb8c0]">"trajectory_curve"</span>: <span class="text-[#c2ef4e]">"ease-in-out-cubic"</span>,
+    <span class="text-[#bdb8c0]">"shutter_angle"</span>: <span class="text-white">180</span>,
+    <span class="text-[#bdb8c0]">"focal_length_mm"</span>: <span class="text-white">50.0</span>,
+    <span class="text-[#bdb8c0]">"lighting_preset"</span>: <span class="text-[#ffb1c8]">"Cyberpunk_Chiaroscuro"</span>
+  },
+  <span class="text-[#ffb1c8]">"consistency_lock"</span>: <span class="text-[#c2ef4e]">true</span>,
+  <span class="text-[#ffb1c8]">"output_format"</span>: <span class="text-white">"ProRes_4444_XQ"</span>
+}</code></pre>
+</div>
+<div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] font-code-prompt text-[#bdb8c0]">
+<span>KEYFRAMES: 120 FRAMES</span>
+<span class="text-[#c2ef4e] font-bold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#c2ef4e] animate-ping"></span> SYNTHESIS READY
+            </span>
+</div>
+</div>
+<!-- Sub-millimeter callout card with cream mode background -->
+<div class="bg-white border border-[#cfcfdb] rounded-2xl p-5 shadow-md">
+<h4 class="font-headline-sm text-base sm:text-lg text-[#150f23] mb-2 flex items-center gap-2 font-bold">
+<span class="material-symbols-outlined text-[#422082]">tune</span>
+            Sub-Millimeter Camera Trajectories
+          </h4>
+<p class="font-body-sm text-xs sm:text-sm text-[#4d445c] leading-relaxed font-medium">
+            Deterministic camera coordinates eliminate synthetic hallucinations. Lock your key visual center while generating infinite camera paths for real-time commercial split runs.
+          </p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ============================================================== -->
+<!-- SQUIGGLY / WAVE DIVIDER: WARM BEIGE BACK INTO DEEP MIDNIGHT   -->
+<!-- ============================================================== -->
+<div class="relative w-full overflow-hidden bg-[#f7f5f0] -mt-1 leading-none select-none z-20">
+<svg class="w-full h-14 sm:h-20 block text-[#150f23]" preserveaspectratio="none" viewbox="0 0 1440 90">
+<path d="M0,40 C360,80 540,10 720,50 C900,90 1080,10 1440,40 L1440,90 L0,90 Z" fill="currentColor"></path>
+<path class="lime-glow" d="M0,40 C360,80 540,10 720,50 C900,90 1080,10 1440,40" fill="none" stroke="#c2ef4e" stroke-width="3"></path>
+</svg>
+</div>
+<!-- ============================================================== -->
+<!-- 5. GENERATIVE AD PIPELINES (POLARITY 5: DEEP MIDNIGHT)         -->
+<!-- ============================================================== -->
+<section class="relative w-full py-16 bg-[#150f23] text-on-surface z-10" id="pipeline-section">
+<div class="max-w-[1240px] mx-auto px-6">
+<div class="max-w-3xl mb-10">
+<div class="inline-flex items-center gap-2 text-[#c2ef4e] font-label-eyebrow text-xs uppercase tracking-widest font-bold mb-2">
+<span class="material-symbols-outlined text-[18px]">view_timeline</span>
+        CROSS-CHANNEL GENERATIVE PIPELINES
+      </div>
+<h2 class="font-headline-xl text-3xl sm:text-5xl font-bold text-white tracking-tight">
+        Generative Ad Workflows &amp; Multi-Modal Pipelines
+      </h2>
+<p class="font-body-lg text-sm sm:text-base text-[#bdb8c0] mt-3 leading-relaxed">
+        Produce viral social-first cutdowns, cinematic widescreen trailers, and square product loops in one click. Character locks preserve facial geometry, wardrobe, and brand logos across every sequence.
+      </p>
+</div>
+<!-- Main Studio Editor Pipeline Container (Rich Midnight Glass Aesthetics) -->
+<div class="bg-[#171026] rounded-3xl p-6 sm:p-8 border border-[#362d59] shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+<div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5 mb-6">
+<div class="flex flex-wrap items-center gap-3">
+<span class="text-xs font-code-prompt-bold text-white uppercase tracking-wider font-bold">ASPECT DEPLOYMENT:</span>
+<div class="flex items-center gap-1.5 bg-[#0e0918] p-1 rounded-xl border border-white/10">
+<button class="aspect-toggle active px-3.5 py-1.5 bg-[#c2ef4e] text-[#150f23] font-code-prompt text-xs rounded-lg font-black flex items-center gap-1.5 shadow-[0_0_12px_rgba(194,239,78,0.3)] transition-all" type="button">
+<span class="material-symbols-outlined text-[14px]">smartphone</span> 9:16 Reels &amp; TikTok
+            </button>
+<button class="aspect-toggle px-3.5 py-1.5 text-[#bdb8c0] hover:text-white font-code-prompt text-xs rounded-lg flex items-center gap-1.5 transition-colors font-semibold" type="button">
+<span class="material-symbols-outlined text-[14px]">tv</span> 16:9 Cinema Ad
+            </button>
+<button class="aspect-toggle px-3.5 py-1.5 text-[#bdb8c0] hover:text-white font-code-prompt text-xs rounded-lg flex items-center gap-1.5 transition-colors font-semibold" type="button">
+<span class="material-symbols-outlined text-[14px]">crop_square</span> 1:1 Feed Carousel
+            </button>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#821f4a]/40 text-[#ffb1c8] border border-[#fa7faa]/40 rounded-full text-xs font-code-prompt font-bold">
+<span class="material-symbols-outlined text-[14px] text-[#fa7faa]">lock</span>
+            CHARACTER LOCK: 99.8%
+          </div>
+<span class="hidden sm:inline-block px-3 py-1.5 bg-[#1f1633] text-[#bdb8c0] border border-white/10 text-xs font-code-prompt font-semibold rounded-full">
+            BATCH: #88219-HG
+          </span>
+</div>
+</div>
+<!-- Video Multi-Variant 3-Column Preview with Rich Cards & Bevels -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<!-- Variant A -->
+<div class="shimmer-mask bg-[#1f1633]/90 rounded-2xl p-4 border border-white/10 hover:border-[#c2ef4e]/60 flex flex-col justify-between group transition-all duration-300 transform hover:-translate-y-1 shadow-lg">
+<div class="flex items-center justify-between mb-3 text-xs font-code-prompt">
+<span class="text-[#ffb1c8] font-bold flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+              VARIANT A [9:16 TIKTOK]
+            </span>
+<span class="text-[#bdb8c0]">00:15 / 60fps</span>
+</div>
+<div class="w-full h-72 rounded-xl bg-[#0b0714] overflow-hidden relative shadow-inner border border-white/5">
+<img alt="Vertical TikTok fashion video shot" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVEGBc3hMsOtPYkrROxHuvAyvTf1IhE2Bb5OumpGx1sQ_QPwqAvX2ej_KoPpf1sm-LvydgJQw6MRMshf1DPBI9afPOWedqXMN2xQDAI4dO0W-2vEI5FZuG0zeg_krNCsPvw3CAkNQUGEXK8yq9l2HEqoEJIsYxJ4ScIDoURtz9tWXID-dJk9ZXULG3QH1THSqNrT7v0bWOZob-7qrAYLY4UrL5Qp8MjmCspEPAjfTpb_gcMO6ICdIs"/>
+<span class="absolute bottom-2.5 left-2.5 bg-[#0e0918]/90 text-[#c2ef4e] border border-[#c2ef4e]/40 font-code-prompt text-[10px] px-2.5 py-1 rounded backdrop-blur-sm font-bold">
+              HOOK: 0.8s RETAIN
+            </span>
+</div>
+<p class="font-body-sm text-xs text-[#bdb8c0] mt-3 leading-relaxed">Optimized for vertical feed retention with synchronized text pacing.</p>
+</div>
+<!-- Variant B -->
+<div class="shimmer-mask bg-[#1f1633]/90 rounded-2xl p-4 border border-white/10 hover:border-[#c2ef4e]/60 flex flex-col justify-between group transition-all duration-300 transform hover:-translate-y-1 shadow-lg">
+<div class="flex items-center justify-between mb-3 text-xs font-code-prompt">
+<span class="text-white font-bold flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-[#c2ef4e]"></span>
+              VARIANT B [16:9 YOUTUBE]
+            </span>
+<span class="text-[#bdb8c0]">00:30 / 4K UHD</span>
+</div>
+<div class="w-full h-72 rounded-xl bg-[#0b0714] overflow-hidden relative shadow-inner border border-white/5">
+<img alt="Cinematic widescreen commercial frame" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvy9Q3MtMCjPokmhOtGXfxXeZFXMXyGWcWmBtzLbmPxbwnkjUwKez_yrek6EpQ5WFlwvYClmRherqmDWxnyQhrV-144XNJNrfS-shw-vFWBMxMsvTvHND17FqQNy4GPb4jn6HG_Qx4ZynAPWu3cpLyIi80sLSW4tYJ4lZZP7_pk1bNhFE0GfwY_hdvN7bs-qQP0FdKcIKI5P_SMpX5NKZU1zX3KuZFFaDSWRTtE8CNvrxjUjpne_Ar"/>
+<span class="absolute bottom-2.5 left-2.5 bg-[#0e0918]/90 text-[#ffb1c8] border border-[#ffb1c8]/40 font-code-prompt text-[10px] px-2.5 py-1 rounded backdrop-blur-sm font-semibold">
+              AUDIO STEMS: DOLBY 5.1
+            </span>
+</div>
+<p class="font-body-sm text-xs text-[#bdb8c0] mt-3 leading-relaxed">Wide visual narrative with high production depth, color graded in CineLUT 04.</p>
+</div>
+<!-- Variant C -->
+<div class="shimmer-mask bg-[#1f1633]/90 rounded-2xl p-4 border border-white/10 hover:border-[#c2ef4e]/60 flex flex-col justify-between group transition-all duration-300 transform hover:-translate-y-1 shadow-lg">
+<div class="flex items-center justify-between mb-3 text-xs font-code-prompt">
+<span class="text-[#c2ef4e] font-bold flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-[#c2ef4e]"></span>
+              VARIANT C [1:1 SQUARE]
+            </span>
+<span class="text-[#bdb8c0]">INFINITE LOOP</span>
+</div>
+<div class="w-full h-72 rounded-xl bg-[#0b0714] overflow-hidden relative shadow-inner border border-white/5">
+<img alt="Square macro commercial shot" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWkjJoxYFbw0Ilwoni3tAoXXcml6QnHSQB7xClT8dTz4bwWg5omIaJEv1ECALfrqbFw8ASlS44uBIEbeDvulTQbkaUNbtqA4-BjfZ71dOMF1CbnnljP3dOfraRTcjtOycwqSR5T66g039lcJ8olHpq8EMeE6zIcJ2C_rsen9jKQgJywxNquJ5apetCBL8WnjNCMrVL_eGBO17_FfVI6LI8ITuuDCRsfbwoLHZrpeU6nkOkl5fUrYqW"/>
+<span class="absolute bottom-2.5 left-2.5 bg-[#0e0918]/90 text-[#c2ef4e] border border-[#c2ef4e]/40 font-code-prompt text-[10px] px-2.5 py-1 rounded backdrop-blur-sm font-bold">
+              CTR LIFT: +48.2%
+            </span>
+</div>
+<p class="font-body-sm text-xs text-[#bdb8c0] mt-3 leading-relaxed">Seamless spinning product isolation designed for high-conversion paid social feeds.</p>
+</div>
+</div>
+<!-- Multi-Track NLE Timeline View with animated sound frequency bars -->
+<div class="bg-[#0e0918] rounded-2xl p-5 sm:p-6 border border-[#362d59] space-y-3.5 shadow-xl">
+<div class="flex items-center justify-between text-xs font-code-prompt text-[#bdb8c0] border-b border-white/10 pb-3">
+<span class="text-[#c2ef4e] flex items-center gap-2 font-bold">
+<span class="material-symbols-outlined text-[18px]">linear_scale</span>
+            MULTI-TRACK NLE PIPELINE
+          </span>
+<span class="text-[#c7bfff] font-mono">TIMECODE 00:00:14:02 / 00:00:30:00</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="w-20 font-code-prompt text-xs text-[#bdb8c0] shrink-0 font-bold">V1 (VIDEO)</span>
+<div class="flex-1 grid grid-cols-6 gap-2 h-9">
+<div class="bg-[#422082] border border-[#79628c]/40 rounded-lg flex items-center justify-center font-code-prompt text-[11px] text-[#f9ffdf] font-bold shadow-sm">Shot 01</div>
+<div class="bg-[#2b2042] rounded-lg flex items-center justify-center font-code-prompt text-[11px] text-white/90">Shot 02</div>
+<div class="bg-[#2b2042] rounded-lg flex items-center justify-center font-code-prompt text-[11px] text-white/90">Shot 03</div>
+<div class="bg-[#422082] border border-[#79628c]/40 rounded-lg flex items-center justify-center font-code-prompt text-[11px] text-[#f9ffdf] font-bold shadow-sm">Shot 04</div>
+<div class="col-span-2 bg-[#821f4a] border border-[#fa7faa]/40 text-[#ffb1c8] rounded-lg flex items-center justify-center font-code-prompt text-[11px] font-bold shadow-sm">CTA Outro</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="w-20 font-code-prompt text-xs text-[#bdb8c0] shrink-0 font-bold">C1 (ID LOCK)</span>
+<div class="flex-1 bg-[#c2ef4e]/15 border border-[#c2ef4e]/40 h-8 rounded-lg flex items-center px-3">
+<span class="text-[#c2ef4e] font-code-prompt text-[11px] font-bold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+              FACE_ID_LATENT_MATRIX_V4 [LOCKED 100%]
+            </span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="w-20 font-code-prompt text-xs text-[#bdb8c0] shrink-0 font-bold">A1 (AUDIO)</span>
+<div class="flex-1 bg-[#1f1633] border border-white/10 h-8 rounded-lg flex items-center justify-between px-4">
+<!-- Animated EQ Frequency Bars -->
+<div class="flex items-center gap-1.5 h-full py-1.5">
+<span class="eq-bar w-1 bg-[#ffb1c8] rounded-full inline-block"></span>
+<span class="eq-bar w-1 bg-[#ffb1c8] rounded-full inline-block"></span>
+<span class="eq-bar w-1 bg-[#c2ef4e] rounded-full inline-block"></span>
+<span class="eq-bar w-1 bg-[#ffb1c8] rounded-full inline-block"></span>
+<span class="eq-bar w-1 bg-[#c2ef4e] rounded-full inline-block"></span>
+<span class="eq-bar w-1 bg-[#ffb1c8] rounded-full inline-block"></span>
+<span class="eq-bar w-1 bg-[#c2ef4e] rounded-full inline-block"></span>
+</div>
+<svg class="w-3/4 h-4 text-[#ffb1c8]/80" fill="none" viewbox="0 0 500 12">
+<path d="M0 6 Q 10 0, 20 6 T 40 6 T 60 12 T 80 0 T 100 6 T 140 10 T 180 2 T 220 11 T 260 4 T 300 9 T 340 1 T 380 6 T 420 12 T 460 0 T 500 6" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ============================================================== -->
+<!-- SQUIGGLY / WAVE DIVIDER: MIDNIGHT INTO WARM BEIGE CANVAS       -->
+<!-- ============================================================== -->
+<div class="relative w-full overflow-hidden bg-[#150f23] -mt-1 leading-none select-none z-20">
+<svg class="w-full h-14 sm:h-20 block text-[#f6f4ee]" preserveaspectratio="none" viewbox="0 0 1440 90">
+<path d="M0,24 C320,70 480,4 720,44 C960,84 1200,10 1440,48 L1440,90 L0,90 Z" fill="currentColor"></path>
+<path class="lime-glow" d="M0,24 C320,70 480,4 720,44 C960,84 1200,10 1440,48" fill="none" stroke="#c2ef4e" stroke-width="3"></path>
+</svg>
+</div>
+<!-- ============================================================== -->
+<!-- 6. METRICS & ENTERPRISE SECTION (POLARITY 6: WARM BEIGE/CREAM) -->
+<!-- ============================================================== -->
+<section class="relative w-full pt-8 pb-16 bg-[#f6f4ee] text-[#150f23] z-10" id="metrics-enterprise">
+<div class="max-w-[1240px] mx-auto px-6">
+<!-- METRICS ROW: CLEAN LIGHT CANVAS TILES WITH INK DARK TYPOGRAPHY -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12">
+<!-- Metric 1 -->
+<div class="bg-white rounded-2xl p-6 text-center border border-[#cfcfdb] shadow-[0_10px_30px_rgba(21,15,35,0.06)] hover:shadow-[0_16px_36px_rgba(21,15,35,0.12)] transform hover:-translate-y-1 transition-all">
+<span class="font-display-lg text-3xl sm:text-5xl font-black text-[#150f23] tracking-tight">10M+</span>
+<span class="block font-label-btn text-xs uppercase text-[#79628c] font-bold mt-1.5">Gens Completed</span>
+<div class="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#c2ef4e]/20 text-[#273500] font-code-prompt text-[10px] font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#aad636]"></span> REAL-TIME
+        </div>
+</div>
+<!-- Metric 2 -->
+<div class="bg-white rounded-2xl p-6 text-center border border-[#cfcfdb] shadow-[0_10px_30px_rgba(21,15,35,0.06)] hover:shadow-[0_16px_36px_rgba(21,15,35,0.12)] transform hover:-translate-y-1 transition-all">
+<span class="font-display-lg text-3xl sm:text-5xl font-black text-[#821f4a] tracking-tight">&lt;850ms</span>
+<span class="block font-label-btn text-xs uppercase text-[#79628c] font-bold mt-1.5">First-Frame Latency</span>
+<div class="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ffb1c8]/30 text-[#821f4a] font-code-prompt text-[10px] font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#821f4a]"></span> TURBO PIPELINE
+        </div>
+</div>
+<!-- Metric 3 -->
+<div class="bg-white rounded-2xl p-6 text-center border border-[#cfcfdb] shadow-[0_10px_30px_rgba(21,15,35,0.06)] hover:shadow-[0_16px_36px_rgba(21,15,35,0.12)] transform hover:-translate-y-1 transition-all">
+<span class="font-display-lg text-3xl sm:text-5xl font-black text-[#422082] tracking-tight">99.9%</span>
+<span class="block font-label-btn text-xs uppercase text-[#79628c] font-bold mt-1.5">Enterprise Uptime</span>
+<div class="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#e1dbff] text-[#422082] font-code-prompt text-[10px] font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#422082]"></span> SLA GUARANTEE
+        </div>
+</div>
+<!-- Metric 4 -->
+<div class="bg-white rounded-2xl p-6 text-center border border-[#cfcfdb] shadow-[0_10px_30px_rgba(21,15,35,0.06)] hover:shadow-[0_16px_36px_rgba(21,15,35,0.12)] transform hover:-translate-y-1 transition-all">
+<span class="font-display-lg text-3xl sm:text-5xl font-black text-[#273500] tracking-tight">4.2x</span>
+<span class="block font-label-btn text-xs uppercase text-[#79628c] font-bold mt-1.5">ROAS Lift In Ads</span>
+<div class="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#c2ef4e]/30 text-[#150f23] font-code-prompt text-[10px] font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#c2ef4e]"></span> PERFORMANCE VERIFIED
+        </div>
+</div>
+</div>
+<!-- ENTERPRISE CTA BANNER (HIGH CONTRAST LUXURY CARD ON WARM BEIGE) -->
+<div class="relative bg-[#150f23] border-2 border-[#362d59] rounded-3xl p-8 sm:p-12 flex flex-col lg:flex-row items-center justify-between gap-6 shadow-[0_24px_60px_rgba(21,15,35,0.22)] overflow-hidden">
+<!-- Background neon subtle flares -->
+<div class="absolute -right-20 -top-20 w-64 h-64 bg-[#c2ef4e]/15 blur-3xl rounded-full pointer-events-none"></div>
+<div class="absolute -left-20 -bottom-20 w-64 h-64 bg-[#fa7faa]/15 blur-3xl rounded-full pointer-events-none"></div>
+<div class="space-y-2.5 text-center lg:text-left relative z-10">
+<span class="inline-block px-3 py-0.5 bg-[#422082] border border-[#79628c]/50 text-[#c7bfff] rounded text-[10px] font-code-prompt uppercase font-bold">
+          ENTERPRISE PIPELINES
+        </span>
+<h3 class="font-headline-xl text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight">
+          Ready to automate your marketing video pipeline?
+        </h3>
+<p class="font-body-md text-xs sm:text-sm text-[#bdb8c0] max-w-xl">
+          Connect programmatic creative feeds via REST API or Python SDK with custom character models, infinite rendering bandwidth, and 24/7 priority compute clusters.
+        </p>
+</div>
+<div class="flex flex-col sm:flex-row items-center gap-3 shrink-0 relative z-10">
+<button class="px-7 py-3.5 bg-[#c2ef4e] hover:bg-[#aad636] text-[#150f23] font-label-btn font-bold text-xs uppercase rounded-xl shadow-[0_0_24px_rgba(194,239,78,0.45)] transition-all transform hover:-translate-y-0.5" type="button">
+          Request Sandbox
+        </button>
+<button class="px-6 py-3.5 bg-[#2b2042] hover:bg-[#362a52] text-white border border-white/15 font-label-btn font-bold text-xs uppercase rounded-xl transition-colors" type="button">
+          API Documentation
+        </button>
+</div>
+</div>
+</div>
+</section>
+<!-- ============================================================== -->
+<!-- SQUIGGLY DIVIDER ABOVE FOOTER                                  -->
+<!-- ============================================================== -->
+<div class="relative w-full overflow-hidden bg-[#f6f4ee] -mt-1 leading-none select-none z-20">
+<svg class="w-full h-10 sm:h-14 block text-[#f0eee6]" preserveaspectratio="none" viewbox="0 0 1440 60">
+<path d="M0,20 C360,45 720,5 1080,35 L1440,15 L1440,60 L0,60 Z" fill="currentColor"></path>
+<path class="lime-glow" d="M0,20 C360,45 720,5 1080,35 L1440,15" fill="none" stroke="#c2ef4e" stroke-width="2.5"></path>
+</svg>
+</div>
+<!-- ============================================================== -->
+<!-- 7. FOOTER (WARM BEIGE CANVAS WITH DARK INK TYPOGRAPHY)         -->
+<!-- ============================================================== -->
+<footer class="w-full bg-[#f0eee6] border-t border-[#cfcfdb]/60 relative z-10 pt-10 pb-12 text-[#150f23]">
+<div class="max-w-[1240px] mx-auto px-6">
+<div class="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-[#cfcfdb]/80">
+<div class="flex items-center gap-3">
+<!-- Adapted Light Footer Logo -->
+<div class="relative w-8 h-8 rounded-lg bg-[#150f23] border border-[#362d59] flex items-center justify-center overflow-hidden shadow-sm">
+<svg class="w-6 h-6" fill="none" viewbox="0 0 56 56">
+<circle cx="28" cy="28" r="26" stroke="#362d59" stroke-width="2"></circle>
+<polygon fill="#c2ef4e" points="28,8 39,22 28,28 17,22"></polygon>
+<polygon fill="#fa7faa" points="48,28 34,39 28,28 34,17"></polygon>
+<polygon fill="#c2ef4e" points="28,48 17,34 28,28 39,34"></polygon>
+<polygon fill="#6a5fc1" points="8,28 22,17 28,28 22,39"></polygon>
+<circle cx="28" cy="28" fill="#150f23" r="5" stroke="#c2ef4e" stroke-width="2"></circle>
+</svg>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="font-headline-sm text-base font-black tracking-tight text-[#150f23]">MARKETING<span class="text-[#422082]">STUDIO</span></span>
+<span class="font-code-prompt text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#150f23] text-[#c2ef4e]">.AI</span>
+</div>
+</div>
+<div class="flex flex-wrap items-center gap-6 text-xs font-body-sm font-medium text-[#4d445c]">
+<a class="hover:text-[#150f23] transition-colors" href="#">Documentation</a>
+<a class="hover:text-[#150f23] transition-colors" href="#">Prompt Index</a>
+<a class="hover:text-[#150f23] transition-colors" href="#">Discord</a>
+<a class="hover:text-[#150f23] transition-colors" href="#">Privacy</a>
+<a class="hover:text-[#150f23] transition-colors" href="#">Terms</a>
+</div>
+</div>
+<div class="pt-6 flex flex-col sm:flex-row items-center justify-between text-[11px] font-code-prompt text-[#79628c]">
+<p>© 2025 Marketing Studio, Inc. Neural director &amp; synthetic video pipelines.</p>
+<div class="flex items-center gap-2 text-[#273500] font-semibold mt-2 sm:mt-0">
+<span class="w-2 h-2 rounded-full bg-[#aad636] animate-ping"></span>
+        ALL CLUSTERS ACTIVE
+      </div>
+</div>
+</div>
+</footer>
+<script>
+  // Interactive aspect deployment switcher tabs
+  const aspectToggles = document.querySelectorAll('.aspect-toggle');
+  aspectToggles.forEach(function(toggle) {
+    toggle.addEventListener('click', function() {
+      aspectToggles.forEach(t => {
+        t.classList.remove('bg-[#c2ef4e]', 'text-[#150f23]', 'font-black', 'shadow-[0_0_12px_rgba(194,239,78,0.3)]');
+        t.classList.add('text-[#bdb8c0]', 'font-semibold');
+      });
+      this.classList.add('bg-[#c2ef4e]', 'text-[#150f23]', 'font-black', 'shadow-[0_0_12px_rgba(194,239,78,0.3)]');
+      this.classList.remove('text-[#bdb8c0]', 'font-semibold');
+    });
+  });
+
+  // Countdown timer ticker simulation
+  let seconds = 20;
+  let minutes = 6;
+  let hours = 19;
+  const timerElem = document.getElementById('countdown-timer');
+  if (timerElem) {
+    setInterval(() => {
+      seconds--;
+      if (seconds < 0) {
+        seconds = 59;
+        minutes--;
+        if (minutes < 0) {
+          minutes = 59;
+          hours--;
+        }
+      }
+      timerElem.textContent = `${hours}h ${minutes < 10 ? '0' : ''}${minutes}m ${seconds < 10 ? '0' : ''}${seconds}s`;
+    }, 1000);
+  }
+</script>
+</body></html>
