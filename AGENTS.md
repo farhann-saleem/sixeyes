@@ -21,7 +21,7 @@ Do not invent stack, models, prices, or an extra feature. If it is not in these 
 | --- | --- |
 | [README.md](README.md) | One-page product + repo map |
 | [docs/sources/FROM-AUTOMATION.md](docs/sources/FROM-AUTOMATION.md) | GPU contracts from the YouTube goldmine |
-| [docs/sources/FROM-REFERENCE-VIDEO.md](docs/sources/FROM-REFERENCE-VIDEO.md) | Pixovid walkthrough — UX/pitfalls, not our stack |
+| [docs/sources/FROM-REFERENCE-VIDEO.md](docs/sources/FROM-REFERENCE-VIDEO.md) | reference walkthrough — UX/pitfalls, not our stack |
 | `.env.example` | Env **names**. Values only in gitignored `.env`. Catalog: [docs/ENV.md](docs/ENV.md) |
 
 Sibling worker folders (not this git root): `../ms-runpod-krea`, `../ms-runpod-qwen`, `../ms-runpod-cpu`.

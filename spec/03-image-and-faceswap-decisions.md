@@ -2,7 +2,7 @@
 
 Companion to [02](./02-implement-image-and-faceswap.md). Image **workers are live**. FaceFusion + ffmpeg **worker is current**. App routes are phase D.
 
-Pixovid 03 is archaeology. Keep only what is still true.
+the reference spec 03 is archaeology. Keep only what is still true.
 
 ---
 
@@ -22,7 +22,7 @@ Model list shape for the picker:
 
 ## 2. FaceFusion (still true)
 
-- **3.6.1 has no REST API.** Wrapper: `POST /swap` multipart source+target, `GET /health`. Pixovid’s `infra/facefusion/server.py` is the pattern, hosted on RunPod CPU, not in our API container.
+- **3.6.1 has no REST API.** Wrapper: `POST /swap` multipart source+target, `GET /health`. the reference `infra/facefusion/server.py` is the pattern, hosted on RunPod CPU, not in our API container.
 - First boot is **several GB**. Marker file so restarts skip download. `lite` scope over-downloads; a warmup `headless-run` on a sample pair is leaner if we care.
 - CPU swaps are slow → long execution timeout + **async jobs**.
 - Do not `docker exec` from the backend. If FaceFusion is down: store inputs, mark `FAILED`, actionable error. Do not 500 the process.

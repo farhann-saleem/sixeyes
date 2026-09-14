@@ -8,11 +8,11 @@ Higgsfield’s landing works because it is a wall of generated video. Ours must 
 
 We **cannot** generate that many clips on our budget. Landing **uses the existing Higgsfield landing videos** (prompts, model labels, mp4s). Modal $30 is for product/demo later (LTX ~$3/hr), **not** for filling the landing wall.
 
-Do not run Pixovid’s `generate-showcase.ts` (OpenRouter, paid). Do not scrape Higgsfield again if we can reuse Pixovid’s catalog.
+Do not run the reference product’s `generate-showcase.ts` (OpenRouter, paid). Do not scrape Higgsfield again if we can reuse the reference catalog.
 
 ## Source we already have
 
-Pixovid already scraped this into [`landing_videos.json`](../landing_videos.json): names, prompts, model ids, categories, and `previewVideo` URLs on `cdn.higgsfield.ai`.
+the reference already scraped this into [`landing_videos.json`](../landing_videos.json): names, prompts, model ids, categories, and `previewVideo` URLs on `cdn.higgsfield.ai`.
 
 **When we implement:** copy that JSON into Marketing Studio. **Download the mp4s once onto Cloudflare R2** (owner lock). Do not hotlink `cdn.higgsfield.ai` in production. Do not ship them only as frontend `/public` files if R2 is the store.
 

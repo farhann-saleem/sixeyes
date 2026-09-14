@@ -29,7 +29,9 @@ def healthy(sha):
     return False
 with fetch(f'https://api.github.com/repos/{REPO}/releases?per_page=10') as response:
     releases = json.load(response)
-release = next((r for r in releases if not r['draft'] and re.fullmatch(r'deploy-[a-f0-9]{40}', r['tag_name'])), None)
+candidates = [r for r in releases if not r['draft'] and re.fullmatch(r'deploy-[a-f0-9]{40}', r['tag_name'])]
+candidates.sort(key=lambda r: r['published_at'], reverse=True)
+release = candidates[0] if candidates else None
 if not release:
     raise SystemExit('No tested deployment release published yet')
 sha = release['tag_name'][7:]

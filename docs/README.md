@@ -11,7 +11,7 @@ All durable project knowledge is markdown. Update these when facts change. Do no
 | [MODAL.md](MODAL.md) | LTX lock (read [sources/MODAL_GUIDE.md](sources/MODAL_GUIDE.md) first) |
 | [RUNPOD.md](RUNPOD.md) | Worker gates. **Never delete.** |
 | [apis/](apis/README.md) | **Owner-written** vendor API notes — read before wiring that vendor |
-| [sources/](sources/README.md) | Goldmine + Pixovid extracts. Not our stack. |
+| [sources/](sources/README.md) | Goldmine + the reference product extracts. Not our stack. |
 | [../spec/README.md](../spec/README.md) | Workflow + spec index |
 | [../CONTEXT.md](../CONTEXT.md) | Full lock |
 | [../AGENTS.md](../AGENTS.md) | Read order |

@@ -131,7 +131,7 @@ Already locked: Voice = ai33pro `VoiceProvider`. Template stitch = ffmpeg on CPU
 
 **Same as Higgsfield Audio, with this key, without a new vendor:**
 
-1. **TTS Voiceover** — script + voice library (start with Edge for cheap / MiniMax or ElevenLabs-labeled for quality). This is the Pixovid bed.
+1. **TTS Voiceover** — script + voice library (start with Edge for cheap / MiniMax or ElevenLabs-labeled for quality). This is the the reference product bed.
 2. **Clone** — one consented sample → reusable `clone_` id for that identity.
 3. **Voice Change / Translate as audio** — extract soundtrack, call changer or dubbing, mux. Output is the same picture, new voice / language. Captions from dubbing `srt_url`.
 
@@ -145,7 +145,7 @@ Wire like Seedream: job row, `POST` create, poll `GET /v1/task/:id`, meter `cred
 
 ## Possible website surfaces (owner menu, 2026-09-13)
 
-Not a lock. Extra feature still unchosen. Pixovid MVP (image, video, swap, avatars, templates, landing, credits) is already the assignment — this list is **what else this key + ffmpeg can add**.
+Not a lock. Extra feature still unchosen. the reference MVP (image, video, swap, avatars, templates, landing, credits) is already the assignment — this list is **what else this key + ffmpeg can add**.
 
 **Higgsfield-like Audio tab (same key):** TTS, clone, voice change (audio or video-mux), translate/dub (audio + SRT, no lip-sync), multi-speaker dialogue, pronunciation dictionary.
 

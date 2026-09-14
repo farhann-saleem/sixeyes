@@ -2,7 +2,7 @@
 
 **When:** read before implementing 07–11. Copy **invariants**. Swap OpenRouter → Modal LTX, MinIO → R2, stitch → RunPod CPU ffmpeg.
 
-Pixovid already designed the block model. Copy the **invariants**.
+the reference already designed the block model. Copy the **invariants**.
 
 ---
 
@@ -40,7 +40,7 @@ Spec 09 said footprint = generated duration. Spec 11 made footprint = **cropped*
 - Black gaps: `color=c=black:s=WxH:r=fps:d=LEN`.
 - Trim: `trim=start=IN:duration=LEN,setpts=PTS-STARTPTS`.
 - Uniform geometry before concat (scale/pad/setsar/fps/yuv420p).
-- Later: many audio clips, `adelay` + `amix`, timeline length = furthest video **or** audio (Pixovid AGENTS.md). If we skip multi-audio at first, still leave room in the schema (`TemplateAudioClip`).
+- Later: many audio clips, `adelay` + `amix`, timeline length = furthest video **or** audio (the reference AGENTS.md). If we skip multi-audio at first, still leave room in the schema (`TemplateAudioClip`).
 
 ---
 

@@ -1066,7 +1066,7 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
             </div>
           </div>
           <div className="hf-footer-bot">
-            <p>© 2026 Marketing Studio. A documentary from a topic — not a Higgsfield clone.</p>
+            <p>© 2026 Marketing Studio. A documentary from a topic — not a Higgsfield landing.</p>
             <div className="hf-live-clusters">
               <span className="hf-dot hf-dot-ping" style={{ background: "#aad636" }} />
               TOPIC → SCRIPT → CAST → MIX

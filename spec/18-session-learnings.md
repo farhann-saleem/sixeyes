@@ -28,7 +28,7 @@ Window listeners registered in `beginDrag` were `useCallback`s that depended on 
 
 ## 4. Concurrent edits
 
-Pixovid had two sessions rewrite `templateRender.ts` at once (serial → parallel + `linkGroupId` + `forceRegenerate`). Types drifted.
+the reference had two sessions rewrite `templateRender.ts` at once (serial → parallel + `linkGroupId` + `forceRegenerate`). Types drifted.
 
 **Rule:** disk is truth. Re-read the file. Align `RenderBlock` with Prisma. Full monorepo typecheck after edits. Our render path must include 14+15 from day one: reuse bake on **admin export**; force regenerate + link-group dedup + capped parallelism on **user generate**.
 

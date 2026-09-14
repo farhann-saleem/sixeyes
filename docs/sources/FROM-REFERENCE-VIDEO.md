@@ -1,8 +1,8 @@
 # Extracted from the Higgsfield-clone walkthrough
 
-Source: [`pixovid-walkthrough.md`](pixovid-walkthrough.md)  
+Source: [`reference-walkthrough.md`](reference-walkthrough.md)  
 Video: [I Recreated Higgsfield From Scratch in 2 Hours](https://www.youtube.com/watch?v=LuCXiNxZ1Dw)  
-Who: the person who shipped **Pixovid** (`pixovid.com`), the reference repo next to this one.
+Who: the person who shipped the reference product this walkthrough is based on.
 
 This is a **product + process** goldmine. It is **not** our stack. Reuse the UX, the spec workflow, and the pitfalls. Do not copy OpenRouter-as-default, MinIO, Razorpay, DigitalOcean K8s, or blocking HTTP generation.
 
@@ -15,7 +15,7 @@ Opening joke is HeyGen. The product is **Higgsfield** (he says Hicksfield / Hixf
 1. **Simple wrapper** — prompt in, video/image out. People pay for convenience instead of going to Gemini.
 2. **Long-form templates** — 30s–10min “movies” / song videos. Models only do 5–10s, so an admin stitches clips on a Premiere-like timeline. User uploads an avatar and becomes the lead.
 
-That second part is their “one step further.” **Marketing Studio already includes it** as core Pixovid surface (specs 04–07, 14). Do not invent a different extra feature from this video.
+That second part is their “one step further.” **Marketing Studio already includes it** as core reference surface (specs 04–07, 14). Do not invent a different extra feature from this video.
 
 ---
 
@@ -49,7 +49,7 @@ Landing wall: they **did not regenerate** Higgsfield’s catalog. They copied pr
 
 ## Pitfalls they paid for (do not re-learn)
 
-1. **Sync generate** — they knew webhooks/async were needed (30s–2min) and deferred it. Pixovid 504s. **We start async.**
+1. **Sync generate** — they knew webhooks/async were needed (30s–2min) and deferred it. the reference 504s. **We start async.**
 2. **Object-store URLs** — backend talks to MinIO as `minio:9000`; browser must see `localhost:9000`. Split internal vs public endpoint. Our analogue is R2 public / signed URLs, not MinIO.
 3. **Bake reuse** — export must skip already-baked `videoKey`s. Otherwise every export re-spends generation.
 4. **Face-swap both frames** — if start *and* end swap, two different people both become the user. Per-frame checkbox. Do not swap extras.
@@ -77,7 +77,7 @@ Landing wall: they **did not regenerate** Higgsfield’s catalog. They copied pr
 | INR packs | ₹1000 / ₹3000 / ₹8000. **We are PKR / SwichNow. Ignore these prices.** |
 | FaceFusion prod | Separate heavy machine, ~$96. **We do not copy this.** |
 | Object store | MinIO local, DigitalOcean Spaces prod. **We use R2.** |
-| Domain | pixovid.com. App was first named Video Arena. |
+| Domain | Not ours — the reference product site. |
 
 ---
 

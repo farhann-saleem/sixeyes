@@ -8,4 +8,4 @@ If the drop would overlap another clip **on the same track**, reject it (snap ba
 
 Cross-track overlaps stay allowed (spec 09, higher track wins).
 
-This is primarily frontend. Backend should still **enforce** same-track no-overlap on create/patch so the inspector cannot sneak an overlap the renderer then “fixes” with tie-breaks (Pixovid left that as a follow-up; we should not).
+This is primarily frontend. Backend should still **enforce** same-track no-overlap on create/patch so the inspector cannot sneak an overlap the renderer then “fixes” with tie-breaks (the reference left that as a follow-up; we should not).

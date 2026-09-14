@@ -49,3 +49,6 @@ build/
 
 # Google OAuth client secret file
 client_secret_*.json
+
+# Local agent config (contains shell command history — keep out of git)
+.commandcode/settings.json

@@ -2,7 +2,7 @@
 
 **When:** before we implement templates. Not current work (current = CPU FaceFusion + ffmpeg).
 
-Pixovid’s session log for templates. We did not live this session. **Do not re-learn it.** Constraints for us: OpenRouter/MinIO → Modal LTX + R2; ffmpeg → RunPod CPU.
+the reference session log for templates. We did not live this session. **Do not re-learn it.** Constraints for us: OpenRouter/MinIO → Modal LTX + R2; ffmpeg → RunPod CPU.
 
 ---
 
@@ -36,7 +36,7 @@ They chose **synchronous serial** render. We do **not**. Background job + poll. 
 ## 4. Provider / storage
 
 - Sniff image mime from magic bytes.
-- Send frames to the video provider the way **that** provider requires (bytes, URL, or base64). R2 can be public; do not cargo-cult Pixovid’s “must be data URLs.”
+- Send frames to the video provider the way **that** provider requires (bytes, URL, or base64). R2 can be public; do not cargo-cult the reference product’s “must be data URLs.”
 - Block duration is the model duration, integer seconds, min 1s, from the allowed set.
 
 ---
@@ -61,4 +61,4 @@ They chose **synchronous serial** render. We do **not**. Background job + poll. 
 
 1. Job queue + poll (already mandated).
 2. Per-block bake (07) so export is not a blind full generate (14).
-3. Template settings edit in the admin UI (audio/slots/name) — Pixovid API had it, UI did not.
+3. Template settings edit in the admin UI (audio/slots/name) — the reference API had it, UI did not.

@@ -78,7 +78,7 @@ Owner-approved Free / Pro / Premium pricing shipped. Tiers: Free $0 (3 avatars, 
 
 ## Aim
 
-Marketing Studio (`marketingstudioie.site`): Higgsfield-style generative-media SaaS. **MVP** follows Pixovid / `docs/sources/`. **Destination** is [higgsfield.ai](https://higgsfield.ai/). Extra feature chosen: **Audio studio** (spec 21). Login shipped; SwichNow pricing shipped; Stitch UI + Supabase last.
+Marketing Studio (`marketingstudioie.site`): Higgsfield-style generative-media SaaS. **MVP** follows the reference product / `docs/sources/`. **Destination** is [higgsfield.ai](https://higgsfield.ai/). Extra feature chosen: **Audio studio** (spec 21). Login shipped; SwichNow pricing shipped; Stitch UI + Supabase last.
 
 Complete guide: [spec/README.md](../spec/README.md). Lock: [CONTEXT.md](../CONTEXT.md). Env names: [ENV.md](ENV.md).
 
@@ -91,7 +91,7 @@ Complete guide: [spec/README.md](../spec/README.md). Lock: [CONTEXT.md](../CONTE
 | A | RunPod **Krea** T2I + **Qwen Edit** I2I | **Set** (`i3fvrhucaici89`, `ko6zewns6wj3mj`, EU-RO-1) |
 | B | RunPod CPU **FaceFusion** + **ffmpeg** | Endpoint `rydclpv4ta6u4p`. **Still swap verified** on Images Templates. **Video swap verified** on Video Templates (15s handheld + `avatar.jpeg`, job `1fab1e69`, **133.7s**). Library **delete** shipped. **Stitch wired** from `/studio` export (product smoke pending first Export). |
 | C | Modal **LTX-2.5** video (**$25** cap) | App **deployed** on **H200** (no offload, 20 steps). Fast 5s smoke **72s**. H100 offload path is retired (1233s). |
-| D | Express MVP. Avatar, Audio, templates, **Projects documentary** (spec 22-brief). No login. | **Landing** is `/` (Stitch Higgsfield clone). **Projects** is `/projects`. Script → Pexels cast → same-id Studio. Export waits on CPU timeline-v1 deploy. Audio `/audio`. Avatar default **FLUX.2 Klein 4B**. Muse geo-blocked. Costs: [COST.md](COST.md). |
+| D | Express MVP. Avatar, Audio, templates, **Projects documentary** (spec 22-brief). No login. | **Landing** is `/` (Stitch Higgsfield landing). **Projects** is `/projects`. Script → Pexels cast → same-id Studio. Export waits on CPU timeline-v1 deploy. Audio `/audio`. Avatar default **FLUX.2 Klein 4B**. Muse geo-blocked. Costs: [COST.md](COST.md). |
 | E | Stitch UI, login, Supabase, SwichNow | **Login shipped.** **Pricing + SwichNow shipped.** **Supabase multi-user code shipped** (SQL apply pending in dashboard). Left: run migration SQL, Stitch polish, recurring auto-debit, host Express. |
 
 Images are RunPod, not Modal. Modal is video only.
@@ -108,7 +108,7 @@ Images are RunPod, not Modal. Modal is video only.
 
 ## Do not
 
-Invent another extra feature (Audio studio already shipped). Spend GPU on curiosity generates. Copy Pixovid blocking HTTP. Put FaceFusion/ffmpeg on a GPU. Put Krea/Qwen on the Modal $25. H100 LTX offload. Claim lip-sync on Translate.
+Invent another extra feature (Audio studio already shipped). Spend GPU on curiosity generates. Use blocking HTTP generation. Put FaceFusion/ffmpeg on a GPU. Put Krea/Qwen on the Modal $25. H100 LTX offload. Claim lip-sync on Translate.
 
 Capture observation (2026-09-13): one Codex canary prompt now exists (session `01a09a27`, `gpt-5.1-codex-max`), but no response at inspection. Two complete session pairs and desktop capture remain unverified. See CAPTURE-TEST.md.
 
