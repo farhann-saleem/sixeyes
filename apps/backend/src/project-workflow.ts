@@ -3,6 +3,8 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { Router } from "express";
 import { getProject, getUpload, listProjects, listUploads, saveProject, saveUpload, studioUploadPath } from "./studio-store.js";
 import { emptyProject, footprint, validateProject } from "./studio-timeline.js";
+import { parseFilmLength, scaleScriptToLength } from "./film-length.js";
+import { assertSafePrompt } from "./prompt-guard.js";
 import { generateScript, parseScript } from "./project-script.js";
 import { fetchSceneStock } from "./project-stock.js";
 import { listStudioMedia } from "./studio-media.js";
@@ -24,10 +26,18 @@ function current(id: string, token: string) {
   if (p.operation_id !== token || p.status !== "running") throw new Error("Operation stopped");
   return p;
 }
-export function createTopicProject(topic: unknown, name?: string, inLibrary = false) {
-  if (typeof topic !== "string" || !topic.trim() || topic.length > 2000) throw new Error("Topic required (max 2000 characters)");
-  const p = emptyProject(randomUUID(), name?.trim().slice(0, 80) || topic.trim().slice(0, 80));
-  p.topic = topic.trim(); p.phase = "topic"; p.status = "draft"; p.in_library = Boolean(inLibrary);
+export function createTopicProject(topic: unknown, name?: string, inLibrary = false, script?: unknown, durationSec?: unknown) {
+  const cleanTopic = assertSafePrompt(topic, "topic");
+  const length = parseFilmLength(durationSec);
+  const cleanName = name == null || name === "" ? undefined : assertSafePrompt(String(name), "name");
+  const p = emptyProject(randomUUID(), cleanName?.trim().slice(0, 80) || cleanTopic.slice(0, 80));
+  p.topic = cleanTopic; p.target_duration_sec = length; p.phase = "topic"; p.status = "draft"; p.in_library = Boolean(inLibrary);
+  if (script !== undefined) {
+    p.script = parseScript(scaleScriptToLength(script, length), undefined, length, { owner: true });
+    p.phase = "script";
+    p.status = "ready";
+    return saveProject(p);
+  }
   saveProject(p); return startOperation(p, "script");
 }
 export function startOperation(p: StudioProject, operation: NonNullable<StudioProject["operation"]>, voiceId?: string) {
@@ -45,7 +55,7 @@ async function runOperation(id: string, token: string) {
   try {
     let p = current(id, token);
     if (p.operation === "script") {
-      const result = await generateScript(p.topic, signal);
+      const result = await generateScript(p.topic, signal, parseFilmLength(p.target_duration_sec));
       p = current(id, token); p.script = result.script; p.script_cost_usd = result.cost; p.phase = "script";
     } else if (p.operation === "stock") {
       if (!p.script) throw new Error("Review a script first");
@@ -70,7 +80,7 @@ async function runOperation(id: string, token: string) {
           if (!voiceId) throw new Error("No usable catalog voice. Choose a voice and retry assemble.");
         }
         p = current(id, token);
-        const job = enqueue("tts", p.name, { text: p.script!.voiceover_full, voice_id: voiceId, speed: 1, project_id: id }, undefined, true);
+        const job = enqueue("tts", p.name, { text: assertSafePrompt(p.script!.voiceover_full, "scriptVo"), voice_id: voiceId, speed: 1, project_id: id }, undefined, true);
         p.tts_job_id = job.id; p.voice_id = voiceId; saveProject(p);
         void runAudioJob(job.id);
       }
@@ -178,7 +188,7 @@ function route(method: "post" | "patch", suffix: string, action: (p: StudioProje
 }
 route("post", "retry-script", p => { if (p.script || !p.topic) throw new Error("Script already exists"); return startOperation(p, "script"); }, 202);
 route("patch", "script", (p, body) => { idle(p); if (p.phase !== "script") throw new Error("Script can only be edited before fetching stock");
-  p.script = parseScript(body, p.script); p.status = "ready"; p.error = null; return saveProject(p); });
+  p.script = parseScript(body, p.script, parseFilmLength(p.target_duration_sec), { owner: true }); p.status = "ready"; p.error = null; return saveProject(p); });
 route("post", "fetch-stock", p => { if (!p.script || !["script", "cast"].includes(p.phase)) throw new Error("Review script before fetching stock"); return startOperation(p, "stock"); }, 202);
 route("post", "scenes/:sceneId/pick", (p, body, sid) => {
   idle(p); if (p.phase !== "cast") throw new Error("Picks can only be edited in Cast");

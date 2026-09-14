@@ -118,8 +118,9 @@ html:has(.in-studio) .nav nav a {
   flex: 1;
   min-height: 0;
   height: 100%;
+  overflow: hidden;
   display: grid;
-  grid-template-rows: auto minmax(240px, 1fr) minmax(220px, min(32vh, 300px));
+  grid-template-rows: auto minmax(0, 1fr) minmax(0, 34%);
   background: var(--nle-bg);
 }
 
@@ -127,8 +128,8 @@ html:has(.in-studio) .nav nav a {
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
-  gap: 10px;
-  padding: 8px 12px;
+  gap: 8px;
+  padding: 6px 10px;
   border-bottom: 1px solid var(--nle-line);
   background: #0c0e12;
 }
@@ -204,7 +205,7 @@ html:has(.in-studio) .nav nav a {
 .nle-mid {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr) 268px;
-  min-height: 240px;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -238,10 +239,10 @@ html:has(.in-studio) .nav nav a {
   background: transparent;
   border: 0;
   color: #8b90a0;
-  padding: 9px 2px;
+  padding: 7px 4px;
   margin: 0;
   font: inherit;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -275,7 +276,7 @@ html:has(.in-studio) .nav nav a {
 
 .nle-bin-upload {
   flex-shrink: 0;
-  padding: 10px;
+  padding: 6px 8px;
 }
 
 .nle-media-wrap {
@@ -421,18 +422,18 @@ html:has(.in-studio) .nav nav a {
 
 .nle-stage-play {
   position: absolute;
-  left: 12px;
-  bottom: 12px;
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
+  left: 10px;
+  bottom: 10px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
   padding: 0;
   margin: 0;
   border: 0;
   border-radius: 999px;
   background: rgba(214, 255, 60, 0.95);
   color: #111;
-  font-size: 1.05rem;
+  font-size: 0.9rem;
   line-height: 1;
   cursor: pointer;
   z-index: 2;
@@ -456,23 +457,23 @@ html:has(.in-studio) .nav nav a {
   display: grid;
   grid-template-columns: auto auto auto minmax(8ch, 1fr) auto;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 6px;
+  padding: 4px 10px;
   background: #101218;
   border-bottom: 1px solid var(--nle-line);
 }
 
 .nle-hit {
   appearance: none;
-  min-height: 44px;
-  min-width: 84px;
-  padding: 0 16px;
+  min-height: 32px;
+  min-width: 72px;
+  padding: 0 12px;
   border: 1px solid var(--nle-line);
-  border-radius: 10px;
+  border-radius: 8px;
   background: #1a1f2a;
   color: #f2f2ee;
   font: inherit;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   font-weight: 650;
   cursor: pointer;
 }
@@ -483,7 +484,7 @@ html:has(.in-studio) .nav nav a {
 }
 
 .nle-hit.play {
-  min-width: 100px;
+  min-width: 84px;
   background: var(--nle-lime);
   color: #111;
   border-color: transparent;
@@ -495,7 +496,7 @@ html:has(.in-studio) .nav nav a {
 
 .nle-tc.big {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 1.45rem;
+  font-size: 1.05rem;
   font-weight: 500;
   color: var(--nle-lime);
   min-width: 8ch;
@@ -505,17 +506,21 @@ html:has(.in-studio) .nav nav a {
 
 .nle-zoom {
   display: inline-flex;
+  flex-direction: row;
   align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  padding: 0 14px;
-  border-radius: 10px;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
   background: #1a1f2a;
   border: 1px solid var(--nle-line);
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 650;
   color: #c5c8d4;
   justify-self: end;
+  align-self: center;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .nle-zoom input[type="range"] {
@@ -527,6 +532,10 @@ html:has(.in-studio) .nav nav a {
 .nle-timeline {
   display: grid;
   grid-template-columns: 88px minmax(0, 1fr);
+  min-height: 0;
+  height: 100%;
+  overflow: auto;
+  align-content: start;
   background: #0b0d12;
   border-top: 1px solid var(--nle-line);
   user-select: none;
@@ -728,63 +737,66 @@ html:has(.in-studio) .nav nav a {
 @media (max-width: 720px) {
   .nle-mid {
     grid-template-columns: 1fr;
-    grid-template-rows: min-content minmax(0, 1fr) 0;
+    grid-template-rows: auto minmax(0, 1fr);
   }
+  .nle-mid > * { min-height: 0; }
   .nle-inspector {
     display: none;
+  }
+  .nle-bin {
+    overflow: hidden;
   }
   .nle-bin-list {
     display: flex;
     overflow-x: auto;
     overflow-y: hidden;
     flex: 0 0 auto;
-    min-height: 118px;
-    height: 118px;
+    min-height: 64px;
+    height: 64px;
     scrollbar-width: none;
   }
   .nle-bin-list::-webkit-scrollbar {
     display: none;
   }
   .nle-media {
-    flex: 0 0 132px;
+    flex: 0 0 108px;
+  }
+  .nle-bin-upload {
+    padding: 6px 8px;
   }
   .nle-transport {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-areas:
-      "play split text"
-      "tc tc zoom";
-    gap: 8px;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    overflow-x: auto;
+    gap: 6px;
   }
   .nle-hit {
-    min-width: 0;
-    width: 100%;
+    min-width: 56px;
+    width: auto;
     padding: 0 8px;
-    font-size: 0.88rem;
+    font-size: 0.78rem;
   }
   .nle-hit.play {
-    grid-area: play;
-    min-width: 0;
-  }
-  .nle-hit.split {
-    grid-area: split;
-  }
-  .nle-hit.text {
-    grid-area: text;
+    min-width: 64px;
   }
   .nle-tc.big {
-    grid-area: tc;
-    font-size: 1.2rem;
+    font-size: 0.95rem;
+    flex: 1;
   }
   .nle-zoom {
-    grid-area: zoom;
-    width: 100%;
+    width: auto;
     justify-content: flex-end;
-    padding: 0 10px;
+    padding: 0 8px;
+    flex-shrink: 0;
   }
   .nle-zoom input[type="range"] {
     width: 88px;
   }
   .nle-dock {
-    grid-template-rows: auto minmax(160px, 28vh);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .nle-shell {
+    grid-template-rows: auto minmax(0, 1fr) minmax(210px, 46%);
   }
 }

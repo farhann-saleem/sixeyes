@@ -11,7 +11,7 @@ An MCP JSON-RPC server on the **existing backend** (`POST http://localhost:3001/
 | `list_templates` | Image / video / effect catalogs |
 | `list_identities` | Saved avatars |
 | `list_library` | Completed generate jobs |
-| `list_films` / `get_film` / `create_documentary` | Spec 22 projects (`in_library` default true) |
+| `list_films` / `get_film` / `create_documentary` | Spec 22 projects (`in_library` default true). `create_documentary` accepts optional `duration_sec` 30/45/60/90 |
 | `generate_look` / `get_generation` | Existing async look generate (`avatar_id` + `template_id`) |
 
 `generate_look` is async. Poll `get_generation`. FaceFusion stays internal. No lip-sync. No LTX from this pipe. Do not generate while CPU `throttled > 0`.

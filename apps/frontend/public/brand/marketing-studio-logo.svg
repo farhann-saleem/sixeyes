@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="logo-title logo-description">
+  <title id="logo-title">Marketing Studio</title>
+  <desc id="logo-description">A lime M ribbon inside a midnight film frame.</desc>
+  <rect x="4" y="4" width="152" height="152" rx="36" fill="#150F23"/>
+  <path d="M42 112V48H60L80 73L100 48H118V112H99V79L80 102L61 79V112H42Z" fill="#C2EF4E"/>
+  <path d="M26 53V39C26 31.8203 31.8203 26 39 26H53M107 134H121C128.18 134 134 128.18 134 121V107" stroke="#C2EF4E" stroke-width="3" stroke-linecap="round"/>
+</svg>

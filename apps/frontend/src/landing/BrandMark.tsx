@@ -1,15 +1,5 @@
 export function BrandMark({ className = "" }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 56 56" aria-hidden="true">
-      <circle cx="28" cy="28" r="26" stroke="#362d59" strokeWidth="2" />
-      <polygon fill="#c2ef4e" points="28,8 39,22 28,28 17,22" />
-      <polygon fill="#fa7faa" points="48,28 34,39 28,28 34,17" />
-      <polygon fill="#c2ef4e" points="28,48 17,34 28,28 39,34" />
-      <polygon fill="#6a5fc1" points="8,28 22,17 28,28 22,39" />
-      <circle cx="28" cy="28" fill="#150f23" r="5" stroke="#c2ef4e" strokeWidth="2" />
-      <circle cx="28" cy="28" fill="#ffffff" r="2" />
-    </svg>
-  );
+  return <img className={className} src="/brand/marketing-studio-logo.svg" width="56" height="56" alt="" aria-hidden="true" />;
 }
 
 export function Icon({ name }: { name: string }) {

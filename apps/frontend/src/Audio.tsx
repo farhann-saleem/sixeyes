@@ -1,4 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { promptIssue } from "./prompt-guard";
+import { SecureLine, SecurePrompt } from "./SecurePrompt";
 import type { AudioDesk } from "./Nav";
 import { formatDuration, json } from "./studio";
 import { VoiceLibraryBrowse, VoicePicker } from "./VoiceLibrary";
@@ -242,6 +244,8 @@ export function AudioStudio({ desk }: { desk?: AudioDesk } = {}) {
 
   async function onTts(e: FormEvent) {
     e.preventDefault();
+    const blocked = promptIssue(text, "speech");
+    if (blocked) { setError(blocked); return; }
     await postJson("/api/audio/tts", {
       text,
       voice_id: voiceId,
@@ -253,6 +257,8 @@ export function AudioStudio({ desk }: { desk?: AudioDesk } = {}) {
 
   async function onDialogue(e: FormEvent) {
     e.preventDefault();
+    const blocked = promptIssue(text, "speech");
+    if (blocked) { setError(blocked); return; }
     await postJson("/api/audio/dialogue", {
       text,
       delay: Number(delay),
@@ -386,7 +392,7 @@ export function AudioStudio({ desk }: { desk?: AudioDesk } = {}) {
         </div>
         <p className="audio-credits">
           {health?.credits_remaining ?? "—"} credits
-          {health?.ffmpeg ? "" : " · ffmpeg missing"}
+          {health && !health.ffmpeg ? " · ffmpeg missing" : ""}
         </p>
       </header>
 
@@ -507,6 +513,8 @@ export function AudioStudio({ desk }: { desk?: AudioDesk } = {}) {
               void postFile("/api/audio/stt", {});
             } else if (mode === "sfx") {
               e.preventDefault();
+              const blocked = promptIssue(text, "sfx");
+              if (blocked) { setError(blocked); return; }
               void postJson("/api/audio/sfx", {
                 text,
                 duration_seconds: sfxDuration === "" ? undefined : Number(sfxDuration),
@@ -515,6 +523,10 @@ export function AudioStudio({ desk }: { desk?: AudioDesk } = {}) {
               });
             } else if (mode === "music") {
               e.preventDefault();
+              const blocked = musicMode === "simple"
+                ? promptIssue(musicPrompt, "music")
+                : promptIssue(lyrics, "lyrics") || promptIssue(tags, "tags") || promptIssue(title, "name");
+              if (blocked) { setError(blocked); return; }
               void postJson(
                 "/api/audio/music",
                 musicMode === "simple"
@@ -529,8 +541,9 @@ export function AudioStudio({ desk }: { desk?: AudioDesk } = {}) {
           {mode === "tts" || mode === "dialogue" || mode === "sfx" ? (
             <>
               <label htmlFor="script">{mode === "sfx" ? "Sound description" : "Script"}</label>
-              <textarea
+              <SecurePrompt
                 id="script"
+                kind={mode === "sfx" ? "sfx" : "speech"}
                 rows={mode === "sfx" ? 4 : 8}
                 value={text}
                 disabled={working}
@@ -541,7 +554,7 @@ export function AudioStudio({ desk }: { desk?: AudioDesk } = {}) {
                       ? "Thunder rolling with heavy rain"
                       : "Paste script or SRT…"
                 }
-                onChange={(e) => setText(e.target.value)}
+                onChange={setText}
               />
             </>
           ) : null}
@@ -721,7 +734,7 @@ export function AudioStudio({ desk }: { desk?: AudioDesk } = {}) {
               {musicMode === "simple" ? (
                 <>
                   <label htmlFor="mp">Description (1–500)</label>
-                  <textarea id="mp" rows={4} value={musicPrompt} disabled={working} onChange={(e) => setMusicPrompt(e.target.value)} />
+                  <SecurePrompt id="mp" kind="music" rows={4} value={musicPrompt} disabled={working} onChange={setMusicPrompt} />
                   <label className="check">
                     <input type="checkbox" checked={instrumental} disabled={working} onChange={(e) => setInstrumental(e.target.checked)} />
                     Instrumental
@@ -730,11 +743,11 @@ export function AudioStudio({ desk }: { desk?: AudioDesk } = {}) {
               ) : (
                 <>
                   <label htmlFor="mt">Title</label>
-                  <input id="mt" value={title} disabled={working} onChange={(e) => setTitle(e.target.value)} />
+                  <SecureLine id="mt" kind="name" value={title} disabled={working} onChange={setTitle} />
                   <label htmlFor="ly">Lyrics</label>
-                  <textarea id="ly" rows={6} value={lyrics} disabled={working} onChange={(e) => setLyrics(e.target.value)} />
+                  <SecurePrompt id="ly" kind="lyrics" rows={6} value={lyrics} disabled={working} onChange={setLyrics} />
                   <label htmlFor="tg">Style tags</label>
-                  <input id="tg" value={tags} disabled={working} onChange={(e) => setTags(e.target.value)} />
+                  <SecureLine id="tg" kind="tags" value={tags} disabled={working} onChange={setTags} />
                   <label htmlFor="g">Vocal</label>
                   <select id="g" value={gender} disabled={working} onChange={(e) => setGender(e.target.value)}>
                     <option value="">Either</option>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { SecurePrompt } from "../SecurePrompt";
 import { Preview } from "./Preview";
 import { Timeline } from "./Timeline";
 import {
@@ -481,9 +482,10 @@ function StudioEditor({ projectId, onHome }: { projectId: string; onHome: () => 
                 {selected.kind === "text" ? (
                   <>
                     <label>Text</label>
-                    <textarea
+                    <SecurePrompt
+                      kind="overlay"
                       value={selected.text ?? ""}
-                      onChange={(e) => patchClip({ text: e.target.value, label: e.target.value.slice(0, 40) })}
+                      onChange={(next) => patchClip({ text: next, label: next.slice(0, 40) })}
                     />
                     <label>Size</label>
                     <input

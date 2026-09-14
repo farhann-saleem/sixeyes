@@ -6,7 +6,7 @@ Owner GO 2026-09-13. Supersedes the empty Studio home from [22-video-studio.md](
 
 Phases: `topic → script → cast → studio → exported`. Status: `draft | running | ready | failed | cancelled`. Legacy rows normalize to studio/ready with null script and empty topic. A durable operation id fences asynchronous writes; startup resumes only assembly with a known TTS provider id. Interrupted script/stock needs explicit retry, never an automatic paid resubmission. Terminal TTS errors retain the job id.
 
-OpenRouter `/chat/completions` writes 6–8 scenes, 4–8 seconds each, total 45–60s. Generated duration arithmetic is normalized without a second LLM request. Owner edits are validated, not silently normalized. Full narration has a 180-word budget; measured output and final timeline have a 90s hard cap. Project keeps returned text cost when available.
+OpenRouter `/chat/completions` writes to the **chosen film length**: 30, 45, **60 (default)**, or 90 seconds. Scene count and word budget scale with that pick (60s stays 6–8 scenes, 4–8 seconds each, total 45–65s). Generated duration arithmetic is normalized without a second LLM request. Owner edits and coffee presets are validated, not silently normalized; presets are scaled to the chosen length. Full narration word budget follows the length (90 words at 30s, 180 at 90s). Measured output and final timeline have a **90s hard cap**. Topic and script fields are prompt-guarded (injection / role-override refused; topic wrapped as data). Project keeps returned text cost when available.
 
 Review title, full narration, headings, scene narration, concrete 3–6 word stock queries and durations. Fetch only after approval. Scene VO edits update full narration while it follows the concatenated scene lines; separately edited full narration remains authoritative.
 
@@ -26,7 +26,7 @@ All paths are below `/api/studio`.
 
 | Method | Path | Behavior |
 | --- | --- | --- |
-| POST | `/projects` | `{topic,name?,in_library?}` creates one row, script queued, 202; `in_library` also lists the film on `/library`; old `{name,from}` retained |
+| POST | `/projects` | `{topic,name?,in_library?,duration_sec?}` creates one row, script queued, 202; `duration_sec` is 30/45/60/90 (default 60); `in_library` also lists the film on `/library`; old `{name,from}` retained |
 | GET | `/projects`, `/projects/:id` | Full project, scenes, candidates and timeline |
 | PATCH | `/projects/:id/script` | Script-only stage; validate owner edits |
 | POST | `/projects/:id/retry-script` | Explicit retry before script exists, 202 |
@@ -42,7 +42,7 @@ All paths are below `/api/studio`.
 
 ## UI
 
-Primary Projects tab, all existing tabs retained. `/` and `/projects` list projects and New topic. `/projects/:id` script; `/cast` picks; `/studio` existing NLE with uploads bin default. Chrome owns project name and step tabs. Studio is gated until assembly (legacy projects already allowed). Old `/studio` paths resolve to Projects routes. Editor remounts per project id and serializes/flushed pending saves before export or server clip changes.
+Primary Projects tab, all existing tabs retained. `/` and `/projects` list projects and New topic plus **How long** (30/45/60/90). `/projects/:id` script; `/cast` picks; `/studio` existing NLE with uploads bin default. Chrome owns project name and step tabs. Studio is gated until assembly (legacy projects already allowed). Old `/studio` paths resolve to Projects routes. Editor remounts per project id and serializes/flushed pending saves before export or server clip changes.
 
 ## Cloud export requirement
 

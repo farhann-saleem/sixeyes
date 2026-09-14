@@ -23,6 +23,8 @@ Owner-written API notes (read before wiring): [apis/ai33pro.md](apis/ai33pro.md)
 
 `HF_TOKEN` / `HUGGING_API_KEY`, R2 `*_1` and canonical `R2_*`, `RUNPOD_API_KEY`, Krea/Qwen/CPU endpoint ids.
 
+`FRONTEND_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — Google OAuth web client (project `higgy-508504`), redirect `https://www.marketingstudioie.site/callback`. For local dev, add `http://localhost:5173/callback` as an authorized redirect in the Google Cloud console; otherwise login 400s locally.
+
 ## Fill when that phase starts
 
 | Phase | Names |
@@ -30,8 +32,8 @@ Owner-written API notes (read before wiring): [apis/ai33pro.md](apis/ai33pro.md)
 | B | `RUNPOD_CPU_ENDPOINT_ID` (live `rydclpv4ta6u4p`) |
 | C | `MODAL_TOKEN_ID`, `MODAL_TOKEN_SECRET` (or Modal CLI `~/.modal.toml`) |
 | D MVP | none of the DB/auth keys required |
-| D later / E | `DATABASE_URL`, `SUPABASE_*`, `FRONTEND_URL`, `GOOGLE_CLIENT_*` — **end** |
-| E | `SWICHNOW_*` — **names TBD** against SwichNow docs; placeholders only |
+| D later / E | `DATABASE_URL`, `SUPABASE_*` — **end** |
+| E | `SWICHNOW_*` — live. `SWICHNOW_API_KEY` = clientId, `SWICHNOW_SECRET` = HMAC secret key (checksums), `SWICHNOW_BASE_URL` = api base (sandbox vs prod), optional `SWICHNOW_PWA_URL` = hosted-checkout host override. See [../spec/19-credits-swichnow.md](../spec/19-credits-swichnow.md). |
 
 Gemini / Anthropic keys in `.env` are extras, not product defaults.
 

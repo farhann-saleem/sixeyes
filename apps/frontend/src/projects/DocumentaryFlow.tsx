@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from "react";
+import { FILM_LENGTH_OPTIONS, sceneDurationBounds, type FilmLengthSec } from "../film-length";
+import { promptIssue } from "../prompt-guard";
+import { SecureLine, SecurePrompt } from "../SecurePrompt";
 import { api, type StudioProject, type ProjectScript } from "../video-studio/model";
 import { VideoStudio } from "../video-studio/VideoStudio";
+import { FILM_PRESETS } from "./film-presets";
 import "./documentary.css";
 
 type Step = "script" | "cast" | "studio";
 type Desk = "topic" | Step;
 
 const FILM_NAV: Array<{ id: Desk; kicker: string; title: string; hint: string }> = [
-  { id: "topic", kicker: "01 · Topic", title: "Start a film", hint: "Topic and a name." },
+  { id: "topic", kicker: "01 · Topic", title: "Start a film", hint: "Topic, name, and length." },
   { id: "script", kicker: "02 · Script", title: "Write the story", hint: "Narration and scenes." },
   { id: "cast", kicker: "03 · Cast", title: "Pick the shots", hint: "One Pexels pick per scene." },
   { id: "studio", kicker: "04 · Mix", title: "Open Studio", hint: "Narration on A1. Music on A2." },
@@ -56,6 +60,8 @@ export function ProjectsHome({ onOpen: _onOpen }: { onOpen: (id: string, step: S
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [topic, setTopic] = useState(""); const [name, setName] = useState("");
+  const [filmLength, setFilmLength] = useState<FilmLengthSec>(60);
+  const [presetId, setPresetId] = useState("");
   const [saveToLibrary, setSaveToLibrary] = useState(true);
   const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const [desk, setDesk] = useState<Desk>("topic");
@@ -69,7 +75,8 @@ export function ProjectsHome({ onOpen: _onOpen }: { onOpen: (id: string, step: S
   async function create() {
     setBusy(true); setError("");
     try {
-      const p = await api<StudioProject>(base, request("POST", { topic, name, in_library: saveToLibrary }));
+      const preset = FILM_PRESETS.find((x) => x.id === presetId);
+      const p = await api<StudioProject>(base, request("POST", { topic, name, in_library: saveToLibrary, script: preset?.script, duration_sec: filmLength }));
       setWorkingId(p.id);
       setDesk("script");
       setProjects((prev) => [p, ...prev.filter((x) => x.id !== p.id)]);
@@ -101,18 +108,67 @@ export function ProjectsHome({ onOpen: _onOpen }: { onOpen: (id: string, step: S
         </p>
       </div>
     </header>
+    <div className="film-workbench">
     <FilmNav desk={desk} onDesk={setDesk} />
     {error ? <p className="project-error" role="alert">{error}</p> : null}
-    <section className={`film-stage${desk === "studio" ? " is-mix" : ""}`}>
+    <section className={`film-stage${desk === "topic" ? " is-topic" : desk === "script" ? " is-script" : desk === "cast" ? " is-cast" : desk === "studio" ? " is-mix" : ""}`}>
       {desk === "topic" ? (
         <form className="film-topic" onSubmit={e => { e.preventDefault(); void create(); }}>
+          <div className="film-topic-intro">
+          <img className="film-brand" src="/brand/marketing-studio-logo.svg" width="160" height="160" alt="" />
           <p className="kicker">01 · Topic</p>
           <h2>Start a film</h2>
-          <p className="lede">Type what the film is about. Optional name. We write the script next.</p>
-          <label>Topic<textarea required maxLength={2000} rows={5} placeholder="Coffee shop morning — first grind to the rush" value={topic} onChange={e => setTopic(e.target.value)} /></label>
-          <label>Name <span>(optional)</span><input maxLength={80} value={name} onChange={e => setName(e.target.value)} placeholder="Give it a name" /></label>
+          <p className="lede">Pick a coffee story — the script is already written — or type your own topic. Choose how long the film should run.</p>
+          </div>
+          <div className="film-topic-fields">
+          <label>Story
+            <select
+              value={presetId}
+              onChange={(e) => {
+                const next = e.target.value;
+                setPresetId(next);
+                const preset = FILM_PRESETS.find((x) => x.id === next);
+                if (preset) { setName(preset.name); setTopic(preset.topic); }
+              }}
+            >
+              <option value="">Write your own topic</option>
+              {FILM_PRESETS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+            </select>
+          </label>
+          <label>Topic
+            <SecurePrompt
+              kind="topic"
+              required
+              rows={4}
+              placeholder="Coffee shop morning — first grind to the rush"
+              value={topic}
+              onChange={(next) => { setTopic(next); setPresetId(""); }}
+            />
+          </label>
+          <fieldset className="film-length">
+            <legend>How long</legend>
+            <div className="film-length-pills" role="radiogroup" aria-label="Film length">
+              {FILM_LENGTH_OPTIONS.map((opt) => (
+                <button
+                  key={opt.sec}
+                  type="button"
+                  role="radio"
+                  aria-checked={filmLength === opt.sec}
+                  className={`film-length-pill${filmLength === opt.sec ? " on" : ""}`}
+                  onClick={() => setFilmLength(opt.sec)}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <p>{FILM_LENGTH_OPTIONS.find((o) => o.sec === filmLength)?.hint} Hard cap is 90 seconds.</p>
+          </fieldset>
+          <label>Name <span>(optional)</span>
+            <SecureLine kind="name" value={name} onChange={setName} placeholder="Give it a name" />
+          </label>
           <label className="project-library-opt"><input type="checkbox" checked={saveToLibrary} onChange={e => setSaveToLibrary(e.target.checked)} /> Also keep in Library</label>
-          <button className="project-primary" disabled={busy || !topic.trim()}>{busy ? "Creating…" : "New project"}</button>
+          <button className="project-primary" disabled={busy || !topic.trim() || Boolean(promptIssue(topic, "topic"))}>{busy ? "Creating…" : "New project"}</button>
+          </div>
         </form>
       ) : workingId ? (
         <ProjectWorkspace
@@ -130,6 +186,7 @@ export function ProjectsHome({ onOpen: _onOpen }: { onOpen: (id: string, step: S
         </div>
       )}
     </section>
+    </div>
     <section className="films-shelf">
       <div className="films-shelf-head">
         <h2>Your films</h2>
@@ -141,7 +198,7 @@ export function ProjectsHome({ onOpen: _onOpen }: { onOpen: (id: string, step: S
         return <article className="project-card" key={p.id}>
         <button className="project-card-open" aria-label={`Open ${p.name}`} onClick={() => { setWorkingId(p.id); setDesk(projectStep(p)); }}>
         <div className="project-card-art">{still ? still.video ? <video src={still.src} muted loop playsInline autoPlay preload="auto" /> : <img src={still.src} alt="" /> : <span>{p.name.slice(0, 1).toUpperCase()}</span>}<em>{p.phase} · {p.status}</em></div>
-        <h2>{p.name}</h2></button><p>{p.topic || "Existing Studio project"}</p><footer>{p.clips.length} clips <span>{new Date(p.updated_at).toLocaleDateString()}</span></footer>
+        <h2>{p.name}</h2></button><p>{p.topic || "Existing Studio project"}</p><footer>{p.target_duration_sec ?? 60}s · {p.clips.length} clips <span>{new Date(p.updated_at).toLocaleDateString()}</span></footer>
         {renamingId === p.id && <input autoFocus aria-label="Rename project" maxLength={80} value={renameValue} onChange={e => setRenameValue(e.target.value)} onBlur={() => void rename(p.id)} onKeyDown={e => { if(e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); } if(e.key === "Escape") setRenamingId(null); }} />}
         <div className="project-card-actions"><button onClick={() => { setWorkingId(p.id); setDesk(projectStep(p)); }}>Edit</button><button disabled={p.status === "running"} onClick={() => { setRenamingId(p.id); setRenameValue(p.name); }}>Rename</button><button disabled={p.status === "running"} onClick={() => void remove(p)}>Delete</button></div>
       </article>;
@@ -199,16 +256,16 @@ export function ProjectWorkspace({ id, step, onStep, onHome, chrome = "full" }: 
   const castReady = scenes.length > 0 && scenes.every(s => ["picked", "skipped"].includes(s.status)) && scenes.some(s => s.status === "picked");
   const body = <>
     {chrome === "full" ? <FilmNav desk={step} onDesk={(d) => { if (d === "topic") onHome(); else onStep(d); }} /> : null}
-    {(error || project.error) && <div className="project-error" role="alert">{error || friendlyError(project.error)}</div>}
+    {(error || project.error) && <div className="project-error" role="alert">{error || friendlyError(project.error || "")}</div>}
     {running && <div className="project-progress" role="status"><span className="project-spinner" />{project.operation === "script" ? "Writing your script…" : project.operation === "stock" ? `Finding stock · ${scenes.filter(s => s.status !== "pending").length}/${scenes.length} scenes` : "Preparing narration and timeline…"}<button onClick={() => void action("cancel")} disabled={busy}>Stop</button></div>}
     {step === "script" ? <section className="project-content">
-      <div className="project-section-heading"><div><p className="project-eyebrow">01 / THE STORY</p><h1>Shape your script</h1><p>{project.topic || "This existing project starts in Studio."}</p></div>{draft && <span>{draft.scenes.length} scenes · {draft.scenes.reduce((n, s) => n + Number(s.duration_sec), 0)}s</span>}</div>
+      <div className="project-section-heading"><div><p className="project-eyebrow">01 / THE STORY</p><h1>Shape your script</h1><p>{project.topic || "This existing project starts in Studio."} Aimed at {project.target_duration_sec ?? 60}s.</p></div>{draft && <span>{draft.scenes.length} scenes · {draft.scenes.reduce((n, s) => n + Number(s.duration_sec), 0)}s</span>}</div>
       {!draft ? <div className="project-empty"><h2>{running ? "A story is taking shape" : "Your script isn’t ready yet"}</h2><p>Stock is only fetched after you review and approve your script.</p>{!running && project.topic && <button className="project-primary" disabled={busy} onClick={() => void action("retry-script")}>Retry script</button>}{!project.topic && <button onClick={() => onStep("studio")}>Open Studio</button>}</div> : <>
-        <div className="project-script"><label>Title<input value={draft.title} disabled={!editable} onChange={e => edit({ ...draft, title: e.target.value })} /></label><label>Full voiceover <span>Used for narration, including when visuals are skipped</span><textarea className="project-vo" value={draft.voiceover_full} disabled={!editable} onChange={e => edit({ ...draft, voiceover_full: e.target.value })} /></label></div>
+        <div className="project-script"><label>Title<SecureLine kind="title" value={draft.title} disabled={!editable} onChange={next => edit({ ...draft, title: next })} /></label><label>Full voiceover <span>Used for narration, including when visuals are skipped</span><SecurePrompt kind="scriptVo" className="project-vo" value={draft.voiceover_full} disabled={!editable} onChange={next => edit({ ...draft, voiceover_full: next })} /></label></div>
         <div className="project-scene-list">{draft.scenes.map((scene, index) => <article className="project-scene-edit" key={scene.id}><span className="scene-number">{String(index + 1).padStart(2, "0")}</span><div>
-          <label>Scene heading<input disabled={!editable} value={scene.heading} onChange={e => edit({ ...draft, scenes: draft.scenes.map(s => s.id === scene.id ? { ...s, heading: e.target.value } : s) })} /></label>
-          <label>Scene narration<textarea disabled={!editable} value={scene.voiceover_line} onChange={e => { const next = draft.scenes.map(s => s.id === scene.id ? { ...s, voiceover_line: e.target.value } : s); const followsScenes = draft.voiceover_full === draft.scenes.map(s => s.voiceover_line).join(" "); edit({ ...draft, scenes: next, voiceover_full: followsScenes ? next.map(s => s.voiceover_line).join(" ") : draft.voiceover_full }); }} /></label>
-          <div className="project-row"><label>Shot search<input disabled={!editable} value={scene.stock_query} onChange={e => edit({ ...draft, scenes: draft.scenes.map(s => s.id === scene.id ? { ...s, stock_query: e.target.value } : s) })} /></label><label className="scene-duration">Seconds<input type="number" min={4} max={8} step={0.5} disabled={!editable} value={scene.duration_sec} onChange={e => edit({ ...draft, scenes: draft.scenes.map(s => s.id === scene.id ? { ...s, duration_sec: Number(e.target.value) } : s) })} /></label></div>
+          <label>Scene heading<SecureLine kind="heading" disabled={!editable} value={scene.heading} onChange={next => edit({ ...draft, scenes: draft.scenes.map(s => s.id === scene.id ? { ...s, heading: next } : s) })} /></label>
+          <label>Scene narration<SecurePrompt kind="sceneVo" disabled={!editable} value={scene.voiceover_line} onChange={next => { const nextScenes = draft.scenes.map(s => s.id === scene.id ? { ...s, voiceover_line: next } : s); const followsScenes = draft.voiceover_full === draft.scenes.map(s => s.voiceover_line).join(" "); edit({ ...draft, scenes: nextScenes, voiceover_full: followsScenes ? nextScenes.map(s => s.voiceover_line).join(" ") : draft.voiceover_full }); }} /></label>
+          <div className="project-row"><label>Shot search<SecureLine kind="stock" disabled={!editable} value={scene.stock_query} onChange={next => edit({ ...draft, scenes: draft.scenes.map(s => s.id === scene.id ? { ...s, stock_query: next } : s) })} /></label><label className="scene-duration">Seconds<input type="number" min={sceneDurationBounds(project.target_duration_sec).min} max={sceneDurationBounds(project.target_duration_sec).max} step={0.5} disabled={!editable} value={scene.duration_sec} onChange={e => edit({ ...draft, scenes: draft.scenes.map(s => s.id === scene.id ? { ...s, duration_sec: Number(e.target.value) } : s) })} /></label></div>
         </div></article>)}</div>
         {project.phase === "script" && <footer className="project-actions"><span>{hasEdits ? "Unsaved script changes" : "Script saved"}</span><button disabled={!editable || !hasEdits} onClick={() => { setBusy(true); void saveScript().catch(e => setError(message(e))).finally(() => setBusy(false)); }}>Save script</button><button className="project-primary" disabled={disabled} onClick={() => void approve()}>Approve & fetch stock →</button></footer>}
       </>}

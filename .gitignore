@@ -46,3 +46,6 @@ build/
 # Hook runtime (assignment logs stay in .agent-logs/, committed)
 .cursor/hooks/state/
 .capture-state/
+
+# Google OAuth client secret file
+client_secret_*.json

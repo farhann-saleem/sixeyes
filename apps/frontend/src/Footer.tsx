@@ -9,7 +9,15 @@ const LINKS: Array<{ label: string; route: Route }> = [
   { label: "Effects", route: { name: "effects" } },
   { label: "Audio", route: { name: "audio" } },
   { label: "Library", route: { name: "library" } },
+  { label: "Pricing", route: { name: "pricing" } },
   { label: "MCP", route: { name: "mcp" } },
+];
+
+const LEGAL_LINKS: Array<{ label: string; route: Route }> = [
+  { label: "Terms and Conditions", route: { name: "terms" } },
+  { label: "Refund Policy", route: { name: "refund" } },
+  { label: "Delivery Policy", route: { name: "delivery" } },
+  { label: "Cancellation Policy", route: { name: "cancellation" } },
 ];
 
 export function Footer({ onGo }: { onGo: (next: Route) => void }) {
@@ -44,6 +52,20 @@ export function Footer({ onGo }: { onGo: (next: Route) => void }) {
         <div className="site-footer-bot">
           <p>© 2026 Marketing Studio. Topic → script → cast → mix.</p>
           <p>One project is a film. Not a generate wall.</p>
+          <nav className="site-footer-legal" aria-label="Legal">
+            {LEGAL_LINKS.map((link) => (
+              <a
+                key={link.label}
+                href={routeToPath(link.route)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onGo(link.route);
+                }}
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
         </div>
       </footer>
     </div>

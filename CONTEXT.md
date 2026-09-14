@@ -1,3 +1,48 @@
+# Active handoff — Pricing tiers + SwichNow (2026-09-14)
+
+Owner GO: Free / **Pro ($20/mo)** / **Premium ($150/mo)** pricing, monthly quotas, per-minute rate limits, and **SwichNow hosted checkout** wired. Policy pages shipped.
+
+- Tiers live in `apps/backend/src/plans.ts` — PKR amounts (Pro **5,600**, Premium **42,000**) are constants there. Everyone defaults to **Free**; a successful Swich payment grants the tier for **30 days**.
+- Quotas per month: Free 3 avatars / 10 images / 3 videos / 20 documentaries; Pro ×10; Premium ×100. Rate limits 6 / 30 / 60 requests per minute. Quota/limit → 429 with an upgrade message.
+- Counted actions: avatar generate, image/video recreate, library→Studio edit (video), new topic documentary. Audio and export are not quota-metered (not in the owner table).
+- Swich flow (doc §5 + §16, hosted PWA GET, PKR): `POST /api/billing/checkout` `{tier, msisdn}` → redirect to Swich. Checkout requires a **mobile number** (Swich makes it mandatory). Callback `GET /api/webhooks/swich` (public) verifies HMAC `SWCallback:...` and grants the tier idempotently. Missing keys → 503.
+- UI: `/pricing` (nav + footer) with usage bars; legal pages `/terms`, `/refund`, `/delivery`, `/cancellation` (Policies.pdf copy adapted from Medigify, footer phone `+92-300-4084760`).
+- Recurring auto-debit (doc §15) is **not** wired — 30-day one-time grants for now. Spec: [spec/19-credits-swichnow.md](spec/19-credits-swichnow.md). Tests: `apps/backend/billing.test.ts`.
+
+---
+
+# Active handoff — Compact Avatar / MCP / Script / Scenes (2026-09-14)
+
+Owner GO: Reduce type and chrome on **Avatar**, **MCPs**, **02 Script**, and **03 Cast / scenes** so they fit the available screen the way Mix already does. Root stays 24px elsewhere. Avatar/MCP drop to 16px html; Script and Scenes keep cream/navy but smaller headings, fields, scene cards. Topic, Your films, Mix, Audio unchanged. FaceFusion wrap. No login. No generation/export.
+
+---
+
+# Active handoff — Compact Avatar / MCP / Script / Scenes (2026-09-14)
+
+Owner GO: Avatar, MCP, Script, and Cast/Scenes desks use **smaller type and tighter padding** so they fit the available screen (same idea as Mix compact chrome). Scene edit rows and cast cards are denser — shorter narration fields, smaller shot tiles. Topic / Your films stay as-is. FaceFusion wrap. No login.
+
+---
+
+# Active handoff — Studio editor viewport (2026-09-14)
+
+Owner GO: Mix/Studio is a **screen-height workspace**. Preview, transport, and timeline stay on one screen. **Start a film** is unchanged (hero, topic form, Your films, footer). Opening Mix hides the film shelf, page head, and footer; returning to Topic restores them. Compact NLE chrome. FaceFusion wrap. No login. No generation/export.
+
+---
+
+# Active handoff — Shared UI polish + film board (2026-09-14)
+
+Owner GO after inspection: preserve cream/navy/lime and existing copy; implement consistency fixes and redesign the film box, with **Your films below**. `/projects` now has a unified navy board, four-step rail, SVG brand introduction and inset topic controls. Existing script/cast/mix behavior, length choices and prompt guards retained. Shared navbar uses the SVG; wraps before items collide. Audio/Avatar are balanced columns; MCP cards restored, URLs wrap. Consistent focus/depth/press states, reduced-motion support; Lightbox receives/traps/restores keyboard focus. Audio no longer flashes “ffmpeg missing” before health resolves.
+
+Styles: `apps/frontend/src/product-polish.css` loads last to resolve legacy page/global specificity. Logo: `public/brand/marketing-studio-logo.svg`. Frontend typecheck and production build passed; browser checked film desktop/mobile plus Audio/MCP/Avatar. No generation/export/deploy performed. Preserve concurrent Cursor backend edits. CPU timeline-v1 deployment lock still applies.
+
+---
+
+# Active handoff — Film length + prompt guard (2026-09-14)
+
+Owner GO: New documentary has a **How long** control — **30 / 45 / 60 / 90 seconds** (default 60). Timeline hard cap stays 90s. Coffee presets scale to the pick. **Every prompt box** (topic, script, VO, stock query, audio TTS/dialogue/SFX/Suno, studio overlay) is prompt-guarded: hidden chars stripped, jailbreak / role-override refused, topic wrapped as data for OpenRouter. MCP `create_documentary` takes optional `duration_sec`. FaceFusion wrap. No login.
+
+---
+
 # Active handoff — Documentary desk (2026-09-14)
 
 Owner GO: `/projects` keeps the **four cards as a navbar** (01 Topic · 02 Script · 03 Cast · 04 Mix). The **stage below** is full-width (Topic is navy + cream type, not a left sliver). Story / Cast / Mix open there. **Your films** stay under the stage. Film stills crop, no black letterbox. Script no longer fails the whole job on a short stock query — we pad/clip to 3–6 words. FaceFusion wrap. No login.
@@ -52,7 +97,7 @@ Owner GO: **Projects own the whole documentary**: topic → text script → per-
 
 **Shipped (app):** async script (OpenRouter text only), script review, Pexels fetch (official video URL + User-Agent; Vimeo CDN allowed), pick/skip, assemble onto the same project (TTS via existing `/api/audio/tts`), Studio NLE gated until assemble. Uploads scoped by `project_id`. Tests: `apps/backend/{projects,missing-keys,stock}.test.ts`.
 
-**Studio UI (usable, not Stitch polish):** project workspace is full-bleed. Global `main.studio` compose padding was shrinking the NLE into white full-width buttons and hiding the timeline. Preview + timeline now share the leftover viewport. Hard-refresh `/projects/:id/studio`.
+**Studio UI (usable, not Stitch polish):** Mix is a screen-height workspace: preview, transport, and timeline stay together. **Start a film** keeps the normal page and film shelf. Global `main.studio` compose padding no longer shrinks the NLE. Hard-refresh Mix if the editor still sits under Your films.
 
 **Audio on the timeline:** Play was silent because preview sought the narration mp3 every frame and stock B-roll was unmuted. Narration is A1 (select the green **Narration** clip, not a picture). Music/SFX: Studio **Audio** bin lists completed jobs from `/audio` (Suno music + sound effects). Drag onto A2. No Pexels-style stock-music catalog — generate in Audio studio or upload an mp3.
 
@@ -72,7 +117,7 @@ This file is the decisions lock. Other agents start at [AGENTS.md](AGENTS.md). L
 
 Knowledge stays in these markdown files. After any decision, update `docs/STATUS.md` and this file in the same turn. Chat is not the source of truth.
 
-Last updated: 2026-09-14 (`.agent-logs/` stays in git for the 8x assignment; live keys in those files are redacted. Values stay in `.env` only. Shared dropdown nav; FaceFusion wrapped; T2V landing uses documentary clips; `/projects` remains Projects home; CPU timeline-v1 export not deployed; still no login / pay).
+Last updated: 2026-09-14 (Pricing tiers + SwichNow shipped: Free/Pro/Premium, monthly quotas, 6/30/60 per-minute rate limits, hosted checkout, `/pricing` + legal pages. Google login live. Payment now wired — recurring auto-debit still open. Earlier: film length 30/45/60/90 on Topic; prompt-guard on all prompt boxes. `.agent-logs/` stays in git for the 8x assignment; live keys in those files are redacted. Values stay in `.env` only. Shared dropdown nav; FaceFusion wrapped; T2V landing uses documentary clips; `/projects` remains Projects home; CPU timeline-v1 export not deployed).
 
 ---
 
@@ -453,7 +498,7 @@ To *make* a sheet: Krea or Qwen Edit (photo → grid). To *use* a sheet as ident
 
 ## Current status
 
-- **A set.** **C infra set** (H200 LTX). **B still-swap wired** (Images Templates → FaceFusion). Stitch **wired from `/studio` export** (first product smoke). **D0 MVP: avatar** still open (Qwen + Seedream). **Audio studio shipped.** **User video studio shipped** (`/studio`). **E last.**
+- **A set.** **C infra set** (H200 LTX). **B still-swap wired** (Images Templates → FaceFusion). Stitch **wired from `/studio` export** (first product smoke). **Audio studio shipped.** **User video studio shipped** (`/studio`). **Pricing + SwichNow shipped** (Free/Pro/Premium, quotas, rate limits, `/pricing`). **E mostly done** — recurring auto-debit is the open payment item.
 - Markdown: [AGENTS.md](AGENTS.md), [docs/STATUS.md](docs/STATUS.md), [docs/apis/](docs/apis/README.md), [docs/sources/](docs/sources/README.md).
 
 Capture observation (2026-09-13): one Codex canary prompt now exists (session `01a09a27`, `gpt-5.1-codex-max`), but no response at inspection. Two complete session pairs and desktop capture remain unverified. See CAPTURE-TEST.md.

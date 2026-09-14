@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { BrandMark } from "./landing/BrandMark";
 
 export const AUDIO_DESKS = [
@@ -31,7 +31,12 @@ export type Route =
   | { name: "effects" }
   | { name: "effect"; id: string }
   | { name: "library" }
-  | { name: "mcp" };
+  | { name: "mcp" }
+  | { name: "pricing" }
+  | { name: "terms" }
+  | { name: "refund" }
+  | { name: "delivery" }
+  | { name: "cancellation" };
 
 type MenuChild = {
   label: string;
@@ -235,6 +240,11 @@ export function pathToRoute(path: string, search = ""): Route {
   if (project) return { name: "project", id: decodeURIComponent(project[1]), step: (project[2] || "script") as "script" | "cast" | "studio" };
   if (path.startsWith("/library")) return { name: "library" };
   if (path.startsWith("/mcp")) return { name: "mcp" };
+  if (path === "/pricing" || path === "/pricing/") return { name: "pricing" };
+  if (path === "/terms" || path === "/terms/") return { name: "terms" };
+  if (path === "/refund" || path === "/refund/") return { name: "refund" };
+  if (path === "/delivery" || path === "/delivery/") return { name: "delivery" };
+  if (path === "/cancellation" || path === "/cancellation/") return { name: "cancellation" };
   if (path.startsWith("/audio")) {
     const desk = parseAudioDesk(search);
     return desk ? { name: "audio", desk } : { name: "audio" };
@@ -268,6 +278,11 @@ export function routeToPath(route: Route): string {
   if (route.name === "project") return `/projects/${encodeURIComponent(route.id)}${route.step === "script" ? "" : `/${route.step}`}`;
   if (route.name === "library") return "/library";
   if (route.name === "mcp") return "/mcp";
+  if (route.name === "pricing") return "/pricing";
+  if (route.name === "terms") return "/terms";
+  if (route.name === "refund") return "/refund";
+  if (route.name === "delivery") return "/delivery";
+  if (route.name === "cancellation") return "/cancellation";
   if (route.name === "audio") return route.desk ? `/audio?desk=${route.desk}` : "/audio";
   if (route.name === "studio") {
     return route.id ? `/projects/${encodeURIComponent(route.id)}/studio` : "/projects";
@@ -286,6 +301,11 @@ export function routeTitle(route: Route): string {
   if (route.name === "projects" || route.name === "project") return "Projects — Marketing Studio";
   if (route.name === "library") return "Your library — Marketing Studio";
   if (route.name === "mcp") return "MCP — Marketing Studio";
+  if (route.name === "pricing") return "Pricing — Marketing Studio";
+  if (route.name === "terms") return "Terms and Conditions — Marketing Studio";
+  if (route.name === "refund") return "Refund Policy — Marketing Studio";
+  if (route.name === "delivery") return "Delivery Policy — Marketing Studio";
+  if (route.name === "cancellation") return "Cancellation Policy — Marketing Studio";
   if (route.name === "audio") return "Audio — Marketing Studio";
   if (route.name === "studio") return "Video Studio — Marketing Studio";
   if (route.name === "videos" || route.name === "video") return "Videos — Marketing Studio";
@@ -357,10 +377,12 @@ export function Nav({
   route,
   onGo,
   libraryCount,
+  auth,
 }: {
   route: Route;
   onGo: (next: Route) => void;
   libraryCount: number;
+  auth?: ReactNode;
 }) {
   const [open, setOpen] = useState<string | null>(null);
 
@@ -450,6 +472,18 @@ export function Nav({
         })}
       </nav>
       <div className="nav-end">
+        {auth}
+        <a
+          className={`nav-top nav-library${route.name === "pricing" ? " is-current" : ""}`}
+          href="/pricing"
+          aria-current={route.name === "pricing" ? "page" : undefined}
+          onClick={(e) => {
+            e.preventDefault();
+            onGo({ name: "pricing" });
+          }}
+        >
+          Pricing
+        </a>
         <a
           className={`nav-top nav-library${route.name === "library" ? " is-current" : ""}`}
           href="/library"
