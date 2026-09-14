@@ -1,0 +1,15 @@
+---
+description: Keep project knowledge in markdown; update STATUS/CONTEXT after decisions
+alwaysApply: true
+---
+
+# Knowledge in markdown
+
+Other agents track this project from git md, not chat. After any lock, infra change, or “we decided”:
+
+1. Update `docs/STATUS.md` (phases A–E, now / next / live ids)
+2. Update `spec/README.md` if build order or stack changed
+3. Update `CONTEXT.md` if the lock changed
+4. Update `docs/RUNPOD.md` if a worker lesson is new. **Never delete** that file or specs 06/12/13–15/18 to “simplify.”
+
+Read [AGENTS.md](AGENTS.md) first. Owner vendor notes: `docs/apis/`. Never put secrets in markdown. `.env` is gitignored; names only in `.env.example`.

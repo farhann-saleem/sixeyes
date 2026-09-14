@@ -1,0 +1,22 @@
+---
+description: Hard gates for RunPod Krea/Qwen workers — volume DC, Comfy pins, no retry-spam
+alwaysApply: true
+---
+
+# RunPod workers
+
+Full lock: `CONTEXT.md`. In-repo lessons: `docs/RUNPOD.md`. Sibling dumps (may contain secrets — do not copy keys): `../ms-runpod-krea/RUNPOD_LESSONS.md`, `../ms-runpod-qwen/RUNPOD_LESSONS.md`.
+
+Live: Krea `i3fvrhucaici89`, Qwen Edit `ko6zewns6wj3mj`, both **EU-RO-1** only. Retired: `r59jmvkgw3a5m3`. Min 0, max 1.
+
+Do not:
+
+- Select “all datacenters” with a network volume (Initializing, empty logs)
+- Use `/runpod-volume` unless `os.path.ismount` (else ~5GB disk, Errno 28)
+- Spam generate/ping while `throttled > 0` or Initializing > ~15 min
+- Use `/runsync` for generate; use `/run` + poll
+- Assume a rebuild is live until the **worker id** changes (purge + idle-out)
+- Pin PyTorch 2.6, clone Comfy HEAD, or skip gcc (Triton)
+- Guess Qwen nodes: CLIP type is `qwen_image`; encoder is `TextEncodeQwenImageEditPlus`
+
+Do: health (no GPU) → ping (`volume_mounted`, `free_gb` >> weights) → generate. Init Comfy/weights **before** `runpod.serverless.start()`. `runpod>=1.10.1,<2`.

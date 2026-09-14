@@ -1,0 +1,48 @@
+# Secrets
+.env
+.env.*
+!.env.example
+.envrc
+*.pem
+*.key
+id_rsa
+id_ed25519
+credentials.json
+secrets.json
+rclone.conf
+.aws/
+.huggingface/
+
+# Local smokes / scratch media (not product)
+test/
+apps/modal/out/
+apps/backend/data/*
+!apps/backend/data/.gitkeep
+
+# Weights / media (live on R2)
+*.safetensors
+*.gguf
+*.ckpt
+*.onnx
+models/
+weights/
+
+# Python / node
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+node_modules/
+.turbo/
+dist/
+build/
+.next/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Hook runtime (assignment logs stay in .agent-logs/, committed)
+.cursor/hooks/state/
+.capture-state/
