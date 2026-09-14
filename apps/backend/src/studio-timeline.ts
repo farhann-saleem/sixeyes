@@ -175,7 +175,7 @@ export function emptyProject(id: string, name = "Untitled"): StudioProject {
   return {
     id,
     name,
-    topic: "", phase: "studio", status: "ready", script: null, tts_job_id: null, error: null,
+    topic: "", target_duration_sec: 60, phase: "studio", status: "ready", script: null, tts_job_id: null, error: null,
     created_at: now,
     updated_at: now,
     width: 1280,

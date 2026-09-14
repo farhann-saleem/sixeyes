@@ -46,6 +46,10 @@ import { studioRouter } from "./studio-routes.js";
 import { mcpRouter } from "./mcp-rpc.js";
 import { listRenders } from "./studio-store.js";
 import { resumeInFlightStudioRenders } from "./studio-render.js";
+import { authRouter, currentUser, requireAuth } from "./google-auth.js";
+import { billingRouter, swichWebhook } from "./billing-routes.js";
+import { faceswapQuotaKind, postQuota, quotaGuard, rateLimitPost } from "./billing-guard.js";
+import { recordUsage } from "./billing-store.js";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -55,13 +59,32 @@ const upload = multer({
 const app = express();
 app.use(cors({ origin: FRONTEND_URL, credentials: true }));
 app.use(express.json({ limit: "12mb" }));
-app.use("/api/audio", audioRouter);
-app.use("/api/studio", studioRouter);
-app.use("/mcp", mcpRouter);
+
+app.use("/api/auth", authRouter);
+
+app.get("/api/webhooks/swich", swichWebhook);
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true, service: "marketing-studio-backend" });
 });
+
+app.use("/api", requireAuth);
+app.use("/mcp", requireAuth);
+
+app.use("/api/billing", billingRouter);
+app.use("/api/audio", rateLimitPost, audioRouter);
+app.use(
+  "/api/studio",
+  rateLimitPost,
+  postQuota((req) => {
+    const body = req.body ?? {};
+    if (typeof body.topic === "string") return "documentaries";
+    if (body.from?.type === "library") return "videos";
+    return null;
+  }),
+  studioRouter,
+);
+app.use("/mcp", mcpRouter);
 
 app.get("/api/models/avatar", async (_req, res) => {
   let qwenHealthBody = null;
@@ -505,7 +528,7 @@ app.get("/api/identities/:id/image", (req, res) => {
   res.type(row.mime).send(readFileSync(file));
 });
 
-app.post("/api/faceswaps", upload.single("image"), (req, res) => {
+app.post("/api/faceswaps", rateLimitPost, postQuota(faceswapQuotaKind), upload.single("image"), (req, res) => {
   const templateId = String(req.body.template_id || "");
   const avatarId = String(req.body.avatar_id || "");
   const template = getMediaTemplate(templateId);
@@ -581,6 +604,7 @@ app.post("/api/faceswaps", upload.single("image"), (req, res) => {
     provider_meta: {},
   };
   saveSwapJob(job);
+  recordUsage(currentUser(req)?.email || "anonymous", job.kind === "video" ? "videos" : "images");
   void runSwapJob(id);
   res.status(202).json(job);
 });
@@ -639,7 +663,7 @@ app.get("/api/avatars/:id/output", (req, res) => {
   res.type(job.output_mime || "image/png").send(readFileSync(file));
 });
 
-app.post("/api/avatars", upload.single("image"), (req, res) => {
+app.post("/api/avatars", rateLimitPost, quotaGuard("avatars"), upload.single("image"), (req, res) => {
   const file = req.file;
   if (!file) {
     res.status(400).json({ error: "image file required (field name: image)" });
@@ -701,6 +725,7 @@ app.post("/api/avatars", upload.single("image"), (req, res) => {
     provider_meta: {},
   };
   saveJob(job);
+  recordUsage(currentUser(req)?.email || "anonymous", "avatars");
   void runAvatarJob(id, inputPath(id, ext));
   res.status(202).json(job);
 });

@@ -246,7 +246,7 @@ export function App({ onIdentities }: { onIdentities?: (rows: SavedAvatar[]) => 
   const resultJob = current?.status === "COMPLETED" ? current : saveTargetJob;
 
   return (
-    <main className="studio">
+    <main className="studio avatar-page">
       <header className="page-head">
         <div>
           <p className="kicker">Avatars</p>

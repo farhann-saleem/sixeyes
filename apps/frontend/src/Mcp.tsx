@@ -17,7 +17,7 @@ const TOOLS = [
   ["list_identities", "Saved avatars"],
   ["list_library", "Finished stills and clips"],
   ["list_films", "Documentary projects"],
-  ["create_documentary", "Topic → script. Async."],
+  ["create_documentary", "Topic → script. Optional duration_sec 30/45/60/90. Async."],
   ["get_film", "Phase and status for one film"],
   ["generate_look", "Look + saved identity. Async. Poll get_generation."],
   ["get_generation", "Poll a generate job"],

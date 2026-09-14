@@ -1,4 +1,5 @@
 import { createTopicProject, projectWorkflowRouter } from "./project-workflow.js";
+import { assertSafePrompt } from "./prompt-guard.js";
 import { randomUUID } from "node:crypto";
 import { existsSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -28,6 +29,8 @@ import type { StudioClip, StudioClipKind, StudioClipSource, StudioProject, Studi
 import { getVideoTemplate } from "./templates.js";
 import { getSwapJob } from "./swap-store.js";
 import { getAudioJob } from "./audio-store.js";
+import { currentUser } from "./google-auth.js";
+import { recordUsage } from "./billing-store.js";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -86,7 +89,7 @@ async function makeClip(opts: {
   if (origin === "text") {
     source = { type: "text" };
     kind = "text";
-    label = (opts.text || "Text").slice(0, 40);
+    label = assertSafePrompt(opts.text || "Text", "overlay").slice(0, 40) || "Text";
   } else if (!opts.media_id) {
     throw new Error("media_id required");
   } else if (origin === "video-template") {
@@ -136,7 +139,7 @@ async function makeClip(opts: {
     crop_end: duration,
     volume: kind === "audio" ? bedVolume : 1,
     muted: false,
-    text: kind === "text" ? opts.text || "Text" : undefined,
+    text: kind === "text" ? assertSafePrompt(opts.text || "Text", "overlay") || "Text" : undefined,
     font_size: kind === "text" ? 48 : undefined,
     color: kind === "text" ? "#ffffff" : undefined,
     x: kind === "text" ? 0.5 : undefined,
@@ -244,10 +247,18 @@ studioRouter.post("/projects", async (req, res) => {
       topic?: string;
       name?: string;
       in_library?: boolean;
+      script?: unknown;
+      duration_sec?: unknown;
       from?: { type: StudioClipSource["type"]; id: string };
     };
-    if ("topic" in body) { res.status(202).json(createTopicProject(body.topic, body.name, body.in_library)); return; }
+    if ("topic" in body) {
+      const project = createTopicProject(body.topic, body.name, body.in_library, body.script, body.duration_sec);
+      recordUsage(currentUser(req)?.email || "anonymous", "documentaries");
+      res.status(202).json(project);
+      return;
+    }
     const project = emptyProject(randomUUID(), body.name?.trim() || "Untitled");
+    let counted: "videos" | null = null;
     if (body.from) {
       const clip = await makeClip({
         origin: body.from.type,
@@ -262,8 +273,10 @@ studioRouter.post("/projects", async (req, res) => {
       const scope = sourceScopeError(project, clip.source); if (scope) throw new Error(scope);
       project.clips.push(clip);
       if (!body.name?.trim()) project.name = clip.label;
+      if (body.from.type === "library") counted = "videos";
     }
     saveProject(project);
+    if (counted) recordUsage(currentUser(req)?.email || "anonymous", counted);
     res.status(201).json(withPreview(project));
   } catch (err) {
     sendErr(res, err);
@@ -285,19 +298,26 @@ studioRouter.patch("/projects/:id", (req, res) => {
     res.status(404).json({ error: "not found" });
     return;
   }
+  try {
   const body = (req.body ?? {}) as Partial<StudioProject>;
   const timelineEdit = ["clips", "tracks", "width", "height", "fps", "playhead_sec"].some(k => k in body);
   if (timelineEdit && project.topic && !["studio", "exported"].includes(project.phase)) { res.status(409).json({ error: "Assemble this project first" }); return; }
   if (project.status === "running") { res.status(409).json({ error: "Project operation running" }); return; }
   if (timelineEdit && project.phase === "exported") project.phase = "studio";
-  if (typeof body.name === "string") project.name = body.name.slice(0, 80) || project.name;
+  if (typeof body.name === "string") project.name = assertSafePrompt(body.name, "name").slice(0, 80) || project.name;
   if (typeof body.in_library === "boolean") project.in_library = body.in_library;
   if (typeof body.width === "number") project.width = body.width;
   if (typeof body.height === "number") project.height = body.height;
   if (typeof body.fps === "number") project.fps = body.fps;
   if (typeof body.playhead_sec === "number") project.playhead_sec = Math.max(0, body.playhead_sec);
   if (Array.isArray(body.tracks)) project.tracks = body.tracks;
-  if (Array.isArray(body.clips)) project.clips = body.clips;
+  if (Array.isArray(body.clips)) {
+    project.clips = body.clips.map((clip) => {
+      if (clip.kind !== "text" || clip.text == null) return clip;
+      const text = assertSafePrompt(clip.text, "overlay");
+      return { ...clip, text, label: text.slice(0, 40) || clip.label };
+    });
+  }
   const invalid = validateProject(project) || projectScopeError(project);
   if (invalid) {
     res.status(400).json({ error: invalid });
@@ -305,6 +325,9 @@ studioRouter.patch("/projects/:id", (req, res) => {
   }
   saveProject(project);
   res.json(withPreview(project));
+  } catch (err) {
+    sendErr(res, err);
+  }
 });
 
 studioRouter.delete("/projects/:id", (req, res) => {

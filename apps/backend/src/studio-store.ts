@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from "node:fs";
 import path from "node:path";
 import { DATA_DIR } from "./env.js";
+import { isFilmLength } from "./film-length.js";
 import type { StudioProject, StudioRenderJob, StudioUpload } from "./studio-types.js";
 
 const PROJECTS_PATH = path.join(DATA_DIR, "studio-projects.json");
@@ -36,7 +37,16 @@ function writeJson(file: string, value: unknown) {
 
 export function listProjects(): StudioProject[] {
   const rows = readJson<StudioProject[]>(PROJECTS_PATH, []);
-  return Array.isArray(rows) ? rows.map((p) => ({ ...p, topic: p.topic ?? "", phase: p.phase ?? "studio", status: p.status ?? "ready", script: p.script ?? null, tts_job_id: p.tts_job_id ?? null, error: p.error ?? null })).sort((a, b) => b.updated_at.localeCompare(a.updated_at)) : [];
+  return Array.isArray(rows) ? rows.map((p) => ({
+    ...p,
+    topic: p.topic ?? "",
+    target_duration_sec: isFilmLength(p.target_duration_sec) ? p.target_duration_sec : 60,
+    phase: p.phase ?? "studio",
+    status: p.status ?? "ready",
+    script: p.script ?? null,
+    tts_job_id: p.tts_job_id ?? null,
+    error: p.error ?? null,
+  })).sort((a, b) => b.updated_at.localeCompare(a.updated_at)) : [];
 }
 
 export function getProject(id: string): StudioProject | undefined {

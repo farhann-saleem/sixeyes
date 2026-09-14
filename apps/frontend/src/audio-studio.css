@@ -24,12 +24,14 @@ body:has(.audio-page) {
 
 .audio-toolbar {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  gap: 12px;
   width: calc(100% - 56px);
   margin: 0 auto;
-  padding: 28px 0 10px;
+  padding: 52px 0 24px;
   border: 0;
 }
 
@@ -47,10 +49,10 @@ body:has(.audio-page) {
 }
 
 .audio-toolbar .lede {
-  margin: 8px 0 0;
+  margin: 8px auto 0;
   color: #2f283d;
-  font-size: 1.12rem;
-  max-width: 52ch;
+  font-size: 1.3rem;
+  max-width: 46rem;
 }
 
 .audio-credits {

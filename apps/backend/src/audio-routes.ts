@@ -1,3 +1,4 @@
+import { assertSafePrompt } from "./prompt-guard.js";
 import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -357,10 +358,8 @@ export function enqueue(kind: AudioKind, title: string, params: Record<string, u
 
 audioRouter.post("/tts", (req, res) => {
   try {
-    const text = String(req.body?.text || "").trim();
+    const text = assertSafePrompt(req.body?.text, "speech");
     const voice_id = String(req.body?.voice_id || "").trim();
-    if (!text) throw new Error("text required");
-    if (text.length > 1_000_000) throw new Error("text max 1,000,000 characters");
     if (!voice_id) throw new Error("voice_id required");
     const job = enqueue("tts", text.slice(0, 48) || "TTS", {
       text,
@@ -377,9 +376,8 @@ audioRouter.post("/tts", (req, res) => {
 
 audioRouter.post("/dialogue", (req, res) => {
   try {
-    const text = String(req.body?.text || "").trim();
+    const text = assertSafePrompt(req.body?.text, "speech");
     const speakers = req.body?.speakers;
-    if (!text) throw new Error("text required (use A> / B> labels)");
     if (!Array.isArray(speakers) || speakers.length < 2 || speakers.length > 26) {
       throw new Error("speakers must be a JSON array of 2–26 voices");
     }
@@ -592,8 +590,7 @@ audioRouter.post("/stt", mediaUpload.single("file"), async (req, res) => {
 
 audioRouter.post("/sfx", (req, res) => {
   try {
-    const text = String(req.body?.text || "").trim();
-    if (text.length < 3 || text.length > 450) throw new Error("text must be 3–450 characters");
+    const text = assertSafePrompt(req.body?.text, "sfx");
     const durationRaw = req.body?.duration_seconds;
     const duration_seconds =
       durationRaw === "" || durationRaw == null ? undefined : Number(durationRaw);
@@ -620,8 +617,7 @@ audioRouter.post("/music", (req, res) => {
   try {
     const mode = req.body?.create_mode === "custom" ? "custom" : "simple";
     if (mode === "simple") {
-      const prompt = String(req.body?.gpt_description_prompt || "").trim();
-      if (prompt.length < 1 || prompt.length > 500) throw new Error("simple mode needs gpt_description_prompt (1–500)");
+      const prompt = assertSafePrompt(req.body?.gpt_description_prompt, "music");
       const job = enqueue("music", prompt.slice(0, 48), {
         create_mode: "simple",
         gpt_description_prompt: prompt,
@@ -630,9 +626,9 @@ audioRouter.post("/music", (req, res) => {
       res.status(202).json(job);
       return;
     }
-    const title = String(req.body?.title || "").slice(0, 80);
-    const lyrics = String(req.body?.lyrics || "").slice(0, 5000);
-    const tags = String(req.body?.tags || "").slice(0, 1000);
+    const title = assertSafePrompt(String(req.body?.title || ""), "name");
+    const lyrics = assertSafePrompt(String(req.body?.lyrics || ""), "lyrics");
+    const tags = assertSafePrompt(String(req.body?.tags || ""), "tags");
     if (!lyrics && !tags) throw new Error("custom mode needs lyrics or tags");
     const gender = req.body?.vocal_gender;
     const job = enqueue("music", title || "Suno", {

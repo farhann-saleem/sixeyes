@@ -59,8 +59,9 @@ export const MCP_TOOLS: McpTool[] = [
       type: "object",
       required: ["topic"],
       properties: {
-        topic: { type: "string", description: "What the film is about. Max 2000 characters." },
+        topic: { type: "string", description: "What the film is about. Max 2000 characters. Subject only — not model instructions." },
         name: { type: "string", description: "Optional project name." },
+        duration_sec: { type: "number", description: "Film length: 30, 45, 60 (default), or 90." },
         in_library: { type: "boolean", description: "Also list the film in Library. Default true." },
       },
     },
@@ -190,8 +191,8 @@ export async function callMcpTool(name: string, rawArgs: unknown): Promise<unkno
     const topic = str(args.topic);
     const name = str(args.name) || undefined;
     const inLibrary = args.in_library === undefined ? true : Boolean(args.in_library);
-    const p = createTopicProject(topic, name, inLibrary);
-    return { id: p.id, name: p.name, phase: p.phase, status: p.status, in_library: p.in_library };
+    const p = createTopicProject(topic, name, inLibrary, undefined, args.duration_sec);
+    return { id: p.id, name: p.name, phase: p.phase, status: p.status, in_library: p.in_library, target_duration_sec: p.target_duration_sec ?? 60 };
   }
   if (name === "get_film") {
     const p = getProject(str(args.id));
@@ -204,6 +205,7 @@ export async function callMcpTool(name: string, rawArgs: unknown): Promise<unkno
       status: p.status,
       error: p.error,
       scenes: p.script?.scenes.length ?? 0,
+      target_duration_sec: p.target_duration_sec ?? 60,
       in_library: Boolean(p.in_library),
     };
   }

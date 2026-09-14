@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type LightboxItem = {
   id: string;
@@ -24,6 +24,8 @@ export function Lightbox({
 }) {
   const [mounted, setMounted] = useState(false);
   const item = items[index];
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => setMounted(true));
@@ -31,15 +33,24 @@ export function Lightbox({
   }, []);
 
   useEffect(() => {
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    closeRef.current?.focus();
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
+      previousFocus?.focus();
     };
   }, []);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      if (e.key === "Tab") {
+        const controls = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>('a[href], button:not(:disabled), video[controls], [tabindex="0"]') || []);
+        const first = controls[0], last = controls[controls.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
+      }
       if (e.key === "Escape") onClose();
       if (e.key === "ArrowRight" && index < items.length - 1) onIndex(index + 1);
       if (e.key === "ArrowLeft" && index > 0) onIndex(index - 1);
@@ -52,6 +63,7 @@ export function Lightbox({
 
   return (
     <div
+      ref={dialogRef}
       className="lightbox"
       data-mounted={mounted}
       role="dialog"
@@ -77,7 +89,7 @@ export function Lightbox({
               Delete
             </button>
           ) : null}
-          <button type="button" className="btn icon" onClick={onClose} aria-label="Close">
+          <button ref={closeRef} type="button" className="btn icon" onClick={onClose} aria-label="Close">
             ✕
           </button>
         </div>

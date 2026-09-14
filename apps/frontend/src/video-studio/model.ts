@@ -54,6 +54,7 @@ export type StudioProject = {
   id: string;
   name: string;
   topic: string;
+  target_duration_sec?: 30 | 45 | 60 | 90;
   phase: "topic" | "script" | "cast" | "studio" | "exported";
   status: "draft" | "running" | "ready" | "failed" | "cancelled";
   script: ProjectScript | null;
