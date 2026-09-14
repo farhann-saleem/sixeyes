@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ensureAuthed } from "../auth";
 import { FILM_LENGTH_OPTIONS, sceneDurationBounds, type FilmLengthSec } from "../film-length";
 import { promptIssue } from "../prompt-guard";
+import { DOC_SHOT_MODELS } from "../model-catalog";
 import { SecureLine, SecurePrompt } from "../SecurePrompt";
 import { api, type StudioProject, type ProjectScript } from "../video-studio/model";
 import { VideoStudio } from "../video-studio/VideoStudio";
@@ -13,9 +14,9 @@ type Desk = "topic" | Step;
 
 const FILM_NAV: Array<{ id: Desk; kicker: string; title: string; hint: string }> = [
   { id: "topic", kicker: "01 · Topic", title: "Start a film", hint: "Topic, name, and length." },
-  { id: "script", kicker: "02 · Script", title: "Write the story", hint: "Narration and scenes." },
-  { id: "cast", kicker: "03 · Cast", title: "Pick the shots", hint: "One Pexels pick per scene." },
-  { id: "studio", kicker: "04 · Mix", title: "Open Studio", hint: "Narration on A1. Music on A2." },
+  { id: "script", kicker: "02 · Script", title: "Director writes", hint: "AI narration and scenes." },
+  { id: "cast", kicker: "03 · Shots", title: "Generate footage", hint: "AI clips per scene — Seedance · Kling · LTX." },
+  { id: "studio", kicker: "04 · Mix", title: "Assemble", hint: "Narration on A1. Music on A2." },
 ];
 
 function FilmNav({ desk, onDesk }: { desk: Desk; onDesk: (d: Desk) => void }) {
@@ -41,7 +42,7 @@ const base = "/api/studio/projects";
 const request = (method: string, body?: unknown): RequestInit => ({ method, headers: { "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
 const message = (e: unknown) => friendlyError(e instanceof Error ? e.message : String(e));
 function friendlyError(raw: string) {
-  if (/stock query/i.test(raw)) return "The writer sent a weak shot list. Retry the script — each scene needs a short filmable search.";
+  if (/stock query/i.test(raw)) return "The director sent a weak shot list. Retry the script — each scene needs a short filmable prompt.";
   return raw;
 }
 function projectStep(p: StudioProject): Step { return ["studio", "exported"].includes(p.phase) ? "studio" : p.phase === "cast" ? "cast" : "script"; }
@@ -106,7 +107,7 @@ export function ProjectsHome({ onOpen: _onOpen }: { onOpen: (id: string, step: S
         <p className="kicker">Documentaries</p>
         <h1>Your films</h1>
         <p className="lede">
-          Same product as MCP: topic, script, cast, mix. Creations land below. Not lip-sync.
+          Full AI pipeline: topic → director script → generated scene footage → voice → mix. Not stock. Not lip-sync.
         </p>
       </div>
     </header>
@@ -120,7 +121,7 @@ export function ProjectsHome({ onOpen: _onOpen }: { onOpen: (id: string, step: S
           <img className="film-brand" src="/brand/marketing-studio-logo.svg" width="160" height="160" alt="" />
           <p className="kicker">01 · Topic</p>
           <h2>Start a film</h2>
-          <p className="lede">Pick a coffee story — the script is already written — or type your own topic. Choose how long the film should run.</p>
+          <p className="lede">Pick a coffee story — the AI script is ready — or type your own topic. Choose how long the film should run.</p>
           </div>
           <div className="film-topic-fields">
           <label>Story
@@ -184,7 +185,7 @@ export function ProjectsHome({ onOpen: _onOpen }: { onOpen: (id: string, step: S
       ) : (
         <div className="film-stage-empty">
           <h2>Pick a film first</h2>
-          <p>Start one in Topic, or open a film below. Then Script, Cast, and Mix appear here.</p>
+          <p>Start one in Topic, or open a film below. Then Script, Shots, and Mix appear here.</p>
         </div>
       )}
     </section>
@@ -259,34 +260,34 @@ export function ProjectWorkspace({ id, step, onStep, onHome, chrome = "full" }: 
   const body = <>
     {chrome === "full" ? <FilmNav desk={step} onDesk={(d) => { if (d === "topic") onHome(); else onStep(d); }} /> : null}
     {(error || project.error) && <div className="project-error" role="alert">{error || friendlyError(project.error || "")}</div>}
-    {running && <div className="project-progress" role="status"><span className="project-spinner" />{project.operation === "script" ? "Writing your script…" : project.operation === "stock" ? `Finding stock · ${scenes.filter(s => s.status !== "pending").length}/${scenes.length} scenes` : "Preparing narration and timeline…"}<button onClick={() => void action("cancel")} disabled={busy}>Stop</button></div>}
+    {running && <div className="project-progress" role="status"><span className="project-spinner" />{project.operation === "script" ? "Director is writing your script…" : project.operation === "stock" ? `Generating AI scenes · ${scenes.filter(s => s.status !== "pending").length}/${scenes.length}` : "Building voice and timeline…"}<button onClick={() => void action("cancel")} disabled={busy}>Stop</button></div>}
     {step === "script" ? <section className="project-content">
-      <div className="project-section-heading"><div><p className="project-eyebrow">01 / THE STORY</p><h1>Shape your script</h1><p>{project.topic || "This existing project starts in Studio."} Aimed at {project.target_duration_sec ?? 60}s.</p></div>{draft && <span>{draft.scenes.length} scenes · {draft.scenes.reduce((n, s) => n + Number(s.duration_sec), 0)}s</span>}</div>
-      {!draft ? <div className="project-empty"><h2>{running ? "A story is taking shape" : "Your script isn’t ready yet"}</h2><p>Stock is only fetched after you review and approve your script.</p>{!running && project.topic && <button className="project-primary" disabled={busy} onClick={() => void action("retry-script")}>Retry script</button>}{!project.topic && <button onClick={() => onStep("studio")}>Open Studio</button>}</div> : <>
+      <div className="project-section-heading"><div><p className="project-eyebrow">01 / THE STORY</p><h1>Shape your script</h1><p>{project.topic || "This existing project starts in Studio."} Aimed at {project.target_duration_sec ?? 60}s. Full generative pipeline — script, shots, voice, assemble.</p></div>{draft && <span>{draft.scenes.length} scenes · {draft.scenes.reduce((n, s) => n + Number(s.duration_sec), 0)}s</span>}</div>
+      {!draft ? <div className="project-empty"><h2>{running ? "A story is taking shape" : "Your script isn’t ready yet"}</h2><p>Scene footage generates only after you approve the script — Seedance, Kling, and LTX for every beat.</p>{!running && project.topic && <button className="project-primary" disabled={busy} onClick={() => void action("retry-script")}>Retry script</button>}{!project.topic && <button onClick={() => onStep("studio")}>Open Studio</button>}</div> : <>
         <div className="project-script"><label>Title<SecureLine kind="title" value={draft.title} disabled={!editable} onChange={next => edit({ ...draft, title: next })} /></label><label>Full voiceover <span>Used for narration, including when visuals are skipped</span><SecurePrompt kind="scriptVo" className="project-vo" value={draft.voiceover_full} disabled={!editable} onChange={next => edit({ ...draft, voiceover_full: next })} /></label></div>
         <div className="project-scene-list">{draft.scenes.map((scene, index) => <article className="project-scene-edit" key={scene.id}><span className="scene-number">{String(index + 1).padStart(2, "0")}</span><div>
           <label>Scene heading<SecureLine kind="heading" disabled={!editable} value={scene.heading} onChange={next => edit({ ...draft, scenes: draft.scenes.map(s => s.id === scene.id ? { ...s, heading: next } : s) })} /></label>
           <label>Scene narration<SecurePrompt kind="sceneVo" disabled={!editable} value={scene.voiceover_line} onChange={next => { const nextScenes = draft.scenes.map(s => s.id === scene.id ? { ...s, voiceover_line: next } : s); const followsScenes = draft.voiceover_full === draft.scenes.map(s => s.voiceover_line).join(" "); edit({ ...draft, scenes: nextScenes, voiceover_full: followsScenes ? nextScenes.map(s => s.voiceover_line).join(" ") : draft.voiceover_full }); }} /></label>
-          <div className="project-row"><label>Shot search<SecureLine kind="stock" disabled={!editable} value={scene.stock_query} onChange={next => edit({ ...draft, scenes: draft.scenes.map(s => s.id === scene.id ? { ...s, stock_query: next } : s) })} /></label><label className="scene-duration">Seconds<input type="number" min={sceneDurationBounds(project.target_duration_sec).min} max={sceneDurationBounds(project.target_duration_sec).max} step={0.5} disabled={!editable} value={scene.duration_sec} onChange={e => edit({ ...draft, scenes: draft.scenes.map(s => s.id === scene.id ? { ...s, duration_sec: Number(e.target.value) } : s) })} /></label></div>
+          <div className="project-row"><label>Shot prompt<SecureLine kind="stock" disabled={!editable} value={scene.stock_query} onChange={next => edit({ ...draft, scenes: draft.scenes.map(s => s.id === scene.id ? { ...s, stock_query: next } : s) })} /></label><label className="scene-duration">Seconds<input type="number" min={sceneDurationBounds(project.target_duration_sec).min} max={sceneDurationBounds(project.target_duration_sec).max} step={0.5} disabled={!editable} value={scene.duration_sec} onChange={e => edit({ ...draft, scenes: draft.scenes.map(s => s.id === scene.id ? { ...s, duration_sec: Number(e.target.value) } : s) })} /></label></div>
         </div></article>)}</div>
-        {project.phase === "script" && <footer className="project-actions"><span>{hasEdits ? "Unsaved script changes" : "Script saved"}</span><button disabled={!editable || !hasEdits} onClick={() => { setBusy(true); void saveScript().catch(e => setError(message(e))).finally(() => setBusy(false)); }}>Save script</button><button className="project-primary" disabled={disabled} onClick={() => void approve()}>Approve & fetch stock →</button></footer>}
+        {project.phase === "script" && <footer className="project-actions"><span>{hasEdits ? "Unsaved script changes" : "Script saved"}</span><button disabled={!editable || !hasEdits} onClick={() => { setBusy(true); void saveScript().catch(e => setError(message(e))).finally(() => setBusy(false)); }}>Save script</button><button className="project-primary" disabled={disabled} onClick={() => void approve()}>Approve & generate scenes →</button></footer>}
       </>}
     </section> : step === "cast" ? <section className="project-content">
-      <div className="project-section-heading"><div><p className="project-eyebrow">02 / THE SCENES</p><h1>Cast your story</h1><p>Pick one visual per scene, or skip it. <a href="https://www.pexels.com" target="_blank" rel="noreferrer">Stock provided by Pexels</a>.</p></div><span>{scenes.filter(s => s.status === "picked").length} picked · {scenes.filter(s => s.status === "skipped").length} skipped</span></div>
+      <div className="project-section-heading"><div><p className="project-eyebrow">02 / AI FOOTAGE</p><h1>Pick generated shots</h1><p>Every candidate is AI-generated scene footage — Seedance 1.5 Pro, Kling 3.0, LTX-2.5. Pick one per beat, or skip it.</p></div><span>{scenes.filter(s => s.status === "picked").length} picked · {scenes.filter(s => s.status === "skipped").length} skipped</span></div>
       {!["cast", "studio", "exported"].includes(project.phase) ? <button onClick={() => onStep("script")}>Review your script first</button> : scenes.map((scene, index) => <article className={`cast-scene ${scene.status === "skipped" ? "skipped" : ""}`} key={scene.id}>
         <header><span className="scene-number">{String(index + 1).padStart(2, "0")}</span><div><h2>{scene.heading}</h2><p>{scene.voiceover_line}</p><small>{scene.stock_query} · {scene.duration_sec}s · {scene.status}</small></div><button disabled={disabled || assembled} onClick={() => void action(`scenes/${scene.id}/pick`, { skip: true })}>{scene.status === "skipped" ? "Skipped" : "Skip scene"}</button></header>
-        <div className="cast-candidates">{scene.candidates.map(c => <div className={`cast-candidate ${c.upload_id === scene.picked_upload_id ? "picked" : ""}`} key={c.upload_id}>
+        <div className="cast-candidates">{scene.candidates.map((c, ci) => <div className={`cast-candidate ${c.upload_id === scene.picked_upload_id ? "picked" : ""}`} key={c.upload_id}>
           {c.kind === "video" ? <video src={c.preview_url} controls preload="metadata" playsInline /> : <img src={c.preview_url} alt={c.label} loading="lazy" />}
-          <div><a href={c.pexels_url} target="_blank" rel="noreferrer">{c.photographer} on Pexels</a><a href={c.license_url} target="_blank" rel="noreferrer">License ↗</a></div>
+          <div><span className="cast-ai-tag">{DOC_SHOT_MODELS[ci % DOC_SHOT_MODELS.length]}</span><span>AI scene</span></div>
           <button disabled={disabled || assembled} className={c.upload_id === scene.picked_upload_id ? "project-primary" : ""} onClick={() => void action(`scenes/${scene.id}/pick`, { upload_id: c.upload_id })}>{c.upload_id === scene.picked_upload_id ? "✓ Selected" : "Pick this shot"}</button>
         </div>)}</div>
-        {!scene.candidates.length && <p className="project-empty-small">{scene.status === "skipped" ? "No visual selected. This scene is skipped." : scene.error || "Stock candidates will appear here."}</p>}
+        {!scene.candidates.length && <p className="project-empty-small">{scene.status === "skipped" ? "No visual selected. This scene is skipped." : scene.error || "Generated scene options will appear here."}</p>}
       </article>)}
       {!assembled && <footer className="project-actions cast-actions"><div><label>Narration voice<select value={voiceId} disabled={disabled || !!project.tts_job_id} onChange={e => setVoiceId(e.target.value)}><option value="">First available English voice</option>{voices.map(v => <option key={v.voice_id} value={v.voice_id}>{v.name || v.voice_name || v.voice_id}</option>)}</select></label>{voiceError && <small role="alert">Voice catalog: {voiceError}</small>}<small>Your full narration stays intact. The final pick repeats if needed to cover it.</small></div>
-        {project.status !== "running" && scenes.some(s => ["pending", "failed"].includes(s.status)) && <button disabled={busy} onClick={() => void action("fetch-stock")}>Retry stock</button>}
+        {project.status !== "running" && scenes.some(s => ["pending", "failed"].includes(s.status)) && <button disabled={busy} onClick={() => void action("fetch-stock")}>Retry scene generate</button>}
         <button className="project-primary" disabled={disabled || !castReady} onClick={() => void action("assemble", { voice_id: voiceId })}>{project.tts_job_id ? "Resume assembly →" : "Assemble timeline →"}</button>
       </footer>}
-    </section> : assembled ? <VideoStudio projectId={id} onHome={onHome} /> : <section className="project-content project-empty"><h1>Cast your scenes first</h1><p>Your timeline opens after assembly.</p><button onClick={() => onStep(projectStep(project))}>Continue project</button></section>}
+    </section> : assembled ? <VideoStudio projectId={id} onHome={onHome} /> : <section className="project-content project-empty"><h1>Generate your scenes first</h1><p>Your timeline opens after assembly.</p><button onClick={() => onStep(projectStep(project))}>Continue project</button></section>}
   </>;
   return chrome === "none" ? <div className={`project-embed${step === "studio" ? " in-studio" : ""}`}>{body}</div> : <main className={`studio project-workspace ${step === "studio" ? "in-studio" : ""}`}>{body}</main>;
 }

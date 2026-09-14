@@ -4,6 +4,8 @@ import { BrandMark, Icon, Squiggle, Wave } from "./BrandMark";
 import { IMG } from "./media";
 import { ImageCycle, VideoCycle } from "./StudioReel";
 import "./landing.css";
+import "./landing-motion.css";
+import { useLandingMotion } from "./useLandingMotion";
 
 const STUDIO_FILTERS = [
   { id: "i2i", label: "Image to Image" },
@@ -337,7 +339,7 @@ const AUDIO_DESKS = [
     tag: "TTS · CLONE · DIALOGUE",
     tagClass: "hf-tag-lime",
     title: "Text to speech",
-    body: "Script in. Voice out. Clone 3–30s with consent. Dialogue needs two speakers. Catalog previews play at 0 credits.",
+    body: "Script in. Voice out. Clone 3–30s with consent. Dialogue needs two speakers. Catalog previews play free.",
     href: "/audio?desk=tts",
     route: { name: "audio" as const, desk: "tts" as const },
     cover: "/landing/audio/voices.svg",
@@ -392,6 +394,7 @@ const HERO_CLIPS = [
 ];
 
 export function Landing({ onGo }: { onGo: (next: Route) => void }) {
+  const motionRef = useLandingMotion();
   const [copied, setCopied] = useState(false);
   const [studioOn, setStudioOn] = useState("i2i");
   const [audioOn, setAudioOn] = useState<(typeof AUDIO_DESKS)[number]["id"]>("voices");
@@ -415,7 +418,7 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
   }
 
   return (
-    <div className="hf">
+    <div className="hf" ref={motionRef}>
       <div className="hf-hero-band">
         <div className="hf-hero-vids" aria-hidden="true">
           {HERO_CLIPS.map((clip) => (
@@ -444,8 +447,8 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
               <span className="chip-lime-keyword">Imagination Engine</span>
             </h1>
             <p>
-              Their Studio makes clips. One project here owns the script, the stock, the voice, and
-              the edit. That documentary loop is the product — not another effects wall.
+              Their Studio makes clips. One project here owns the script, the AI footage, the voice, and
+              the edit. That documentary loop is the product — a full generative pipeline, not another effects wall.
             </p>
             <div className="hf-hero-ctas">
               <a className="hf-btn-lime" href="/projects" onClick={go({ name: "projects" })}>
@@ -483,9 +486,9 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
               Type a topic. Finish a <span className="chip-lime-keyword">film</span>.
             </h2>
             <p>
-              Write “coffee shop morning.” We draft a script you can edit. You pick the shots. A
-              voice sits on the picture. That is one project — a short documentary, not four
-              unrelated clips. Higgsfield’s Studio generates a look. This desk edits a story.
+              Write “coffee shop morning.” We draft a script you can edit. AI generates the shots —
+              Seedance, Kling, LTX. A voice sits on the picture. That is one project — a short
+              documentary, not four unrelated clips. Higgsfield’s Studio generates a look. This desk finishes a film.
             </p>
           </div>
 
@@ -508,11 +511,11 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
                 </li>
                 <li>
                   <strong>You read the script.</strong>
-                  <span>Change any voiceover line before we fetch pictures.</span>
+                  <span>Change any voiceover line before we generate the shots.</span>
                 </li>
                 <li>
-                  <strong>You cast each scene.</strong>
-                  <span>Pick one stock clip, or skip it. Dawn, baristas, friends, cups.</span>
+                  <strong>You pick AI footage.</strong>
+                  <span>Generated clips per scene — Seedance, Kling, LTX — or skip a beat.</span>
                 </li>
                 <li>
                   <strong>You mix the sound.</strong>
@@ -1013,8 +1016,8 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
               </span>
               <h3>Start with a topic. Finish in Studio.</h3>
               <p>
-                Script, stock, voice, and mix share one id. Studio is the edit of that documentary —
-                not Higgsfield’s generate playground. Translate changes the soundtrack only.
+                Script, AI shots, voice, and mix share one id. Studio is the edit of that documentary —
+                a full generative pipeline, not Higgsfield’s generate playground. Translate changes the soundtrack only.
               </p>
             </div>
             <div className="hf-ent-btns">
@@ -1033,40 +1036,72 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
 
       <footer className="hf-footer">
         <div className="hf-wrap-hero">
-          <div className="hf-footer-top">
-            <div className="hf-brand">
-              <span className="hf-brand-mark">
-                <BrandMark />
-              </span>
-              <span className="hf-brand-word">
-                <strong style={{ color: "#150f23" }}>
-                  MARKETING<em style={{ color: "#422082" }}>STUDIO</em>
-                </strong>
-                <span className="hf-ai" style={{ background: "#150f23", color: "#c2ef4e" }}>
-                  .AI
+          <div className="hf-footer-grid">
+            <div className="hf-footer-brand-col">
+              <div className="hf-brand">
+                <span className="hf-brand-mark">
+                  <BrandMark />
                 </span>
-              </span>
+                <span className="hf-brand-word">
+                  <strong style={{ color: "#150f23" }}>
+                    MARKETING<em style={{ color: "#422082" }}>STUDIO</em>
+                  </strong>
+                </span>
+              </div>
+              <p className="hf-footer-tagline">Your Imagination Engine</p>
+              <p className="hf-footer-blurb">A documentary from a topic — not a generate wall.</p>
             </div>
-            <div className="hf-footer-links">
+            <nav className="hf-footer-col" aria-label="Start creating">
+              <p className="hf-footer-col-title">Start creating</p>
               <a href="/projects" onClick={go({ name: "projects" })}>
                 Documentaries
+              </a>
+              <a href="/avatar" onClick={go({ name: "avatar" })}>
+                Avatar
+              </a>
+              <a href="/images-templates" onClick={go({ name: "templates" })}>
+                Images
+              </a>
+              <a href="/video-templates" onClick={go({ name: "videos" })}>
+                Videos
               </a>
               <a href="/effects" onClick={go({ name: "effects" })}>
                 Effects
               </a>
-              <a href="/library" onClick={go({ name: "library" })}>
-                Library
-              </a>
               <a href="/audio" onClick={go({ name: "audio" })}>
                 Audio
               </a>
-              <a href="/avatar" onClick={go({ name: "avatar" })}>
-                Create avatar
+            </nav>
+            <nav className="hf-footer-col" aria-label="Product">
+              <p className="hf-footer-col-title">Product</p>
+              <a href="/library" onClick={go({ name: "library" })}>
+                Library
               </a>
-            </div>
+              <a href="/pricing" onClick={go({ name: "pricing" })}>
+                Pricing
+              </a>
+              <a href="/mcp" onClick={go({ name: "mcp" })}>
+                MCP
+              </a>
+            </nav>
+            <nav className="hf-footer-col" aria-label="Legal">
+              <p className="hf-footer-col-title">Legal</p>
+              <a href="/terms" onClick={go({ name: "terms" })}>
+                Terms
+              </a>
+              <a href="/refund" onClick={go({ name: "refund" })}>
+                Refunds
+              </a>
+              <a href="/delivery" onClick={go({ name: "delivery" })}>
+                Delivery
+              </a>
+              <a href="/cancellation" onClick={go({ name: "cancellation" })}>
+                Cancellation
+              </a>
+            </nav>
           </div>
           <div className="hf-footer-bot">
-            <p>© 2026 Marketing Studio. A documentary from a topic — not a Higgsfield landing.</p>
+            <p>© 2026 Marketing Studio.</p>
             <div className="hf-live-clusters">
               <span className="hf-dot hf-dot-ping" style={{ background: "#aad636" }} />
               TOPIC → SCRIPT → CAST → MIX

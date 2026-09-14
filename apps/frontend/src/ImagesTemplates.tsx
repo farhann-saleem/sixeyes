@@ -1,4 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { IMAGE_MODELS } from "./model-catalog";
+import { ModelStrip } from "./ModelStrip";
 import { isLive, type Catalog, type SwapJob } from "./studio";
 
 export function ImagesTemplates({
@@ -17,6 +19,7 @@ export function ImagesTemplates({
   const workers = catalog?.cpu?.health?.workers;
   const r2Error = catalog?.r2?.error ?? null;
   const live = jobs.find(isLive);
+  const [engine, setEngine] = useState(IMAGE_MODELS[0]?.id ?? "");
 
   const countByTemplate = useMemo(() => {
     const map = new Map<string, number>();
@@ -34,7 +37,7 @@ export function ImagesTemplates({
           <p className="kicker">Images</p>
           <h1>Image to image</h1>
           <p className="lede">
-            Pick a still. Add a reference. We write a new image from that prompt.
+            Pick a still. Choose an image model. Generate from your reference — full AI stills, not stock.
           </p>
         </div>
         <div className="head-side">
@@ -46,6 +49,8 @@ export function ImagesTemplates({
           </div>
         </div>
       </header>
+
+      <ModelStrip label="Image models" models={IMAGE_MODELS} value={engine} onChange={setEngine} />
 
       {blocked ? <p className="notice">{blocked}</p> : null}
       {r2Error ? <p className="notice">Storage: {r2Error}</p> : null}

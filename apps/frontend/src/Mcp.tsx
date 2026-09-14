@@ -55,7 +55,7 @@ export function McpDesk() {
           <h1>Talk to this studio from Cursor or Claude</h1>
           <p className="lede">
             Same product, agent-sized. Documentaries, catalog looks, saved identities, library.
-            Generate is async. Not lip-sync. Not thirty mystery models.
+            Generate is async. Famous models on every desk. Not lip-sync.
           </p>
         </div>
       </header>

@@ -119,7 +119,7 @@ export function labelFromImageFilename(filename: string) {
 }
 
 export function labelFromVideoFilename(filename: string) {
-  const stem = filename.replace(/\.[^.]+$/, "");
+  const stem = filename.replace(/\.[^.]+$/, "").replace(/^\d+_[a-z0-9]+_/i, "");
   const parts = stem.split("_");
   const pack = parts[0] ?? "";
   const take = Number((parts[1] || "").replace(/\D/g, ""));

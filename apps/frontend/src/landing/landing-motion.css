@@ -1,0 +1,49 @@
+/* Motion only. Existing composition, typography, colors and media stay intact. */
+.hf { --hf-motion-ease: cubic-bezier(.23, 1, .32, 1); }
+.hf .hf-orb-a { animation: hf-atmosphere-center 16s ease-in-out infinite; }
+.hf .hf-orb-b { animation: hf-atmosphere-drift 19s ease-in-out infinite alternate; }
+.hf .hf-orb-c { animation: hf-atmosphere-drift 23s ease-in-out -9s infinite alternate-reverse; }
+.hf .hf-telem i { animation: hf-signal-breathe 3.6s ease-in-out infinite; }
+.hf .hf-telem span:nth-child(2) i { animation-delay: .45s; }
+.hf .hf-telem span:nth-child(3) i { animation-delay: .9s; }
+.hf .hf-telem span:nth-child(4) i { animation-delay: 1.35s; }
+.hf :is(.hf-lime-glow, .hf-pink-glow) { animation: hf-divider-breathe 7s ease-in-out infinite; }
+/* Same equalizer, compositor-only movement instead of animating layout height. */
+.hf .hf-eq i { height: 18px; animation-name: hf-equalizer-motion; transform-origin: center bottom; }
+.hf .hf-eq i:nth-child(3n) { animation-duration: 1.45s; }
+.hf .hf-eq i:nth-child(4n) { animation-duration: 1.75s; }
+.hf :is(.hf-btn-lime, .hf-btn-ink, .hf-btn-ghost-dark, .hf-filters button, .hf-aspect-switch button) {
+  transition: transform 180ms var(--hf-motion-ease), background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+.hf :is(.hf-card, .hf-av, .hf-var, .hf-why-shot, .hf-why-film) {
+  transition: transform 240ms var(--hf-motion-ease), border-color 200ms ease, box-shadow 240ms ease;
+}
+.hf .hf-footer-col a { transition: transform 180ms var(--hf-motion-ease), color 180ms ease; }
+.hf :is(.hf-btn-lime, .hf-btn-ink, .hf-btn-ghost-dark):active { transform: translateY(0) scale(.98); }
+@media (hover: hover) and (pointer: fine) {
+  .hf :is(.hf-btn-lime, .hf-btn-ink, .hf-btn-ghost-dark):hover { transform: translateY(-2px); }
+  .hf :is(.hf-card, .hf-av, .hf-var, .hf-why-shot, .hf-why-film):hover { transform: translateY(-4px); }
+  .hf .hf-footer-col a:hover { transform: translateX(3px); }
+  .hf .shimmer-mask:hover::after { animation: hf-shimmer 850ms var(--hf-motion-ease) forwards; }
+}
+/* Pause ambient CSS motion outside the viewport and while the tab is hidden. */
+.hf-motion-ready .hf-hero-band:not(.hf-motion-visible) *,
+.hf-motion-ready section:not(.hf-motion-visible) *,
+.hf-motion-ready .hf-wave:not(.hf-motion-visible) *,
+.hf-motion-ready .hf-footer:not(.hf-motion-visible) *,
+.hf.hf-motion-paused *, .hf.hf-motion-paused *::after { animation-play-state: paused !important; }
+@keyframes hf-atmosphere-center {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: .5; }
+  50% { transform: translate(-47%, 12px) scale(1.06); opacity: .85; }
+}
+@keyframes hf-atmosphere-drift {
+  from { transform: translate(0, 0); }
+  to { transform: translate(22px, -24px); }
+}
+@keyframes hf-signal-breathe { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes hf-divider-breathe { 0%, 100% { opacity: .65; } 50% { opacity: 1; } }
+@keyframes hf-equalizer-motion { 0%, 100% { transform: scaleY(.35); } 50% { transform: scaleY(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .hf *, .hf *::before, .hf *::after { animation: none !important; transition: none !important; }
+  .hf :is(.hf-card, .hf-av, .hf-var, .hf-why-shot, .hf-why-film, .hf-btn-lime, .hf-btn-ink, .hf-btn-ghost-dark, .hf-footer-col a):hover { transform: none; }
+}

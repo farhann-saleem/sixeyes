@@ -1,6 +1,7 @@
 import { apiUrl } from "./api";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ensureAuthed } from "./auth";
+import { AVATAR_MODELS, displayNameForProvider } from "./model-catalog";
 import { SaveNamePanel } from "./SaveNamePanel";
 import { json, type SavedAvatar } from "./studio";
 
@@ -24,34 +25,12 @@ type ModelRow = {
   default?: boolean;
   blocked?: string | null;
   notes?: string;
-  quoted_credits?: number | null;
-  credits_remaining?: number | null;
-  catalog?: { listed_usd?: number };
 };
 
 type Models = {
   prompt: string;
   models: ModelRow[];
 };
-
-const NAMES: Record<string, string> = {
-  "openrouter-flux": "FLUX.2 Klein 4B",
-  openrouter: "Muse on OpenRouter",
-  qwen: "Qwen on RunPod",
-  ai33pro: "Seedream 4.5",
-};
-
-const MODEL_PICK: Array<{
-  id: Provider;
-  title: string;
-  vendor: string;
-  price: string;
-}> = [
-  { id: "openrouter-flux", title: "FLUX.2 Klein 4B", vendor: "OpenRouter", price: "~$0.014" },
-  { id: "openrouter", title: "Muse", vendor: "OpenRouter", price: "$0.01" },
-  { id: "qwen", title: "Qwen Image Edit", vendor: "RunPod", price: "Self-host" },
-  { id: "ai33pro", title: "Seedream 4.5", vendor: "ai33pro", price: "Credits" },
-];
 
 function isLive(job: AvatarJob | undefined): job is AvatarJob {
   return job?.status === "IN_PROGRESS" || job?.status === "PENDING";
@@ -69,24 +48,32 @@ export function App({ onIdentities }: { onIdentities?: (rows: SavedAvatar[]) => 
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [identities, setIdentities] = useState<SavedAvatar[]>([]);
   const [pickedId, setPickedId] = useState<string | null>(null);
+  const [stageOpen, setStageOpen] = useState(false);
+  const controlsRef = useRef<HTMLFormElement>(null);
+  const previousLeft = useRef<number | null>(null);
+  function openStage() {
+    if (!stageOpen) previousLeft.current = controlsRef.current?.getBoundingClientRect().left ?? null;
+    setStageOpen(true);
+  }
+  useLayoutEffect(() => {
+    const el = controlsRef.current;
+    if (el && previousLeft.current !== null && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const offset = previousLeft.current - el.getBoundingClientRect().left;
+      el.animate([{ transform: `translateX(${offset}px)` }, { transform: "translateX(0)" }], { duration: 280, easing: "cubic-bezier(0.23, 1, 0.32, 1)" });
+    }
+    previousLeft.current = null;
+  }, [stageOpen]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const selected = models?.models.find((m) => m.id === provider);
-  const qwen = models?.models.find((m) => m.id === "qwen");
-  const ai33 = models?.models.find((m) => m.id === "ai33pro");
   const current = jobs.find((j) => j.id === currentId) ?? null;
   const working = busy || isLive(current ?? undefined);
-
-  const latestDone = useMemo(
-    () => jobs.find((j) => j.status === "COMPLETED") ?? null,
-    [jobs],
-  );
 
   const pickedIdentity = identities.find((a) => a.id === pickedId) ?? null;
   const pickedJob =
     jobs.find((j) => j.id === pickedId && j.status === "COMPLETED") ??
     (pickedIdentity ? jobs.find((j) => j.id === pickedIdentity.job_id) : null);
-  const saveTargetJob = pickedJob ?? latestDone;
+  const saveTargetJob = current?.status === "COMPLETED" ? current : pickedJob ?? null;
   const alreadySaved = saveTargetJob
     ? identities.find((a) => a.job_id === saveTargetJob.id) ?? null
     : pickedIdentity;
@@ -117,11 +104,11 @@ export function App({ onIdentities }: { onIdentities?: (rows: SavedAvatar[]) => 
     const ordered = jobBody.jobs;
     setJobs(ordered);
     const live = ordered.find(isLive) ?? null;
-    const done = ordered.find((j) => j.status === "COMPLETED") ?? null;
+    if (live) openStage();
     setCurrentId((prev) => {
       if (live) return live.id;
       if (prev && ordered.some((j) => j.id === prev)) return prev;
-      return done?.id ?? prev;
+      return prev;
     });
     if (m.models.find((x) => x.id === "qwen")?.blocked && provider === "qwen") {
       setProvider("openrouter-flux");
@@ -163,6 +150,9 @@ export function App({ onIdentities }: { onIdentities?: (rows: SavedAvatar[]) => 
       return;
     }
     setError(null);
+    openStage();
+    setCurrentId(null);
+    setPickedId(null);
     setBusy(true);
     const body = new FormData();
     body.append("image", file);
@@ -190,6 +180,7 @@ export function App({ onIdentities }: { onIdentities?: (rows: SavedAvatar[]) => 
   }
 
   function pickIdentity(row: SavedAvatar) {
+    openStage();
     setPickedId(row.id);
     setCurrentId(row.job_id);
   }
@@ -200,6 +191,7 @@ export function App({ onIdentities }: { onIdentities?: (rows: SavedAvatar[]) => 
   }
 
   function pickUnsaved(job: AvatarJob) {
+    openStage();
     setPickedId(job.id);
     setCurrentId(job.id);
   }
@@ -250,60 +242,66 @@ export function App({ onIdentities }: { onIdentities?: (rows: SavedAvatar[]) => 
 
   return (
     <main className="studio avatar-page">
-      <header className="page-head">
+      <header className="page-head avatar-heading">
         <div>
           <p className="kicker">Avatars</p>
-          <h1>Create an avatar</h1>
-          <p className="lede">
-            Upload a face. Generate a portrait. Name it. Use that identity on images, videos, and
-            effects.
-          </p>
+          <h1>Imagine it. Then be in it.</h1>
+          <p className="lede">Upload a face. Generate your look. Save the identity — then step into images, videos, and effects.</p>
         </div>
       </header>
 
-      <div className="avatar-desk">
-      <form className="compose-panel" onSubmit={(e) => void onSubmit(e)}>
-        <p className="kicker">Generate</p>
-        <h2>Photo, then a model</h2>
-        <p className="lede">Same order every time. Face first. Pick a model you can actually read. Then generate.</p>
-
-        <div className="avatar-block">
-          <p className="avatar-block-label">1 · Face photo</p>
-        <div
-          className="avatar-shot"
+      <div className={`avatar-workspace${stageOpen ? " has-stage" : ""}`}>
+      <form ref={controlsRef} className="avatar-controls" onSubmit={(e) => void onSubmit(e)}>
+        <div className="avatar-settings-column">
+        <fieldset className="avatar-model-picker" disabled={working}>
+          <legend className="avatar-section-label"><span>01</span> Model settings</legend>
+          <div className="avatar-model-grid">
+            {AVATAR_MODELS.map((row) => {
+              const live = models?.models.find((m) => m.id === row.backendId);
+              return (
+                <label key={row.id} className={`avatar-model-option${provider === row.backendId ? " is-selected" : ""}${live?.blocked ? " is-blocked" : ""}`}>
+                  <input type="radio" name="avatar-model" value={row.backendId} checked={provider === row.backendId} disabled={Boolean(live?.blocked)} onChange={() => setProvider(row.backendId)} />
+                  <span className="avatar-model-name">{row.name}</span>
+                  <span className="avatar-model-meta">{live?.blocked ? "Unavailable" : row.tag ?? row.vibe}</span>
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
+        <details className="avatar-prompt">
+          <summary>Prompt &amp; details</summary>
+          <textarea readOnly value={models?.prompt ?? "loading…"} />
+        </details>
+        {selected?.notes ? <p className="muted avatar-dock-note">{selected.notes}</p> : null}
+        {blocked ? <p className="notice">{blocked}</p> : null}
+        </div>
+        <div className="avatar-upload-column">
+        <div className="avatar-section-label"><span>02</span> Upload your photo</div>
+        <button
+          type="button"
+          className={`avatar-upload${preview ? " has-photo" : ""}`}
+          disabled={working}
+          onClick={() => fileRef.current?.click()}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
             e.preventDefault();
-            const next = e.dataTransfer.files?.[0] ?? null;
-            if (next) setFile(next);
+            if (working) return;
+            const next = e.dataTransfer.files?.[0];
+            if (next && ["image/jpeg", "image/png", "image/webp"].includes(next.type)) setFile(next);
+            else if (next) setError("Choose a JPG, PNG or WebP photo.");
           }}
         >
-          {preview ? (
-            <img src={preview} alt="Selected reference" />
-          ) : (
-            <button type="button" className="avatar-shot-empty" onClick={() => fileRef.current?.click()}>
-              <strong>Drop a face photo here</strong>
-              JPEG, PNG, or WebP. The whole still stays in frame.
-            </button>
+          {preview ? <img src={preview} alt="Your reference photo" /> : (
+            <>
+              <span className="avatar-upload-icon" aria-hidden="true">↥</span>
+              <strong>Start with a face</strong>
+              <span>Drop your photo here or browse</span>
+              <small>JPG, PNG or WebP · One clear face</small>
+            </>
           )}
-          {working ? (
-            <div className="gen-wait" aria-live="polite">
-              <span className="gen-wait-veil" />
-              <p>{current?.phase_label || "Painting the portrait…"}</p>
-            </div>
-          ) : null}
-          <div className="avatar-shot-actions">
-            {preview ? (
-              <button type="button" className="btn ghost small" disabled={working} onClick={clearUpload}>
-                Remove
-              </button>
-            ) : null}
-            <button type="button" className="btn ghost small" disabled={working} onClick={() => fileRef.current?.click()}>
-              {preview ? "Replace" : "Upload"}
-            </button>
-          </div>
-        </div>
-        </div>
+          {preview ? <span className="avatar-replace">Replace photo ↗</span> : null}
+        </button>
+        {preview ? <button type="button" className="avatar-remove" disabled={working} onClick={clearUpload}>Remove photo</button> : null}
         <input
           ref={fileRef}
           id="image"
@@ -314,97 +312,63 @@ export function App({ onIdentities }: { onIdentities?: (rows: SavedAvatar[]) => 
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
         />
 
-        <div className="avatar-block">
-          <p className="avatar-block-label" id="model-label">
-            2 · Model
-          </p>
-          <div className="avatar-models" role="radiogroup" aria-labelledby="model-label">
-            {MODEL_PICK.map((row) => {
-              const live = models?.models.find((m) => m.id === row.id);
-              const isOn = provider === row.id;
-              const isBlocked = Boolean(live?.blocked);
-              const price =
-                row.id === "ai33pro" && live?.quoted_credits != null
-                  ? `${live.quoted_credits} credits`
-                  : row.price;
-              return (
-                <button
-                  key={row.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={isOn}
-                  className={`avatar-model${isOn ? " on" : ""}${isBlocked ? " is-blocked" : ""}`}
-                  disabled={working}
-                  onClick={() => setProvider(row.id)}
-                >
-                  <strong>{row.title}</strong>
-                  <span className="avatar-tags">
-                    <span className="avatar-tag">{row.vendor}</span>
-                    <span className="avatar-tag">{price}</span>
-                    {row.id === "openrouter-flux" ? <span className="avatar-tag ok">Default</span> : null}
-                    {isBlocked ? <span className="avatar-tag warn">Blocked</span> : null}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-          {selected?.notes ? <p className="muted">{selected.notes}</p> : null}
-          {provider === "qwen" && qwen?.blocked ? <p className="notice">{qwen.blocked}</p> : null}
-          {provider === "ai33pro" && ai33 ? (
-            <p className="muted">
-              Quoted {ai33.quoted_credits ?? "—"} credits · balance {ai33.credits_remaining ?? "—"}
-            </p>
-          ) : null}
-        </div>
-
-        <details className="avatar-prompt">
-          <summary>Locked prompt we send</summary>
-          <textarea readOnly value={models?.prompt ?? "loading…"} />
-        </details>
-
-        <div className="head-side">
-          <button
-            type="submit"
-            className="btn lime"
-            disabled={working || Boolean(blocked) || !file}
-          >
-            {working ? "Working…" : "Generate portrait"}
+        {error ? <p className="notice" role="alert">{error}</p> : null}
+        <div className="avatar-create-actions">
+          <button type="submit" className="btn lime avatar-generate" disabled={working || Boolean(blocked) || !file}>
+            <span aria-hidden="true">✦</span> {working ? "Creating your avatar…" : "Generate avatar"}
+            {!working ? <span aria-hidden="true">↗</span> : null}
           </button>
-          {working ? (
-            <button type="button" className="btn ghost" onClick={() => void stop()}>
-              Stop
-            </button>
-          ) : null}
+          {working && current && isLive(current) ? <button type="button" className="avatar-remove" onClick={() => void stop()}>Stop generation</button> : null}
         </div>
-        {blocked ? <p className="notice">{blocked}</p> : null}
-        {error ? <p className="notice">{error}</p> : null}
+        </div>
       </form>
-      <div className="avatar-rail">
-      {showResult && resultJob ? (
+      {stageOpen ? <div className="avatar-preview" aria-busy={working}>
+        <div className="avatar-preview-top"><span>03 · YOUR AVATAR</span><span className={working ? "is-working" : ""}>● {working ? "Creating" : showResult ? "Ready" : "Ready when you are"}</span></div>
+        {working ? (
+          <div className="avatar-render" role="status" aria-live="polite">
+            <div className="avatar-render-canvas" aria-hidden="true">
+              {preview ? <img src={preview} alt="" /> : null}
+              <div className="avatar-shimmer" />
+              <span className="avatar-sparkle sparkle-one">✦</span><span className="avatar-sparkle sparkle-two">✦</span><span className="avatar-sparkle sparkle-three">✧</span>
+            </div>
+            <h2>A little magic in the making.</h2>
+            <p>{current?.phase_label || "Creating your portrait…"}</p>
+            <span className="avatar-render-caption">Your portrait will appear here when it’s ready.</span>
+          </div>
+        ) : showResult && resultJob ? (
+
         <SaveNamePanel
           key={resultJob.id}
           resultId={resultJob.id}
           imageSrc={apiUrl(`/api/avatars/${resultJob.id}/output`)}
-          tag={`${alreadySaved?.name || "Not saved yet"} · ${NAMES[resultJob.provider] || resultJob.provider}`}
+          tag={`${alreadySaved?.name || "Not saved yet"} · ${displayNameForProvider(resultJob.provider)}`}
           alreadySaved={Boolean(alreadySaved)}
           existingName={alreadySaved?.name ?? ""}
           saving={saving}
           onSave={(name) => void savePicked(name)}
         />
-      ) : null}
+      ) : (
+        <div className="avatar-empty-stage">
+          <h2>{current?.status === "CANCELLED" ? "Generation stopped" : "No portrait created"}</h2>
+          <p>Choose your photo and try again when you’re ready.</p>
+        </div>
+      )}
+      {!working ? <div className="avatar-result-actions">
+        <button type="button" className="avatar-remove" onClick={() => { setStageOpen(false); setPickedId(null); setCurrentId(null); }}>Dismiss result</button>
+      </div> : null}
+      {current?.status === "FAILED" || current?.status === "CANCELLED" ? <p className="notice" role="status">{current.error || (current.status === "CANCELLED" ? "Generation stopped. You can try again when you’re ready." : "Generation failed. Please try again.")}</p> : null}
+      </div> : null}
+      </div>
 
-      <section className="compose-panel">
-        <p className="kicker">Identities</p>
-        <h2>{showResult ? "Saved and waiting" : "No avatar yet"}</h2>
-        <p className="lede">
-          {showResult
-            ? "Click a still to select it. Unsaved portraits wait here until you name them."
-            : "Generate on the left. The portrait and your saved names land on this side."}
-        </p>
+      <section className="avatar-collection">
+        <div className="avatar-collection-heading">
+          <div><p className="kicker">YOUR CAST, COLLECTED</p><h2>Saved avatars <span>{identities.length.toString().padStart(2, "0")}</span></h2></div>
+          <p>Select a portrait to view it or give it a name.</p>
+        </div>
         {identities.length === 0 && unsavedJobs.length === 0 ? (
           <div className="need-avatar">
-            <strong>Create an avatar first</strong>
-            <p>Drop a face, pick a model, generate, type a name, then Save avatar.</p>
+            <strong>Your cast is waiting</strong>
+            <p>Create your first portrait above, then save it here for your next image or video.</p>
           </div>
         ) : (
           <div className="gallery compact">
@@ -413,13 +377,13 @@ export function App({ onIdentities }: { onIdentities?: (rows: SavedAvatar[]) => 
                 key={job.id}
                 className={`tile${pickedId === job.id ? " selected" : ""}`}
               >
-                <button type="button" className="tile-open" onClick={() => pickUnsaved(job)}>
+                <button type="button" className="tile-open" disabled={working} aria-label="Select unsaved portrait" onClick={() => pickUnsaved(job)}>
                   <img src={apiUrl(`/api/avatars/${job.id}/output`)} alt="Unsaved portrait" />
                 </button>
                 <figcaption className="tile-meta">
                   <div className="tile-meta-text">
                     <strong>Unsaved</strong>
-                    <span className="muted">{NAMES[job.provider] || job.provider}</span>
+                    <span className="muted">{displayNameForProvider(job.provider)}</span>
                   </div>
                 </figcaption>
               </figure>
@@ -429,7 +393,7 @@ export function App({ onIdentities }: { onIdentities?: (rows: SavedAvatar[]) => 
                 key={a.id}
                 className={`tile${pickedId === a.id ? " selected" : ""}`}
               >
-                <button type="button" className="tile-open" onClick={() => pickIdentity(a)}>
+                <button type="button" className="tile-open" disabled={working} aria-label={`Select ${a.name}`} onClick={() => pickIdentity(a)}>
                   <img src={a.image_url} alt={a.name} />
                 </button>
                 <figcaption className="tile-meta">
@@ -443,8 +407,6 @@ export function App({ onIdentities }: { onIdentities?: (rows: SavedAvatar[]) => 
           </div>
         )}
       </section>
-      </div>
-      </div>
     </main>
   );
 }

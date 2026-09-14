@@ -6,7 +6,7 @@ export const PROMPT_LIMITS: Record<PromptKind, PromptLimit> = {
   topic: { min: 1, max: 2000, label: "Topic" },
   title: { min: 1, max: 160, label: "Title" },
   heading: { min: 1, max: 160, label: "Scene heading" },
-  stock: { min: 1, max: 120, label: "Stock query" },
+  stock: { min: 1, max: 120, label: "Shot prompt" },
   speech: { min: 1, max: 1_000_000, label: "Script" },
   scriptVo: { min: 1, max: 1800, label: "Narration" },
   sceneVo: { min: 1, max: 500, label: "Scene narration" },

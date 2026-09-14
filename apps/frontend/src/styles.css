@@ -2255,7 +2255,7 @@ pre {
 .site-footer {
   background: #110b1f;
   border-top: 1px solid #362d59;
-  padding: 28px 28px 32px;
+  padding: 88px 40px 64px;
 }
 
 .site-footer-inner {
@@ -2306,14 +2306,14 @@ pre {
 }
 
 .site-footer-bot {
-  width: calc(100% - 56px);
-  margin: 22px auto 0;
+  width: calc(100% - 80px);
+  margin: 40px auto 0;
   display: flex;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
   color: #cfc8d6;
-  font-size: 13px;
+  font-size: 0.9rem;
 }
 
 .site-footer-bot p {

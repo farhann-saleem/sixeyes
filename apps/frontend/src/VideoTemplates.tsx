@@ -1,4 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { VIDEO_MODELS } from "./model-catalog";
+import { ModelStrip } from "./ModelStrip";
 import { formatClip, isLive, isVideoJob, type Catalog, type SwapJob, type Template } from "./studio";
 
 function effectName(t: Template) {
@@ -21,7 +23,7 @@ export function VideoTemplates({
   onOpen,
   kicker = "Videos",
   title = "Image to video",
-  lede = "Pick a clip. Add a reference still. We generate a new video from that prompt.",
+  lede = "Pick a clip. Choose a video model. Generate motion from your still — full AI pipeline.",
   emptyHint = "Add clips to the video-template folder and they appear here.",
   groupByEffect = false,
 }: {
@@ -40,6 +42,7 @@ export function VideoTemplates({
   const workers = catalog?.cpu?.health?.workers;
   const r2Error = catalog?.r2?.error ?? null;
   const live = jobs.find(isLive);
+  const [engine, setEngine] = useState(VIDEO_MODELS[0]?.id ?? "");
 
   const countByTemplate = useMemo(() => {
     const map = new Map<string, number>();
@@ -118,6 +121,13 @@ export function VideoTemplates({
           </div>
         </div>
       </header>
+
+      <ModelStrip
+        label={groupByEffect ? "Effects engines" : "Video models"}
+        models={VIDEO_MODELS}
+        value={engine}
+        onChange={setEngine}
+      />
 
       {blocked ? <p className="notice">{blocked}</p> : null}
       {r2Error ? <p className="notice">Storage: {r2Error}</p> : null}

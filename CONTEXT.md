@@ -1,4 +1,54 @@
-# Current handoff — split hosting locked (2026-09-14)
+# Current handoff — Landing motion only (2026-09-14)
+
+Owner requested animation only, preserving landing copy, layout, colors and assets. Added `landing/useLandingMotion.ts` and `landing/landing-motion.css`, attached via one root ref/import in Landing. Hero elements enter in sequence; section headings, documentary steps, cards and footer columns reveal once on intersection. Existing ambient orbs drift slowly; workflow dots and divider strokes breathe. Refined existing card shimmer, hover lift, CTA press feedback and footer link movement. Existing equalizer now animates transform rather than height (18px fixed bar maximum).
+
+Motion uses opacity/transform, no scroll hijacking or frame-by-frame JS. Offscreen ambient CSS animations and hidden-tab motion pause. Reduced-motion changes cancel entrances and disable decorative CSS movement; keyboard interaction finishes active entrances immediately. Existing video/image cycles unchanged.
+
+Validation: frontend typecheck/build passed; local desktop scroll inspected, motion class/orb animations active and offscreen equalizer paused verified in browser. No deployment. Prior landing edits preserved; no page copy/layout/assets edited in this turn.
+
+---
+
+# Avatar empty-state contrast fix (2026-09-14)
+
+Owner reported “Your cast is waiting” was dim against its light panel. Avatar collection now explicitly sets the heading to dark ink (`#211b2d`) and description to `#443b50` on `#efede8`, overriding inherited light heading styles. Frontend CSS only.
+
+---
+
+# Current handoff — Horizontal avatar creation flow (2026-09-14)
+
+Owner corrected the avatar redesign: neutral dark panels (less green), original headline/copy and the Image-to-image display font, and horizontal **model settings → upload photo → result**. Settings/upload are visible initially; Generate opens the third section with shimmer/sparkles. Controls move with a short transform animation; reduced motion disables it. Existing completed jobs stay in the collection until selected, active jobs reopen the stage. Result supports name/save and **Dismiss result**; saved avatars remain below. Dismiss does not delete data.
+
+**Pending owner choice:** avatar/identity deletion has no existing backend route. Asked whether to authorize the small backend addition for real deletion or retain frontend-only dismissal; no answer yet. Backend unchanged.
+
+Validation: TypeScript and production build passed. Desktop three-section loading state and 390px mobile layout inspected with isolated local mock responses; name/save updated the mock collection. No paid generation, real record mutation or deployment. Temporary browser fixture removed. Files: `apps/frontend/src/App.tsx`, `apps/frontend/src/avatar-studio.css` (imported by main). Prior unrelated edits preserved.
+
+---
+
+# Current handoff — Avatar studio redesign (2026-09-14)
+
+Owner requested a frontend-only premium avatar studio. `/avatar` now has a cream editorial header, navy creation workspace, large reference upload, four existing model radio cards, a dedicated portrait stage, and the saved/unsaved avatar collection below creation. Live jobs show a blurred reference with CSS shimmer and sparkle animation; completed portraits fade in. Reduced-motion rules, keyboard focus, blocked model states, and failed/cancelled notices are included. Gallery selection is disabled during generation so it cannot switch away from the polled job. Existing backend/API contracts unchanged.
+
+Validation: frontend TypeScript and production build passed; local browser desktop and 390px mobile empty states inspected. Signed-out local API requires Google login; real generation, save/rename and animated live job were not exercised against paid providers. No deployment performed. Styles are scoped in `apps/frontend/src/avatar-studio.css`. Existing unrelated working-tree changes preserved.
+
+---
+
+# Current handoff — split hosting live and verified (2026-09-14)
+
+Split hosting is **live**: Vercel serves the frontend at `https://www.marketingstudioie.site`, EC2 serves the API at `https://api.marketingstudioie.site` (Caddy TLS, backend on `127.0.0.1:3001`). Hostinger DNS now has `A api -> 13.49.134.103`; `www` and `@` still point to Vercel. Public `/health` returns the installed revision; CORS preflight from the Vercel origin passes with credentials; the OAuth state-cookie roundtrip works (login 302 → Google → callback validates state and redirects errors to `www/?auth_error=…`); public catalog endpoints (templates, effects, models) serve 200 and media 302s to R2 presigned URLs; authenticated data (projects, billing/plan, faceswaps) returns 401 anonymously.
+
+**Updater bug found and fixed:** the GitHub releases API did not return releases newest-first, so `ms-update-release` kept matching the already-installed release and EC2 stalled on `83614b9`. Fixed in `deploy/update-release.py` (sort candidates by `published_at` desc, also patched on the server at `/usr/local/sbin/ms-update-release`), and EC2 now auto-installs newest releases via the two-minute timer — verified end to end. Git history was rewritten to drop the Cursor co-author line and force-pushed; remote main is `3aa1900bf1…` and EC2 runs that exact revision.
+
+Still owner-browser-only: a real Google sign-in click-through and two-account isolation (user A cannot read user B's projects/media). Structural checks all pass; the code path is exercised up to Google's token exchange. Shared CPU timeline-v1 export remains a separate deployment gate. Do not run paid model generations without owner authorization.
+
+---
+
+# Superseded handoff — UI polish: login, avatar dock, footers (2026-09-14)
+
+Focused cream/navy/lime polish (not OpenArt purple): dedicated `/login` page (Google only), profile dropdown in the nav, OpenArt-style avatar prompt dock with the four real models (FLUX / Muse / Qwen / Seedream), column footers on product + landing, taller nav padding, and video template labels that strip leading `\d+_[a-z0-9]+_` stems. Hosting lock unchanged — Vercel frontend + EC2 API; DNS for `api` still the external blocker.
+
+---
+
+# Superseded handoff — split hosting locked (2026-09-14)
 
 Owner locked **Vercel frontend + EC2 backend**. Frontend API/media URLs now resolve to `https://api.marketingstudioie.site`, every fetch includes credentials, backend credentialed CORS accepts only `https://www.marketingstudioie.site`, and the API binds to localhost behind Caddy. Google OAuth keeps the registered `https://www.marketingstudioie.site/callback`; that page forwards the code/state to the API. The two hostnames are different origins but the same site, so the API's host-only Secure `SameSite=Lax` cookie is sent when frontend fetches use `credentials: include`.
 

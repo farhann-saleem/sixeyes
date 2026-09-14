@@ -33,6 +33,7 @@ export type Route =
   | { name: "library" }
   | { name: "mcp" }
   | { name: "pricing" }
+  | { name: "login" }
   | { name: "terms" }
   | { name: "refund" }
   | { name: "delivery" }
@@ -107,7 +108,7 @@ const MENUS: Menu[] = [
       {
         title: "Generate",
         items: [
-          { label: "Text to Video", hint: "A documentary cut from a line of copy.", href: "/projects", route: { name: "projects" } },
+          { label: "Text to Video", hint: "AI documentary from a line of copy.", href: "/projects", route: { name: "projects" } },
           { label: "Image to Video", hint: "A still that already is the shot.", href: "/video-templates", route: { name: "videos" } },
           { label: "Effects", hint: "Baked motion packs — person holds, world moves.", href: "/effects", route: { name: "effects" } },
         ],
@@ -123,7 +124,7 @@ const MENUS: Menu[] = [
       {
         title: "Story",
         items: [
-          { label: "New documentary", hint: "Topic → script → cast → Studio.", href: "/projects", route: { name: "projects" } },
+          { label: "New documentary", hint: "Topic → script → AI shots → Mix.", href: "/projects", route: { name: "projects" } },
           { label: "Your projects", hint: "Open a story you already started.", href: "/projects", route: { name: "projects" } },
         ],
       },
@@ -163,7 +164,7 @@ const MENUS: Menu[] = [
       {
         title: "Library",
         items: [
-          audio("voices", "Voice Library", "Hover a cover. Previews are 0 credits."),
+          audio("voices", "Voice Library", "Hover a cover. Previews are free."),
           audio("dictionary", "Dictionary", "Brand-name replacements on TTS."),
         ],
       },
@@ -241,6 +242,7 @@ export function pathToRoute(path: string, search = ""): Route {
   if (path.startsWith("/library")) return { name: "library" };
   if (path.startsWith("/mcp")) return { name: "mcp" };
   if (path === "/pricing" || path === "/pricing/") return { name: "pricing" };
+  if (path === "/login" || path === "/login/") return { name: "login" };
   if (path === "/terms" || path === "/terms/") return { name: "terms" };
   if (path === "/refund" || path === "/refund/") return { name: "refund" };
   if (path === "/delivery" || path === "/delivery/") return { name: "delivery" };
@@ -279,6 +281,7 @@ export function routeToPath(route: Route): string {
   if (route.name === "library") return "/library";
   if (route.name === "mcp") return "/mcp";
   if (route.name === "pricing") return "/pricing";
+  if (route.name === "login") return "/login";
   if (route.name === "terms") return "/terms";
   if (route.name === "refund") return "/refund";
   if (route.name === "delivery") return "/delivery";
@@ -298,20 +301,21 @@ export function routeToPath(route: Route): string {
 
 export function routeTitle(route: Route): string {
   if (route.name === "landing") return "Marketing Studio — Your Imagination Engine";
-  if (route.name === "projects" || route.name === "project") return "Projects — Marketing Studio";
-  if (route.name === "library") return "Your library — Marketing Studio";
-  if (route.name === "mcp") return "MCP — Marketing Studio";
-  if (route.name === "pricing") return "Pricing — Marketing Studio";
-  if (route.name === "terms") return "Terms and Conditions — Marketing Studio";
-  if (route.name === "refund") return "Refund Policy — Marketing Studio";
-  if (route.name === "delivery") return "Delivery Policy — Marketing Studio";
-  if (route.name === "cancellation") return "Cancellation Policy — Marketing Studio";
-  if (route.name === "audio") return "Audio — Marketing Studio";
-  if (route.name === "studio") return "Video Studio — Marketing Studio";
-  if (route.name === "videos" || route.name === "video") return "Videos — Marketing Studio";
-  if (route.name === "effects" || route.name === "effect") return "Effects — Marketing Studio";
-  if (route.name === "templates" || route.name === "template") return "Images — Marketing Studio";
-  return "Create avatar — Marketing Studio";
+  if (route.name === "projects" || route.name === "project") return "Marketing Studio — Your films";
+  if (route.name === "library") return "Marketing Studio — Library";
+  if (route.name === "mcp") return "Marketing Studio — MCP";
+  if (route.name === "pricing") return "Marketing Studio — Pricing";
+  if (route.name === "login") return "Marketing Studio — Sign in";
+  if (route.name === "terms") return "Marketing Studio — Terms";
+  if (route.name === "refund") return "Marketing Studio — Refunds";
+  if (route.name === "delivery") return "Marketing Studio — Delivery";
+  if (route.name === "cancellation") return "Marketing Studio — Cancellation";
+  if (route.name === "audio") return "Marketing Studio — Audio";
+  if (route.name === "studio") return "Marketing Studio — Mix";
+  if (route.name === "videos" || route.name === "video") return "Marketing Studio — Videos";
+  if (route.name === "effects" || route.name === "effect") return "Marketing Studio — Effects";
+  if (route.name === "templates" || route.name === "template") return "Marketing Studio — Images";
+  return "Marketing Studio — Be in it";
 }
 
 function menuActive(menu: Menu, route: Route): boolean {

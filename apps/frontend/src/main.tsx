@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { Shell } from "./Shell";
 import "./styles.css";
 import "./product-polish.css";
+import "./avatar-studio.css";
 
 const pathname = window.location.pathname;
 

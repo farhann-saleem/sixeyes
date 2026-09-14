@@ -381,7 +381,7 @@ export function AudioStudio({ desk }: { desk?: AudioDesk } = {}) {
     if (mode === "dictionary") return "Replacement rules for brand names. Attach the id on TTS or dialogue.";
     if (mode === "isolate") return "Strip background noise from a recording.";
     if (mode === "stt") return "Audio to text. Download SRT when the vendor returns srt_url.";
-    if (mode === "sfx") return "Describe a sound. Omit duration for auto (200 credits) or set 0.5–30s.";
+    if (mode === "sfx") return "Describe a sound. Leave duration blank for auto, or set 0.5–30s.";
     return "Simple: describe a song. Custom: title, lyrics, tags. Suno returns up to two clips.";
   }, [mode]);
 
@@ -394,8 +394,7 @@ export function AudioStudio({ desk }: { desk?: AudioDesk } = {}) {
           <p className="lede">{lede}</p>
         </div>
         <p className="audio-credits">
-          {health?.credits_remaining ?? "—"} credits
-          {health && !health.ffmpeg ? " · ffmpeg missing" : ""}
+          {health && !health.ffmpeg ? "ffmpeg missing" : "Ready"}
         </p>
       </header>
 
@@ -715,7 +714,7 @@ export function AudioStudio({ desk }: { desk?: AudioDesk } = {}) {
           {mode === "sfx" ? (
             <>
               <PromptStarters kind="sfx" onUseSfx={applySfxStarter} onUseMusic={applyMusicStarter} />
-              <label htmlFor="dur">Duration seconds (blank = auto, 200 credits)</label>
+              <label htmlFor="dur">Duration seconds (blank = auto)</label>
               <input id="dur" value={sfxDuration} disabled={working} placeholder="5" onChange={(e) => setSfxDuration(e.target.value)} />
               <label htmlFor="inf">Prompt influence (0–1)</label>
               <input id="inf" value={sfxInfluence} disabled={working} onChange={(e) => setSfxInfluence(e.target.value)} />
@@ -844,7 +843,6 @@ export function AudioStudio({ desk }: { desk?: AudioDesk } = {}) {
               </div>
               <p className="muted">
                 {formatDuration(current.duration_ms)}
-                {current.credit_cost != null ? ` · ${current.credit_cost} credits` : ""}
               </p>
             </section>
           ) : current?.status === "FAILED" ? (
@@ -871,7 +869,6 @@ export function AudioStudio({ desk }: { desk?: AudioDesk } = {}) {
                       <strong>{j.title || j.kind}</strong>
                       <span>
                         {j.kind} · {j.status.toLowerCase()}
-                        {j.credit_cost != null ? ` · ${j.credit_cost} cr` : ""}
                       </span>
                     </button>
                   </li>

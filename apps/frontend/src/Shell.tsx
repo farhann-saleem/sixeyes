@@ -11,8 +11,8 @@ import { TemplateStudio } from "./TemplateStudio";
 import { VideoTemplates } from "./VideoTemplates";
 import { ProjectsHome, ProjectWorkspace } from "./projects/DocumentaryFlow";
 import { isLive, json, type Catalog, type SavedAvatar, type SwapJob } from "./studio";
-import { fetchUser, googleLogin, googleLogout, setUser as setCachedUser, type User } from "./auth";
-import { AuthBadge } from "./LoginGate";
+import { fetchUser, googleLogout, setUser as setCachedUser, type User } from "./auth";
+import { AuthBadge, LoginPage } from "./LoginGate";
 import { Pricing } from "./Pricing";
 import { Policy } from "./Policy";
 
@@ -123,31 +123,35 @@ export function Shell() {
 
   const inStudio =
     (route.name === "project" && route.step === "studio") || (route.name === "studio" && Boolean(route.id));
-  const hideFooter = route.name === "landing" || inStudio;
+  const hideFooter = route.name === "landing" || route.name === "login" || inStudio;
+
+  useEffect(() => {
+    if (route.name === "login" && user) go({ name: "projects" });
+  }, [route.name, user, go]);
 
   return (
-    <div className={`app-shell${route.name === "landing" ? " is-landing" : ""}${inStudio ? " is-nle" : ""}`}>
+    <div
+      className={`app-shell${route.name === "landing" ? " is-landing" : ""}${route.name === "login" ? " is-login" : ""}${inStudio ? " is-nle" : ""}`}
+    >
       <Nav
         route={route}
         onGo={go}
         libraryCount={libraryCount}
         auth={
-          user ? (
-            <AuthBadge user={user} onLogout={() => void googleLogout()} />
-          ) : (
-            <button
-              type="button"
-              className="nav-top auth-signin"
-              onClick={() => googleLogin(`${window.location.pathname}${window.location.search}`)}
-            >
-              Sign in
-            </button>
+          user === undefined ? null : (
+            <AuthBadge
+              user={user}
+              onGoLogin={() => go({ name: "login" })}
+              onLogout={() => void googleLogout()}
+            />
           )
         }
       />
       <div className="app-main">
       {route.name === "landing" ? (
         <Landing onGo={go} />
+      ) : route.name === "login" ? (
+        <LoginPage />
       ) : route.name === "templates" ? (
         <ImagesTemplates
           catalog={imageCatalog}
@@ -196,7 +200,7 @@ export function Shell() {
           onOpen={(id) => go({ name: "effect", id })}
           kicker="Effects"
           title="Generate an effect"
-          lede="Each pack is a baked motion. Pick a clip, add a reference still or a saved identity, and we generate that effect."
+          lede="Each pack is a baked motion. Pick an effects engine, add a reference or saved identity, and generate."
           emptyHint="Add clips to the effects-template folder and they appear here."
           groupByEffect
         />

@@ -1,4 +1,52 @@
-# Current handoff — split hosting locked (2026-09-14)
+# Current handoff — Landing motion only (2026-09-14)
+
+Owner requested animation only, preserving landing copy, layout, colors and assets. Added `landing/useLandingMotion.ts` and `landing/landing-motion.css`, attached via one root ref/import in Landing. Hero elements enter in sequence; section headings, documentary steps, cards and footer columns reveal once on intersection. Existing ambient orbs drift slowly; workflow dots and divider strokes breathe. Refined existing card shimmer, hover lift, CTA press feedback and footer link movement. Existing equalizer now animates transform rather than height (18px fixed bar maximum).
+
+Motion uses opacity/transform, no scroll hijacking or frame-by-frame JS. Offscreen ambient CSS animations and hidden-tab motion pause. Reduced-motion changes cancel entrances and disable decorative CSS movement; keyboard interaction finishes active entrances immediately. Existing video/image cycles unchanged.
+
+Validation: frontend typecheck/build passed; local desktop scroll inspected, motion class/orb animations active and offscreen equalizer paused verified in browser. No deployment. Prior landing edits preserved; no page copy/layout/assets edited in this turn.
+
+---
+
+# Avatar empty-state contrast fix (2026-09-14)
+
+Owner reported “Your cast is waiting” was dim against its light panel. Avatar collection now explicitly sets the heading to dark ink (`#211b2d`) and description to `#443b50` on `#efede8`, overriding inherited light heading styles. Frontend CSS only.
+
+---
+
+# Current handoff — Horizontal avatar creation flow (2026-09-14)
+
+Owner corrected the avatar redesign: neutral dark panels (less green), original headline/copy and the Image-to-image display font, and horizontal **model settings → upload photo → result**. Settings/upload are visible initially; Generate opens the third section with shimmer/sparkles. Controls move with a short transform animation; reduced motion disables it. Existing completed jobs stay in the collection until selected, active jobs reopen the stage. Result supports name/save and **Dismiss result**; saved avatars remain below. Dismiss does not delete data.
+
+**Pending owner choice:** avatar/identity deletion has no existing backend route. Asked whether to authorize the small backend addition for real deletion or retain frontend-only dismissal; no answer yet. Backend unchanged.
+
+Validation: TypeScript and production build passed. Desktop three-section loading state and 390px mobile layout inspected with isolated local mock responses; name/save updated the mock collection. No paid generation, real record mutation or deployment. Temporary browser fixture removed. Files: `apps/frontend/src/App.tsx`, `apps/frontend/src/avatar-studio.css` (imported by main). Prior unrelated edits preserved.
+
+---
+
+# Current handoff — Avatar studio redesign (2026-09-14)
+
+Owner requested a frontend-only premium avatar studio. `/avatar` now has a cream editorial header, navy creation workspace, large reference upload, four existing model radio cards, a dedicated portrait stage, and the saved/unsaved avatar collection below creation. Live jobs show a blurred reference with CSS shimmer and sparkle animation; completed portraits fade in. Reduced-motion rules, keyboard focus, blocked model states, and failed/cancelled notices are included. Gallery selection is disabled during generation so it cannot switch away from the polled job. Existing backend/API contracts unchanged.
+
+Validation: frontend TypeScript and production build passed; local browser desktop and 390px mobile empty states inspected. Signed-out local API requires Google login; real generation, save/rename and animated live job were not exercised against paid providers. No deployment performed. Styles are scoped in `apps/frontend/src/avatar-studio.css`. Existing unrelated working-tree changes preserved.
+
+---
+
+# Current handoff — split hosting live and verified (2026-09-14)
+
+Split hosting is **live**. Hostinger DNS `A api -> 13.49.134.103` is in place; `www`/`@` stay on Vercel. Public `https://api.marketingstudioie.site/health` serves the installed revision; credentialed CORS preflight from the Vercel origin passes; OAuth state-cookie roundtrip, public catalog 200s, R2 media 302s and anonymous 401s on user data are all verified over public HTTPS.
+
+**Updater bug fixed:** the releases API order was not newest-first, so the EC2 updater kept matching the already-installed `83614b9`. `deploy/update-release.py` now sorts candidates by `published_at` desc (server copy patched too), and the two-minute timer auto-installed the newest release end to end. History was rewritten to drop the Cursor co-author line and force-pushed; remote main is `3aa1900bf1…`, EC2 runs that revision. Remaining owner-browser checks: real Google sign-in click-through and two-account isolation. CPU timeline-v1 export stays a separate gate.
+
+---
+
+# Superseded handoff — UI polish: login, avatar dock, footers (2026-09-14)
+
+Cream/navy/lime polish: `/login` (Google only), nav profile dropdown, avatar prompt dock (four real models), column footers, taller nav, video labels strip numeric stems. Split hosting lock unchanged; `api` DNS still pending.
+
+---
+
+# Superseded handoff — split hosting locked (2026-09-14)
 
 Owner locked **Vercel frontend + EC2 backend**. Frontend uses `https://api.marketingstudioie.site` with credentialed requests; backend accepts the Vercel origin and binds to localhost behind Caddy. Google OAuth keeps `https://www.marketingstudioie.site/callback`. Local verification: 34 backend tests and the frontend production build pass.
 
@@ -71,6 +119,8 @@ Backend store APIs are async (Promises). Call sites await them. `app.use(attachU
 Owner-approved film board redesign and shared visual consistency shipped. Four steps and navy topic workspace use the SVG logo; Your films stays below. Responsive nav, balanced Audio/Avatar columns, restored MCP cards, lime focus, reduced motion and Lightbox keyboard focus.
 
 **Compact desks (owner 2026-09-14):** Avatar and MCP use 16px html (same idea as Mix). Script and Cast/scenes are denser — shorter narration fields, tighter scene rows, smaller cast shot tiles. Topic, shelf, Mix, and Audio stay as they were. See CONTEXT top.
+
+**Login / avatar dock / footers (owner 2026-09-14):** Dedicated `/login` (Google only, cream card). Nav profile menu (email + sign out; signed-out → login). Avatar compose is a horizontal prompt dock (photo + 4 real models + Generate); Muse stays selectable. Product + landing footers use brand / Start creating / Product / Legal columns. Nav slightly taller. Video template labels strip `\d+_[a-z0-9]+_` prefixes like images.
 
 ## Pricing + SwichNow — 2026-09-14
 

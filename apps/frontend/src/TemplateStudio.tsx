@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ensureAuthed } from "./auth";
 import { Lightbox, type LightboxItem } from "./Lightbox";
+import { IMAGE_MODELS, VIDEO_MODELS } from "./model-catalog";
+import { ModelStrip } from "./ModelStrip";
 import {
   downloadUrl,
   formatClip,
@@ -49,6 +51,9 @@ export function TemplateStudio({
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
   const [zoom, setZoom] = useState<number | null>(null);
+  const [engine, setEngine] = useState(
+    () => (mode === "video" ? VIDEO_MODELS[0]?.id : IMAGE_MODELS[0]?.id) ?? "",
+  );
   const fileRef = useRef<HTMLInputElement>(null);
 
   const template = catalog?.templates.find((t) => t.id === templateId) ?? null;
@@ -265,9 +270,16 @@ export function TemplateStudio({
             {shown
               ? "Original on the left. Yours on the right. Saved to the library — download it, or run the prompt again with a different still."
               : videoLook
-                ? `Add a reference still or a saved identity. A ${formatClip(template?.duration_s) || "30s clip"} takes several minutes.`
-                : "Select a saved identity, or add one reference still. We generate from that prompt."}
+                ? `Pick a video model, add a reference still or saved identity. A ${formatClip(template?.duration_s) || "30s clip"} generates async.`
+                : "Pick an image model, select a saved identity or reference still, then generate."}
           </p>
+
+          <ModelStrip
+            label={videoLook ? "Video model" : "Image model"}
+            models={videoLook ? VIDEO_MODELS : IMAGE_MODELS}
+            value={engine}
+            onChange={setEngine}
+          />
 
           <div className="identity-pick">
             <p className="kicker">Select a saved identity</p>
