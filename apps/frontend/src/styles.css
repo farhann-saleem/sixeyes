@@ -2779,3 +2779,12 @@ main.studio.mcp-page {
   font-size: 13px;
   margin: 8px 0 0;
 }
+.auth-signin {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  padding: 0;
+}
+.auth-signin:hover { text-decoration: underline; }

@@ -1,0 +1,44 @@
+name: Test, build and deploy to EC2
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            apps/backend/package-lock.json
+            apps/frontend/package-lock.json
+      - run: npm ci --prefix apps/backend
+      - run: npm ci --prefix apps/frontend
+      - run: npm run typecheck --prefix apps/backend
+      - run: npm test --prefix apps/backend
+      - run: npx --prefix apps/frontend tsc --project apps/frontend/tsconfig.json --noEmit
+      - run: npm run build --prefix apps/frontend
+      - name: Package public code and built frontend
+        run: |
+          bash deploy/package-release.sh "$RUNNER_TEMP/marketing-studio.tar.gz"
+          cd "$RUNNER_TEMP"
+          sha256sum marketing-studio.tar.gz > SHA256SUMS
+      - name: Publish tested release for EC2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="deploy-$GITHUB_SHA"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo 'This commit already has a release.'
+            exit 0
+          fi
+          gh release create "$tag" "$RUNNER_TEMP/marketing-studio.tar.gz" "$RUNNER_TEMP/SHA256SUMS" --target "$GITHUB_SHA" --prerelease --title "Deployment $GITHUB_SHA" --notes 'Tests and production build passed. EC2 installs this release automatically and checks health before retaining it.'

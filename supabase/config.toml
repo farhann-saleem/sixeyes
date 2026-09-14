@@ -1,0 +1,8 @@
+# Minimal Supabase CLI config. Project ref comes from .env / link.
+project_id = "ykuesbxcvqfdtxzhggxd"
+
+[api]
+enabled = true
+
+[db]
+major_version = 15

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ensureAuthed } from "./auth";
 import { Lightbox, type LightboxItem } from "./Lightbox";
 import {
   downloadUrl,
@@ -106,6 +107,7 @@ export function TemplateStudio({
 
   async function recreate() {
     if ((!face && !avatarId) || !template) return;
+    if (!ensureAuthed()) return;
     setError(null);
     if (liveAnywhere) {
       setError("Another generate is running. Wait for it to finish.");

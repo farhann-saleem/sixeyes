@@ -45,6 +45,8 @@ export function sameTrackCollision(
 
 export function validateProject(project: StudioProject): string | null {
   if (!Array.isArray(project.tracks) || !Array.isArray(project.clips)) return "tracks and clips required";
+  if (project.tracks.some(t => !t || typeof t !== "object" || typeof t.id !== "string" || !["video", "audio", "text"].includes(t.kind))) return "invalid track";
+  if (project.clips.some(c => !c || typeof c !== "object")) return "invalid clip";
   if (project.topic && projectDuration(project) > 90.001) return "Project duration exceeds 90 seconds";
   if (![project.width, project.height].every((n) => Number.isInteger(n) && n >= 2 && n <= 3840)) return "canvas must be 2–3840 pixels";
   if (new Set(project.tracks.map(t => t.id)).size !== project.tracks.length || new Set(project.clips.map(c => c.id)).size !== project.clips.length) return "duplicate track or clip id";

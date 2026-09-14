@@ -11,13 +11,13 @@ import { TemplateStudio } from "./TemplateStudio";
 import { VideoTemplates } from "./VideoTemplates";
 import { ProjectsHome, ProjectWorkspace } from "./projects/DocumentaryFlow";
 import { isLive, json, type Catalog, type SavedAvatar, type SwapJob } from "./studio";
-import { fetchUser, googleLogout, type User } from "./auth";
-import { AuthBadge, LoginGate } from "./LoginGate";
+import { fetchUser, googleLogin, googleLogout, setUser as setCachedUser, type User } from "./auth";
+import { AuthBadge } from "./LoginGate";
 import { Pricing } from "./Pricing";
 import { Policy } from "./Policy";
 
 export function Shell() {
-  const [user, setUser] = useState<User | null | undefined>(undefined);
+  const [user, setAuthUser] = useState<User | null | undefined>(undefined);
   const [route, setRoute] = useState<Route>(() =>
     typeof window === "undefined"
       ? { name: "landing" }
@@ -34,7 +34,10 @@ export function Shell() {
   liveRef.current = Boolean(live);
 
   useEffect(() => {
-    fetchUser().then(setUser);
+    fetchUser().then((u) => {
+      setCachedUser(u);
+      setAuthUser(u);
+    });
   }, []);
 
   useEffect(() => {
@@ -122,16 +125,26 @@ export function Shell() {
     (route.name === "project" && route.step === "studio") || (route.name === "studio" && Boolean(route.id));
   const hideFooter = route.name === "landing" || inStudio;
 
-  if (user === undefined) {
-    return <div className="app-shell"><div className="app-main" /></div>;
-  }
-  if (!user) {
-    return <LoginGate />;
-  }
-
   return (
     <div className={`app-shell${route.name === "landing" ? " is-landing" : ""}${inStudio ? " is-nle" : ""}`}>
-      <Nav route={route} onGo={go} libraryCount={libraryCount} auth={<AuthBadge user={user} onLogout={() => void googleLogout()} />} />
+      <Nav
+        route={route}
+        onGo={go}
+        libraryCount={libraryCount}
+        auth={
+          user ? (
+            <AuthBadge user={user} onLogout={() => void googleLogout()} />
+          ) : (
+            <button
+              type="button"
+              className="nav-top auth-signin"
+              onClick={() => googleLogin(`${window.location.pathname}${window.location.search}`)}
+            >
+              Sign in
+            </button>
+          )
+        }
+      />
       <div className="app-main">
       {route.name === "landing" ? (
         <Landing onGo={go} />
@@ -217,7 +230,7 @@ export function Shell() {
       ) : route.name === "mcp" ? (
         <McpDesk />
       ) : route.name === "pricing" ? (
-        <Pricing user={user} />
+        <Pricing user={user ?? { email: "", name: "", picture: "" }} />
       ) : route.name === "terms" || route.name === "refund" || route.name === "delivery" || route.name === "cancellation" ? (
         <Policy page={route.name} />
       ) : route.name === "audio" ? (

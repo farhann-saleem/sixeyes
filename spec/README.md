@@ -97,6 +97,7 @@ RunPod worker rules: [docs/RUNPOD.md](../docs/RUNPOD.md). Min workers 0, max 1, 
 | [22](./22-video-studio.md) | User CapCut-style NLE | D | Empty timeline. Export = RunPod `op=stitch`. Superceded as home by 22-brief. |
 | [22-brief](./22-brief-stock-documentary.md) | Projects documentary | D | Owner go 2026-09-13. One project: script → 2–3 Pexels picks → same-id Studio. No GPU B-roll. |
 | [23](./23-mcp.md) | MCP agent connector | D | Owner go 2026-09-14. JSON-RPC on `/mcp`. Our desks only. |
+| [24](./24-r2-artifacts.md) | Artifacts on R2 + presigned URLs | D/E infra | Owner go 2026-09-14. Kills the `readFileSync`→`send` memory risk and all backend media egress. Makes the host disposable. Deploy context: [docs/DEPLOY.md](../docs/DEPLOY.md). |
 
 Walkthrough of Pixovid screens (not our stack): [FROM-REFERENCE-VIDEO.md](../docs/sources/FROM-REFERENCE-VIDEO.md). GPU contracts + Modal pitfalls: [FROM-AUTOMATION.md](../docs/sources/FROM-AUTOMATION.md). Owner vendor APIs: [docs/apis/](../docs/apis/README.md).
 

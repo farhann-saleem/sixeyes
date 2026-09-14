@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ensureAuthed } from "./auth";
 import { SaveNamePanel } from "./SaveNamePanel";
 import { json, type SavedAvatar } from "./studio";
 
@@ -151,6 +152,7 @@ export function App({ onIdentities }: { onIdentities?: (rows: SavedAvatar[]) => 
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!ensureAuthed()) return;
     if (!file) {
       setError("Upload a face photo first.");
       return;

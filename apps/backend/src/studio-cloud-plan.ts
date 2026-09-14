@@ -1,6 +1,5 @@
-import { readFileSync } from "node:fs";
 import { extFromMime } from "./media.js";
-import { r2Put } from "./r2.js";
+import { r2PutFile } from "./r2.js";
 import { projectScopeError, resolveSource } from "./studio-media.js";
 import { audioBeds, inPointAt, projectDuration, visualSlices } from "./studio-timeline.js";
 import type { StudioClipSource, StudioProject } from "./studio-types.js";
@@ -12,13 +11,13 @@ export type CloudTimeline = {
 };
 /** Metadata and original bytes only. All trim, composition, mix and encoding run on CPU worker. */
 export async function buildCloudPlan(p: StudioProject, renderId: string): Promise<CloudTimeline> {
-  const invalid = projectScopeError(p); if (invalid) throw new Error(invalid);
+  const invalid = await projectScopeError(p); if (invalid) throw new Error(invalid);
   const keys = new Map<string, string>();
   async function keyFor(source: StudioClipSource) {
     const id = JSON.stringify(source); if (keys.has(id)) return keys.get(id)!;
-    const media = resolveSource(source);
+    const media = await resolveSource(source);
     const key = media.r2_key || `studio/projects/${p.id}/renders/${renderId}/source-${keys.size}${extFromMime(media.mime)}`;
-    if (!media.r2_key) await r2Put(key, readFileSync(media.file), media.mime);
+    if (!media.r2_key) await r2PutFile(key, media.file, media.mime);
     keys.set(id, key); return key;
   }
   const slices: CloudTimeline["slices"] = [];

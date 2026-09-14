@@ -1,9 +1,10 @@
+import { artifactName, restoreArtifact } from "./artifacts.js";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { listAudioJobs, audioOutputPath } from "./audio-store.js";
+import { getAudioJob, listAudioJobs, audioOutputPath } from "./audio-store.js";
 import { extFromMime } from "./media.js";
 import { outputPath } from "./store.js";
-import { listSwapJobs } from "./swap-store.js";
+import { listSwapJobs, getSwapJob } from "./swap-store.js";
 import { getImageTemplate, getVideoTemplate, labelFromImageFilename, labelFromVideoFilename, listEffectTemplates, listImageTemplates, listVideoTemplates } from "./templates.js";
 import { listProjects, getUpload, listUploads, studioUploadPath } from "./studio-store.js";
 import type { StudioClip, StudioClipSource, StudioProject } from "./studio-types.js";
@@ -20,7 +21,10 @@ export type MediaItem = {
   bin?: "sfx" | "music" | "voice";
 };
 
-export function listStudioMedia(projectId?: string): { templates: MediaItem[]; library: MediaItem[]; audio: MediaItem[]; uploads: MediaItem[] } {
+export async function listStudioMedia(
+  projectId?: string,
+  ownerEmail?: string,
+): Promise<{ templates: MediaItem[]; library: MediaItem[]; audio: MediaItem[]; uploads: MediaItem[] }> {
   const templates: MediaItem[] = [
     ...listVideoTemplates().map((t) => ({
       id: t.id,
@@ -54,7 +58,7 @@ export function listStudioMedia(projectId?: string): { templates: MediaItem[]; l
     })),
   ];
 
-  const library: MediaItem[] = listSwapJobs()
+  const library: MediaItem[] = (await listSwapJobs(ownerEmail))
     .filter((j) => j.status === "COMPLETED")
     .map((j) => ({
       id: j.id,
@@ -66,11 +70,12 @@ export function listStudioMedia(projectId?: string): { templates: MediaItem[]; l
       poster_url: j.kind === "video" ? undefined : `/api/faceswaps/${j.id}/output`,
     }));
 
-  const audio: MediaItem[] = listAudioJobs()
+  const projects = await listProjects(ownerEmail);
+  const audio: MediaItem[] = (await listAudioJobs(ownerEmail))
     .filter((j) => {
       if (j.status !== "COMPLETED") return false;
       if (j.kind === "stt" || j.kind === "clone") return false;
-      const owner = listProjects().find((p) => p.tts_job_id === j.id);
+      const owner = projects.find((p) => p.tts_job_id === j.id);
       if (owner && owner.id !== projectId) return false;
       return true;
     })
@@ -84,15 +89,17 @@ export function listStudioMedia(projectId?: string): { templates: MediaItem[]; l
       bin: j.kind === "sfx" ? "sfx" : j.kind === "music" ? "music" : "voice",
     }));
 
-  const uploads: MediaItem[] = listUploads().filter(u => projectId ? u.project_id === projectId : u.project_id === null).map((u) => ({
-    id: u.id,
-    origin: "upload" as const,
-    kind: u.kind,
-    label: u.filename,
-    duration_s: u.duration_s,
-    preview_url: `/api/studio/uploads/${u.id}/file`,
-    bytes: u.bytes,
-  }));
+  const uploads: MediaItem[] = (await listUploads(projectId === undefined ? undefined : projectId, ownerEmail))
+    .filter((u) => (projectId ? u.project_id === projectId : u.project_id === null))
+    .map((u) => ({
+      id: u.id,
+      origin: "upload" as const,
+      kind: u.kind,
+      label: u.filename,
+      duration_s: u.duration_s,
+      preview_url: `/api/studio/uploads/${u.id}/file`,
+      bytes: u.bytes,
+    }));
 
   return { templates, library, audio, uploads };
 }
@@ -118,7 +125,7 @@ export type ResolvedSource = {
   duration_s: number | null;
 };
 
-export function resolveSource(source: StudioClipSource): ResolvedSource {
+export async function resolveSource(source: StudioClipSource): Promise<ResolvedSource> {
   if (source.type === "video-template") {
     const t = getVideoTemplate(source.id);
     if (!t || !existsSync(t.abs_path)) throw new Error(`video template ${source.id} missing`);
@@ -130,10 +137,10 @@ export function resolveSource(source: StudioClipSource): ResolvedSource {
     return { file: t.abs_path, mime: t.mime, r2_key: t.r2_key, duration_s: 5 };
   }
   if (source.type === "library") {
-    const job = listSwapJobs().find((j) => j.id === source.id);
+    const job = await getSwapJob(source.id);
     if (!job || job.status !== "COMPLETED" || !job.output_mime) throw new Error(`library item ${source.id} not ready`);
     const file = outputPath(job.id, extFromMime(job.output_mime));
-    if (!existsSync(file)) throw new Error(`library file ${source.id} missing`);
+    if (!job.output_r2_key && !existsSync(file)) throw new Error(`library file ${source.id} missing`);
     return {
       file,
       mime: job.output_mime,
@@ -143,35 +150,40 @@ export function resolveSource(source: StudioClipSource): ResolvedSource {
   }
   if (source.type === "audio") {
     const file = audioOutputPath(source.id, ".mp3");
-    if (!existsSync(file)) throw new Error(`audio ${source.id} missing`);
-    return { file, mime: "audio/mpeg", r2_key: null, duration_s: null };
+    const row = await getAudioJob(source.id);
+    if (!row) throw new Error("Audio not found");
+    const key = row.artifacts?.[artifactName(file)] || null;
+    if (!key && !existsSync(file)) throw new Error(`audio ${source.id} missing`);
+    return { file, mime: "audio/mpeg", r2_key: key, duration_s: null };
   }
   if (source.type === "upload") {
-    const row = getUpload(source.id);
+    const row = await getUpload(source.id);
     if (!row) throw new Error(`upload ${source.id} missing`);
     const ext = path.extname(row.filename) || extFromMime(row.mime);
     const file = studioUploadPath(row.id, ext);
-    if (!existsSync(file)) throw new Error(`upload file ${source.id} missing`);
+    if (!row.r2_key && !existsSync(file)) throw new Error(`upload file ${source.id} missing`);
     return { file, mime: row.mime, r2_key: row.r2_key, duration_s: row.duration_s };
   }
   throw new Error("text clips have no media file");
 }
 
 /** Enforced for add, PATCH, legacy create-from and export; UI filtering alone is insufficient. */
-export function sourceScopeError(project: StudioProject, source: StudioClipSource): string | null {
+export async function sourceScopeError(project: StudioProject, source: StudioClipSource): Promise<string | null> {
   if (source.type === "upload") {
-    const row = getUpload(source.id);
+    const row = await getUpload(source.id, project.owner_email || "anonymous");
     if (!row || (row.project_id !== null && row.project_id !== project.id) || (project.topic && row.project_id !== project.id)) return "Upload does not belong to this project";
   }
+  if (source.type === "library" && !(await getSwapJob(source.id, project.owner_email || "anonymous"))) return "Library item does not belong to you";
   if (source.type === "audio") {
-    const owner = listProjects().find(p => p.tts_job_id === source.id);
+    if (!(await getAudioJob(source.id, project.owner_email || "anonymous"))) return "Audio does not belong to you";
+    const owner = (await listProjects()).find((p) => p.tts_job_id === source.id);
     if (owner && owner.id !== project.id) return "Audio does not belong to this project";
   }
   return null;
 }
-export function projectScopeError(project: StudioProject): string | null {
+export async function projectScopeError(project: StudioProject): Promise<string | null> {
   for (const clip of project.clips) {
-    const error = sourceScopeError(project, clip.source);
+    const error = await sourceScopeError(project, clip.source);
     if (error) return error;
   }
   return null;

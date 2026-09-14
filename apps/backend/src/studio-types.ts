@@ -58,6 +58,8 @@ export type ProjectScript = { title: string; voiceover_full: string; scenes: Pro
 
 export type StudioProject = {
   id: string;
+  owner_email?: string;
+  artifacts?: Record<string, string>;
   name: string;
   topic: string;
   /** Chosen film length. 30 | 45 | 60 | 90. Timeline hard cap stays 90s. */
@@ -84,6 +86,8 @@ export type StudioProject = {
 
 export type StudioUpload = {
   id: string;
+  owner_email?: string;
+  artifacts?: Record<string, string>;
   project_id: string | null;
   filename: string;
   mime: string;
@@ -96,6 +100,8 @@ export type StudioUpload = {
 
 export type StudioRenderJob = {
   id: string;
+  owner_email?: string;
+  artifacts?: Record<string, string>;
   project_id: string;
   created_at: string;
   updated_at: string;

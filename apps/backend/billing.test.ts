@@ -40,37 +40,37 @@ test("tier table matches the owner pricing lock", () => {
   assert.deepEqual(QUOTA_KINDS, ["avatars", "images", "videos", "documentaries"]);
 });
 
-test("usage counts against the free tier and blocks over quota", () => {
+test("usage counts against the free tier and blocks over quota", async () => {
   const email = "quota@test.dev";
-  assert.equal(effectiveTier(email), "free");
-  assert.equal(quotaOk(email, "avatars"), true);
-  for (let i = 0; i < 3; i++) recordUsage(email, "avatars");
-  assert.deepEqual(usageForMonth(email).avatars, 3);
-  assert.equal(quotaOk(email, "avatars"), false);
-  assert.equal(quotaOk(email, "videos"), true);
+  assert.equal(await effectiveTier(email), "free");
+  assert.equal(await quotaOk(email, "avatars"), true);
+  for (let i = 0; i < 3; i++) await recordUsage(email, "avatars");
+  assert.deepEqual((await usageForMonth(email)).avatars, 3);
+  assert.equal(await quotaOk(email, "avatars"), false);
+  assert.equal(await quotaOk(email, "videos"), true);
 });
 
-test("pro tier raises quotas and expiry falls back to free", () => {
+test("pro tier raises quotas and expiry falls back to free", async () => {
   const email = "pro@test.dev";
-  setTier(email, "pro", 30);
-  assert.equal(effectiveTier(email), "pro");
-  assert.equal(quotaOk(email, "avatars"), true);
-  for (let i = 0; i < 30; i++) recordUsage(email, "avatars");
-  assert.equal(quotaOk(email, "avatars"), false);
-  setTier(email, "pro", -1);
-  assert.equal(effectiveTier(email), "free");
+  await setTier(email, "pro", 30);
+  assert.equal(await effectiveTier(email), "pro");
+  assert.equal(await quotaOk(email, "avatars"), true);
+  for (let i = 0; i < 30; i++) await recordUsage(email, "avatars");
+  assert.equal(await quotaOk(email, "avatars"), false);
+  await setTier(email, "pro", -1);
+  assert.equal(await effectiveTier(email), "free");
 });
 
-test("orders grant once and record swich order ids", () => {
+test("orders grant once and record swich order ids", async () => {
   const email = "buyer@test.dev";
-  const order = createOrder({ id: "tx-1", email, tier: "pro", amount_pkr: 5600 });
+  const order = await createOrder({ id: "tx-1", email, tier: "pro", amount_pkr: 5600 });
   assert.equal(order.status, "pending");
-  completeOrder("tx-1", "SW123");
-  assert.equal(getOrder("tx-1")?.status, "success");
-  assert.equal(getOrder("tx-1")?.order_id, "SW123");
-  assert.equal(getOrder("tx-1")?.granted, true);
-  completeOrder("tx-1", "SW123");
-  assert.equal(getOrder("tx-1")?.granted, true);
+  await completeOrder("tx-1", "SW123");
+  assert.equal((await getOrder("tx-1"))?.status, "success");
+  assert.equal((await getOrder("tx-1"))?.order_id, "SW123");
+  assert.equal((await getOrder("tx-1"))?.granted, true);
+  await completeOrder("tx-1", "SW123");
+  assert.equal((await getOrder("tx-1"))?.granted, true);
 });
 
 test("swich checkout and callback checksums match the documented HMAC formulas", () => {
@@ -101,9 +101,9 @@ test("rate limit allows N hits per window then refuses with retry seconds", () =
   assert.equal(allowHit(email, 6, t0 + 61_000).allowed, true);
 });
 
-test("unknown users read as free with empty usage", () => {
-  const row = getBillingUser("fresh@test.dev");
+test("unknown users read as free with empty usage", async () => {
+  const row = await getBillingUser("fresh@test.dev");
   assert.equal(row.tier, "free");
   assert.equal(row.tier_expires_at, null);
-  assert.deepEqual(usageForMonth("fresh@test.dev"), { avatars: 0, images: 0, videos: 0, documentaries: 0 });
+  assert.deepEqual(await usageForMonth("fresh@test.dev"), { avatars: 0, images: 0, videos: 0, documentaries: 0 });
 });

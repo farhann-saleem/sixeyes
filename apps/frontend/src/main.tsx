@@ -7,19 +7,9 @@ import "./product-polish.css";
 const pathname = window.location.pathname;
 
 if (pathname === "/callback") {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get("code");
-  const state = params.get("state");
-  if (code) {
-    fetch(
-      `/api/auth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state ?? "")}`,
-      { redirect: "manual" },
-    )
-      .catch(() => undefined)
-      .finally(() => window.location.replace("/"));
-  } else {
-    window.location.replace("/");
-  }
+  // Navigate through the server callback so Google errors and the saved return path
+  // survive the redirect, and the HttpOnly cookie is set by a normal navigation.
+  window.location.replace(`/api/auth/callback${window.location.search}`);
 } else {
   createRoot(document.getElementById("root")!).render(
     <StrictMode>

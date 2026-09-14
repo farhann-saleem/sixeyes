@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { MCP_TOKEN } from "./env.js";
 import { MCP_TOOLS, callMcpTool } from "./mcp-tools.js";
+import { currentUser } from "./google-auth.js";
 
 const PROTOCOL = "2025-03-26";
 
@@ -14,7 +15,7 @@ function fail(id: Rpc["id"], code: number, message: string) {
   return { jsonrpc: "2.0", id: id ?? null, error: { code, message } };
 }
 
-export async function handleMcpRpc(body: unknown): Promise<{ status: number; payload: unknown }> {
+export async function handleMcpRpc(body: unknown, ownerEmail = "anonymous"): Promise<{ status: number; payload: unknown }> {
   const msg = (body && typeof body === "object" ? body : {}) as Rpc;
   if (msg.jsonrpc !== "2.0" || !msg.method) {
     return { status: 200, payload: fail(msg.id, -32600, "Invalid Request") };
@@ -42,7 +43,7 @@ export async function handleMcpRpc(body: unknown): Promise<{ status: number; pay
       arguments?: unknown;
     };
     try {
-      const result = await callMcpTool(String(params.name || ""), params.arguments);
+      const result = await callMcpTool(String(params.name || ""), params.arguments, ownerEmail);
       return {
         status: 200,
         payload: ok(msg.id, { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] }),
@@ -66,24 +67,13 @@ function bearerOk(header: string | undefined): boolean {
 
 export const mcpRouter = Router();
 
-mcpRouter.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, MCP-Protocol-Version");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  if (req.method === "OPTIONS") {
-    res.status(204).end();
-    return;
-  }
-  next();
-});
-
 mcpRouter.get("/", (_req, res) => {
   res.json({
     name: "marketing-studio",
     protocol: PROTOCOL,
     transport: "json-rpc POST",
     tools: MCP_TOOLS.map((t) => t.name),
-    auth: MCP_TOKEN ? "bearer MCP_TOKEN" : "open on this host",
+    auth: MCP_TOKEN ? "Google session and bearer MCP_TOKEN" : "Google session",
   });
 });
 
@@ -92,7 +82,7 @@ mcpRouter.post("/", async (req, res) => {
     res.status(401).json({ error: "MCP token required" });
     return;
   }
-  const { status, payload } = await handleMcpRpc(req.body);
+  const { status, payload } = await handleMcpRpc(req.body, currentUser(req)?.email || "anonymous");
   if (payload === null) {
     res.status(status).end();
     return;

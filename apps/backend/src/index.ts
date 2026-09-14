@@ -1,10 +1,15 @@
+import { assertProductionReady } from "./production.js";
+import { initArtifactDirs, serveArtifact, restoreArtifact } from "./artifacts.js";
+import "express-async-errors";
+import path from "node:path";
+import { installSpa, privateApi, serializeUserWrites, sameOriginWrites, errorHandler } from "./http.js";
 import { resumeProjectOperations } from "./project-workflow.js";
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import cors from "cors";
 import express from "express";
 import multer from "multer";
-import { FRONTEND_URL, PORT } from "./env.js";
+import { FRONTEND_URL, PORT, REPO_ROOT } from "./env.js";
 import { AVATAR_PROMPT } from "./prompt.js";
 import { getJob, inputPath, listJobs, outputPath, saveJob } from "./store.js";
 import {
@@ -23,6 +28,7 @@ import { OPENROUTER_IMAGE_SPECS, openrouterKeyOk } from "./providers/openrouter.
 import { cpuBlockedReason, cpuHealthCached } from "./providers/cpu.js";
 import {
   ensureTemplatesOnR2,
+  catalogR2Key,
   effectFromFilename,
   getEffectTemplate,
   getImageTemplate,
@@ -38,7 +44,7 @@ import {
 import { deleteSwapJob, getSwapJob, listSwapJobs, saveSwapJob } from "./swap-store.js";
 import { cancelSwapJob, resumeInFlightSwapJobs, runSwapJob } from "./swap-runner.js";
 import { extFromMime } from "./media.js";
-import { r2Del } from "./r2.js";
+import { r2Del, r2SignedUrl } from "./r2.js";
 import { audioRouter } from "./audio-routes.js";
 import { listAudioJobs } from "./audio-store.js";
 import { resumeInFlightAudioJobs } from "./audio-runner.js";
@@ -46,7 +52,7 @@ import { studioRouter } from "./studio-routes.js";
 import { mcpRouter } from "./mcp-rpc.js";
 import { listRenders } from "./studio-store.js";
 import { resumeInFlightStudioRenders } from "./studio-render.js";
-import { authRouter, currentUser, requireAuth } from "./google-auth.js";
+import { attachUser, authRouter, currentUser, requireAuth } from "./google-auth.js";
 import { billingRouter, swichWebhook } from "./billing-routes.js";
 import { faceswapQuotaKind, postQuota, quotaGuard, rateLimitPost } from "./billing-guard.js";
 import { recordUsage } from "./billing-store.js";
@@ -56,20 +62,27 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-const app = express();
+initArtifactDirs();
+export const app = express();
 app.use(cors({ origin: FRONTEND_URL, credentials: true }));
 app.use(express.json({ limit: "12mb" }));
+app.use(sameOriginWrites);
+app.use(attachUser);
+app.use(serializeUserWrites);
 
 app.use("/api/auth", authRouter);
 
 app.get("/api/webhooks/swich", swichWebhook);
 
 app.get("/health", (_req, res) => {
-  res.json({ ok: true, service: "marketing-studio-backend" });
+  res.json({ ok: true, service: "marketing-studio-backend", revision: process.env.DEPLOY_REVISION || null });
 });
 
-app.use("/api", requireAuth);
-app.use("/mcp", requireAuth);
+app.use("/api", privateApi);
+app.use("/mcp", (req, res, next) => {
+  if (req.method === "GET" && req.path === "/") return next();
+  return requireAuth(req, res, next);
+});
 
 app.use("/api/billing", billingRouter);
 app.use("/api/audio", rateLimitPost, audioRouter);
@@ -84,7 +97,8 @@ app.use(
   }),
   studioRouter,
 );
-app.use("/mcp", mcpRouter);
+app.use("/mcp", (req, res, next) => req.method === "GET" ? next() : mcpRouter(req, res, next));
+app.use("/api/mcp", mcpRouter);
 
 app.get("/api/models/avatar", async (_req, res) => {
   let qwenHealthBody = null;
@@ -190,6 +204,14 @@ app.get("/api/costs", async (_req, res) => {
     qwenBlock = err instanceof Error ? err.message : String(err);
   }
 
+  const email = currentUser(_req)?.email;
+  const [avatars, swaps, audios, renders] = await Promise.all([
+    listJobs(email),
+    listSwapJobs(email),
+    listAudioJobs(email),
+    listRenders(undefined, email),
+  ]);
+
   res.json({
     measured_on: "each job stores duration_ms + estimated_usd + credit_cost in data/cost-ledger.jsonl",
     qwen: {
@@ -216,7 +238,7 @@ app.get("/api/costs", async (_req, res) => {
       catalog_video_720p_30s: 456,
     },
     jobs: [
-      ...listJobs().map((j) => ({
+      ...avatars.map((j) => ({
         id: j.id,
         kind: "avatar",
         provider: j.provider,
@@ -227,7 +249,7 @@ app.get("/api/costs", async (_req, res) => {
         credit_cost: j.credit_cost,
         created_at: j.created_at,
       })),
-      ...listSwapJobs().map((j) => ({
+      ...swaps.map((j) => ({
         id: j.id,
         kind: j.kind === "video" ? "faceswap-video" : "faceswap",
         provider: "cpu",
@@ -238,7 +260,7 @@ app.get("/api/costs", async (_req, res) => {
         credit_cost: null,
         created_at: j.created_at,
       })),
-      ...listAudioJobs().map((j) => ({
+      ...audios.map((j) => ({
         id: j.id,
         kind: `audio-${j.kind}`,
         provider: "ai33pro",
@@ -249,7 +271,7 @@ app.get("/api/costs", async (_req, res) => {
         credit_cost: j.credit_cost,
         created_at: j.created_at,
       })),
-      ...listRenders().map((j) => ({
+      ...renders.map((j) => ({
         id: j.id,
         kind: "studio-render",
         provider: "cpu",
@@ -295,13 +317,14 @@ app.get("/api/image-templates", async (_req, res) => {
   });
 });
 
-app.get("/api/image-templates/:id/image", (req, res) => {
+app.get("/api/image-templates/:id/image", async (req, res) => {
   const t = getImageTemplate(req.params.id);
-  if (!t || !existsSync(t.abs_path)) {
-    res.status(404).json({ error: "template not found" });
-    return;
-  }
-  res.type(t.mime).send(readFileSync(t.abs_path));
+  if (!t) { res.status(404).json({ error: "template not found" }); return; }
+  const key = await catalogR2Key(t, false);
+  if (key) { res.status(302).setHeader("Location", await r2SignedUrl(key)); res.setHeader("Cache-Control", "no-store"); res.end(); return; }
+  const file = t.abs_path;
+  if (!file || !existsSync(file)) { res.status(404).json({ error: "file missing" }); return; }
+  res.type(t.mime).sendFile(path.resolve(file));
 });
 
 function publicVideoTemplate(t: VideoTemplate) {
@@ -344,54 +367,56 @@ app.get("/api/video-templates", async (_req, res) => {
   res.json(await cpuCatalogPayload(listVideoTemplates()));
 });
 
-app.get("/api/video-templates/:id/video", (req, res) => {
+app.get("/api/video-templates/:id/video", async (req, res) => {
   const t = getVideoTemplate(req.params.id);
-  if (!t || !existsSync(t.abs_path)) {
-    res.status(404).json({ error: "template not found" });
-    return;
-  }
-  res.type(t.mime);
-  res.sendFile(t.abs_path);
+  if (!t) { res.status(404).json({ error: "template not found" }); return; }
+  const key = await catalogR2Key(t, false);
+  if (key) { res.status(302).setHeader("Location", await r2SignedUrl(key)); res.setHeader("Cache-Control", "no-store"); res.end(); return; }
+  const file = t.abs_path;
+  if (!file || !existsSync(file)) { res.status(404).json({ error: "file missing" }); return; }
+  res.type(t.mime).sendFile(path.resolve(file));
 });
 
-app.get("/api/video-templates/:id/poster", (req, res) => {
+app.get("/api/video-templates/:id/poster", async (req, res) => {
   const t = getVideoTemplate(req.params.id);
-  if (!t || !t.poster_path || !existsSync(t.poster_path)) {
-    res.status(404).json({ error: "poster not ready" });
-    return;
-  }
-  res.type("image/jpeg").send(readFileSync(t.poster_path));
+  if (!t) { res.status(404).json({ error: "template not found" }); return; }
+  const key = await catalogR2Key(t, true);
+  if (key) { res.status(302).setHeader("Location", await r2SignedUrl(key)); res.setHeader("Cache-Control", "no-store"); res.end(); return; }
+  const file = t.poster_path;
+  if (!file || !existsSync(file)) { res.status(404).json({ error: "file missing" }); return; }
+  res.type("image/jpeg").sendFile(path.resolve(file));
 });
 
 app.get("/api/effects", async (_req, res) => {
   res.json(await cpuCatalogPayload(listEffectTemplates()));
 });
 
-app.get("/api/effects/:id/video", (req, res) => {
+app.get("/api/effects/:id/video", async (req, res) => {
   const t = getEffectTemplate(req.params.id);
-  if (!t || !existsSync(t.abs_path)) {
-    res.status(404).json({ error: "template not found" });
-    return;
-  }
-  res.type(t.mime);
-  res.sendFile(t.abs_path);
+  if (!t) { res.status(404).json({ error: "template not found" }); return; }
+  const key = await catalogR2Key(t, false);
+  if (key) { res.status(302).setHeader("Location", await r2SignedUrl(key)); res.setHeader("Cache-Control", "no-store"); res.end(); return; }
+  const file = t.abs_path;
+  if (!file || !existsSync(file)) { res.status(404).json({ error: "file missing" }); return; }
+  res.type(t.mime).sendFile(path.resolve(file));
 });
 
-app.get("/api/effects/:id/poster", (req, res) => {
+app.get("/api/effects/:id/poster", async (req, res) => {
   const t = getEffectTemplate(req.params.id);
-  if (!t || !t.poster_path || !existsSync(t.poster_path)) {
-    res.status(404).json({ error: "poster not ready" });
-    return;
-  }
-  res.type("image/jpeg").send(readFileSync(t.poster_path));
+  if (!t) { res.status(404).json({ error: "template not found" }); return; }
+  const key = await catalogR2Key(t, true);
+  if (key) { res.status(302).setHeader("Location", await r2SignedUrl(key)); res.setHeader("Cache-Control", "no-store"); res.end(); return; }
+  const file = t.poster_path;
+  if (!file || !existsSync(file)) { res.status(404).json({ error: "file missing" }); return; }
+  res.type("image/jpeg").sendFile(path.resolve(file));
 });
 
-app.get("/api/faceswaps", (_req, res) => {
-  res.json({ jobs: listSwapJobs() });
+app.get("/api/faceswaps", async (req, res) => {
+  res.json({ jobs: await listSwapJobs(currentUser(req)?.email) });
 });
 
-app.get("/api/faceswaps/:id", (req, res) => {
-  const job = getSwapJob(req.params.id);
+app.get("/api/faceswaps/:id", async (req, res) => {
+  const job = await getSwapJob(req.params.id, currentUser(req)?.email);
   if (!job) {
     res.status(404).json({ error: "not found" });
     return;
@@ -400,7 +425,8 @@ app.get("/api/faceswaps/:id", (req, res) => {
 });
 
 app.delete("/api/faceswaps/:id", async (req, res) => {
-  const job = getSwapJob(req.params.id);
+  const email = currentUser(req)?.email;
+  const job = await getSwapJob(req.params.id, email);
   if (!job) {
     res.status(404).json({ error: "not found" });
     return;
@@ -409,21 +435,26 @@ app.delete("/api/faceswaps/:id", async (req, res) => {
     res.status(409).json({ error: "stop the swap before deleting it" });
     return;
   }
-  deleteSwapJob(job.id);
-  removeSwapFiles(job);
-  for (const key of [job.face_r2_key, job.output_r2_key]) {
+  for (const key of [job.face_r2_key, job.output_r2_key, ...Object.values(job.artifacts || {})]) {
     if (!key) continue;
     try {
       await r2Del(key);
     } catch (err) {
-      console.log("r2 delete", job.id, err instanceof Error ? err.message : err);
+      res.status(503).json({ error: "Could not delete remote media; retry deletion" }); return;
     }
   }
+  await deleteSwapJob(job.id, email);
+  removeSwapFiles(job);
   res.json({ ok: true, id: job.id });
 });
 
 app.post("/api/faceswaps/:id/cancel", async (req, res) => {
   try {
+    const owned = await getSwapJob(req.params.id, currentUser(req)?.email);
+    if (!owned) {
+      res.status(404).json({ error: "not found" });
+      return;
+    }
     const job = await cancelSwapJob(req.params.id);
     res.json(job);
   } catch (err) {
@@ -433,47 +464,30 @@ app.post("/api/faceswaps/:id/cancel", async (req, res) => {
   }
 });
 
-app.get("/api/faceswaps/:id/face", (req, res) => {
-  const job = getSwapJob(req.params.id);
+app.get("/api/faceswaps/:id/face", async (req, res) => {
+  const job = await getSwapJob(req.params.id, currentUser(req)?.email);
   if (!job) {
     res.status(404).json({ error: "not found" });
     return;
   }
-  const ext = extFromMime(job.face_mime);
-  const file = inputPath(job.id, ext);
-  if (!existsSync(file)) {
-    res.status(404).json({ error: "face missing" });
-    return;
-  }
-  res.type(job.face_mime).send(readFileSync(file));
+  await serveArtifact(res, job, inputPath(job.id, extFromMime(job.face_mime)), job.face_mime, undefined, req.query.download ? `marketing-studio-${job.id}${extFromMime(job.face_mime)}` : undefined);
 });
 
-app.get("/api/faceswaps/:id/output", (req, res) => {
-  const job = getSwapJob(req.params.id);
+app.get("/api/faceswaps/:id/output", async (req, res) => {
+  const job = await getSwapJob(req.params.id, currentUser(req)?.email);
   if (!job || job.status !== "COMPLETED") {
     res.status(404).json({ error: "output not ready" });
     return;
   }
-  const ext = extFromMime(job.output_mime || "image/png");
-  const file = outputPath(job.id, ext);
-  if (!existsSync(file)) {
-    res.status(404).json({ error: "output missing" });
-    return;
-  }
-  if (req.query.download === "1") {
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="marketing-studio-${job.template_id}-${job.id.slice(0, 8)}${ext}"`,
-    );
-  }
-  res.type(job.output_mime || "image/png").send(readFileSync(file));
+  await serveArtifact(res, job, outputPath(job.id, extFromMime(job.output_mime || "image/png")), job.output_mime || "image/png", job.output_r2_key, req.query.download ? `marketing-studio-${job.id}${extFromMime(job.output_mime || "image/png")}` : undefined);
 });
 
-app.get("/api/identities", (_req, res) => {
-  res.json({ identities: listIdentities() });
+app.get("/api/identities", async (req, res) => {
+  res.json({ identities: await listIdentities(currentUser(req)?.email) });
 });
 
-app.post("/api/identities", (req, res) => {
+app.post("/api/identities", async (req, res) => {
+  const email = currentUser(req)?.email || "anonymous";
   const jobId = String(req.body.job_id || "").trim();
   const name = String(req.body.name || "").trim();
   if (!jobId) {
@@ -484,51 +498,49 @@ app.post("/api/identities", (req, res) => {
     res.status(400).json({ error: "name required" });
     return;
   }
-  const job = getJob(jobId);
+  const job = await getJob(jobId, email);
   if (!job || job.status !== "COMPLETED" || !job.output_mime) {
     res.status(400).json({ error: "completed avatar job required" });
     return;
   }
   const source = outputPath(job.id, extFromMime(job.output_mime));
+  await restoreArtifact(job, source);
   if (!existsSync(source)) {
     res.status(404).json({ error: "output missing" });
     return;
   }
-  const existing = identityForJob(job.id);
-  const row = saveIdentityFromJob({
+  const existing = await identityForJob(job.id, email);
+  const row = await saveIdentityFromJob({
     id: existing?.id || job.id,
     name,
     job_id: job.id,
     mime: job.output_mime,
     source_file: source,
+    owner_email: email,
   });
   res.status(existing ? 200 : 201).json(row);
 });
 
-app.patch("/api/identities/:id", (req, res) => {
+app.patch("/api/identities/:id", async (req, res) => {
   try {
-    res.json(renameIdentity(req.params.id, String(req.body.name || "")));
+    res.json(await renameIdentity(req.params.id, String(req.body.name || ""), currentUser(req)?.email));
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     res.status(message === "not found" ? 404 : 400).json({ error: message });
   }
 });
 
-app.get("/api/identities/:id/image", (req, res) => {
-  const row = getIdentity(req.params.id);
+app.get("/api/identities/:id/image", async (req, res) => {
+  const row = await getIdentity(req.params.id, currentUser(req)?.email);
   if (!row) {
     res.status(404).json({ error: "not found" });
     return;
   }
-  const file = identityPath(row.id, row.mime);
-  if (!existsSync(file)) {
-    res.status(404).json({ error: "image missing" });
-    return;
-  }
-  res.type(row.mime).send(readFileSync(file));
+  await serveArtifact(res, row, identityPath(row.id, row.mime), row.mime, undefined, req.query.download ? `marketing-studio-${row.id}${extFromMime(row.mime)}` : undefined);
 });
 
-app.post("/api/faceswaps", rateLimitPost, postQuota(faceswapQuotaKind), upload.single("image"), (req, res) => {
+app.post("/api/faceswaps", rateLimitPost, upload.single("image"), postQuota(faceswapQuotaKind), async (req, res) => {
+  const email = currentUser(req)?.email || "anonymous";
   const templateId = String(req.body.template_id || "");
   const avatarId = String(req.body.avatar_id || "");
   const template = getMediaTemplate(templateId);
@@ -541,12 +553,13 @@ app.post("/api/faceswaps", rateLimitPost, postQuota(faceswapQuotaKind), upload.s
   let faceMime: string;
   let faceName: string;
   if (avatarId) {
-    const identity = getIdentity(avatarId);
+    const identity = await getIdentity(avatarId, email);
     if (!identity) {
       res.status(400).json({ error: "unknown avatar_id" });
       return;
     }
     const file = identityPath(identity.id, identity.mime);
+    await restoreArtifact(identity, file);
     if (!existsSync(file)) {
       res.status(400).json({ error: "saved avatar file missing" });
       return;
@@ -602,19 +615,20 @@ app.post("/api/faceswaps", rateLimitPost, postQuota(faceswapQuotaKind), upload.s
     estimated_usd: null,
     usd_per_hour_assumed: null,
     provider_meta: {},
+    owner_email: email,
   };
-  saveSwapJob(job);
-  recordUsage(currentUser(req)?.email || "anonymous", job.kind === "video" ? "videos" : "images");
+  await saveSwapJob(job);
+  await recordUsage(email, job.kind === "video" ? "videos" : "images");
   void runSwapJob(id);
   res.status(202).json(job);
 });
 
-app.get("/api/avatars", (_req, res) => {
-  res.json({ jobs: listJobs() });
+app.get("/api/avatars", async (req, res) => {
+  res.json({ jobs: await listJobs(currentUser(req)?.email) });
 });
 
-app.get("/api/avatars/:id", (req, res) => {
-  const job = getJob(req.params.id);
+app.get("/api/avatars/:id", async (req, res) => {
+  const job = await getJob(req.params.id, currentUser(req)?.email);
   if (!job) {
     res.status(404).json({ error: "not found" });
     return;
@@ -624,6 +638,11 @@ app.get("/api/avatars/:id", (req, res) => {
 
 app.post("/api/avatars/:id/cancel", async (req, res) => {
   try {
+    const owned = await getJob(req.params.id, currentUser(req)?.email);
+    if (!owned) {
+      res.status(404).json({ error: "not found" });
+      return;
+    }
     const job = await cancelAvatarJob(req.params.id);
     res.json(job);
   } catch (err) {
@@ -633,37 +652,26 @@ app.post("/api/avatars/:id/cancel", async (req, res) => {
   }
 });
 
-app.get("/api/avatars/:id/input", (req, res) => {
-  const job = getJob(req.params.id);
+app.get("/api/avatars/:id/input", async (req, res) => {
+  const job = await getJob(req.params.id, currentUser(req)?.email);
   if (!job) {
     res.status(404).json({ error: "not found" });
     return;
   }
-  const ext = extFromMime(job.input_mime);
-  const file = inputPath(job.id, ext);
-  if (!existsSync(file)) {
-    res.status(404).json({ error: "input missing" });
-    return;
-  }
-  res.type(job.input_mime).send(readFileSync(file));
+  await serveArtifact(res, job, inputPath(job.id, extFromMime(job.input_mime)), job.input_mime, undefined, req.query.download ? `marketing-studio-${job.id}${extFromMime(job.input_mime)}` : undefined);
 });
 
-app.get("/api/avatars/:id/output", (req, res) => {
-  const job = getJob(req.params.id);
+app.get("/api/avatars/:id/output", async (req, res) => {
+  const job = await getJob(req.params.id, currentUser(req)?.email);
   if (!job || job.status !== "COMPLETED") {
     res.status(404).json({ error: "output not ready" });
     return;
   }
-  const ext = extFromMime(job.output_mime || "image/png");
-  const file = outputPath(job.id, ext);
-  if (!existsSync(file)) {
-    res.status(404).json({ error: "output missing" });
-    return;
-  }
-  res.type(job.output_mime || "image/png").send(readFileSync(file));
+  await serveArtifact(res, job, outputPath(job.id, extFromMime(job.output_mime || "image/png")), job.output_mime || "image/png", undefined, req.query.download ? `marketing-studio-${job.id}${extFromMime(job.output_mime || "image/png")}` : undefined);
 });
 
-app.post("/api/avatars", rateLimitPost, quotaGuard("avatars"), upload.single("image"), (req, res) => {
+app.post("/api/avatars", rateLimitPost, quotaGuard("avatars"), upload.single("image"), async (req, res) => {
+  const email = currentUser(req)?.email || "anonymous";
   const file = req.file;
   if (!file) {
     res.status(400).json({ error: "image file required (field name: image)" });
@@ -723,9 +731,10 @@ app.post("/api/avatars", rateLimitPost, quotaGuard("avatars"), upload.single("im
     credit_cost: null,
     credits_remaining: null,
     provider_meta: {},
+    owner_email: email,
   };
-  saveJob(job);
-  recordUsage(currentUser(req)?.email || "anonymous", "avatars");
+  await saveJob(job);
+  await recordUsage(email, "avatars");
   void runAvatarJob(id, inputPath(id, ext));
   res.status(202).json(job);
 });
@@ -747,13 +756,17 @@ function removeSwapFiles(job: SwapJob) {
   }
 }
 
-app.listen(PORT, () => {
+installSpa(app, path.join(REPO_ROOT, "apps/frontend/dist"));
+app.use(errorHandler);
+
+await assertProductionReady();
+if (process.env.NODE_ENV !== "test") app.listen(PORT, () => {
   console.log(`backend http://localhost:${PORT}`);
   void resumeInFlightJobs();
   void resumeInFlightSwapJobs();
   void resumeInFlightAudioJobs();
   void resumeInFlightStudioRenders();
-  resumeProjectOperations();
+  void resumeProjectOperations();
   void ensureTemplatesOnR2()
     .then((r) => console.log("r2 templates", r))
     .catch((err) => console.log("r2 templates failed", err instanceof Error ? err.message : err));

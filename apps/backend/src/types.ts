@@ -14,6 +14,8 @@ export type AudioKind =
 
 export type AudioJob = {
   id: string;
+  owner_email?: string;
+  artifacts?: Record<string, string>;
   created_at: string;
   updated_at: string;
   status: GenerationStatus;
@@ -66,6 +68,8 @@ export type JobPhase =
 
 export type AvatarJob = {
   id: string;
+  owner_email?: string;
+  artifacts?: Record<string, string>;
   created_at: string;
   updated_at: string;
   status: GenerationStatus;
@@ -92,6 +96,8 @@ export type AvatarJob = {
 
 export type SavedAvatar = {
   id: string;
+  owner_email?: string;
+  artifacts?: Record<string, string>;
   name: string;
   job_id: string;
   created_at: string;
@@ -103,6 +109,8 @@ export type SwapKind = "image" | "video";
 
 export type SwapJob = {
   id: string;
+  owner_email?: string;
+  artifacts?: Record<string, string>;
   created_at: string;
   updated_at: string;
   status: GenerationStatus;

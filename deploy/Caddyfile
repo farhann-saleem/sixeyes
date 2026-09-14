@@ -1,0 +1,10 @@
+www.marketingstudioie.site {
+    request_body {
+        max_size 220MB
+    }
+    reverse_proxy 127.0.0.1:3001
+}
+
+marketingstudioie.site {
+    redir https://www.marketingstudioie.site{uri} permanent
+}

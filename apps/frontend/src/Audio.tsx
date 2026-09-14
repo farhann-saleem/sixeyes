@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ensureAuthed } from "./auth";
 import { promptIssue } from "./prompt-guard";
 import { SecureLine, SecurePrompt } from "./SecurePrompt";
 import type { AudioDesk } from "./Nav";
@@ -204,6 +205,7 @@ export function AudioStudio({ desk }: { desk?: AudioDesk } = {}) {
   }, [current?.id, current?.status]);
 
   async function postJson(url: string, body: unknown) {
+    if (!ensureAuthed()) return;
     setBusy(true);
     setError(null);
     try {

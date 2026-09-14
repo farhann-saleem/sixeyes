@@ -1,3 +1,4 @@
+import { db, dbEnabled } from "./db.js";
 import { randomUUID } from "node:crypto";
 import express from "express";
 import { currentUser } from "./google-auth.js";
@@ -29,20 +30,20 @@ function tierCatalog() {
   }));
 }
 
-billingRouter.get("/plan", (req, res) => {
+billingRouter.get("/plan", async (req, res) => {
   const user = currentUser(req);
   if (!user) {
     res.status(401).json({ error: "sign in with Google first" });
     return;
   }
   const email = user.email;
-  const tier = effectiveTier(email);
-  const row = getBillingUser(email);
+  const tier = await effectiveTier(email);
+  const row = await getBillingUser(email);
   res.json({
     tier,
     tier_name: TIERS[tier].name,
     tier_expires_at: tier === "free" ? null : row.tier_expires_at,
-    usage: usageForMonth(email),
+    usage: await usageForMonth(email),
     quotas: TIERS[tier].quotas,
     rate_per_min: TIERS[tier].rate_per_min,
     month_key: monthKey(),
@@ -50,7 +51,7 @@ billingRouter.get("/plan", (req, res) => {
   });
 });
 
-billingRouter.post("/checkout", (req, res) => {
+billingRouter.post("/checkout", async (req, res) => {
   const user = currentUser(req);
   if (!user) {
     res.status(401).json({ error: "sign in with Google first" });
@@ -74,7 +75,7 @@ billingRouter.post("/checkout", (req, res) => {
     });
     return;
   }
-  const order = createOrder({
+  const order = await createOrder({
     id: randomUUID(),
     email: user.email,
     tier: tier.id,
@@ -90,9 +91,9 @@ billingRouter.post("/checkout", (req, res) => {
   res.json({ order_id: order.id, url });
 });
 
-billingRouter.get("/order/:id", (req, res) => {
+billingRouter.get("/order/:id", async (req, res) => {
   const user = currentUser(req);
-  const order = getOrder(req.params.id);
+  const order = await getOrder(req.params.id);
   if (!order || order.email !== user?.email) {
     res.status(404).json({ error: "order not found" });
     return;
@@ -107,25 +108,23 @@ billingRouter.get("/order/:id", (req, res) => {
 });
 
 /** Public Swich callback (doc §16). Verify, grant, answer `{"status":"success"}`. */
-export function swichWebhook(
-  req: express.Request,
-  res: express.Response,
-) {
+export async function swichWebhook(req: express.Request, res: express.Response) {
   const query = req.query as Record<string, string | undefined>;
   const check = verifyCallback(query);
   if (!check.ok) {
     res.status(400).json({ status: "failed" });
     return;
   }
-  const order: BillingOrder | undefined = getOrder(check.customerTransactionId!);
+  const order: BillingOrder | undefined = await getOrder(check.customerTransactionId!);
   if (order) {
     if (check.status === "success") {
-      completeOrder(order.id, check.orderId!);
-      if (!order.granted) {
-        setTier(order.email, order.tier, 30);
+      if (dbEnabled()) await db.rpc("grant_paid_order", { p_id: order.id, p_order_id: check.orderId! });
+      else if (!order.granted) {
+        await setTier(order.email, order.tier, 30);
+        await completeOrder(order.id, check.orderId!);
       }
-    } else if (check.status !== "pending") {
-      completeOrder(order.id, check.orderId!, "failed");
+    } else if (check.status !== "pending" && !order.granted) {
+      await completeOrder(order.id, check.orderId!, "failed");
     }
   }
   res.json({ status: "success" });

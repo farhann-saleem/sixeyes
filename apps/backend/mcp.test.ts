@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
-import { handleMcpRpc } from "./src/mcp-rpc.js";
-import { MCP_TOOLS, callMcpTool } from "./src/mcp-tools.js";
+import { test, after } from "node:test";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+process.env.NODE_ENV = "test";
+process.env.STUDIO_TEST_DATA_DIR = mkdtempSync(path.join(tmpdir(), "mcp-tests-"));
+after(() => rmSync(process.env.STUDIO_TEST_DATA_DIR!, { recursive: true, force: true }));
+const { handleMcpRpc } = await import("./src/mcp-rpc.js");
+const { MCP_TOOLS, callMcpTool } = await import("./src/mcp-tools.js");
 
 test("initialize and tools/list speak MCP JSON-RPC", async () => {
   const init = await handleMcpRpc({ jsonrpc: "2.0", id: 1, method: "initialize", params: {} });

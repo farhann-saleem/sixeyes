@@ -87,6 +87,7 @@ export async function fetchSceneStock(
   projectId: string,
   scene: ProjectScene,
   signal: AbortSignal,
+  ownerEmail = "anonymous",
 ): Promise<StockCandidate[]> {
   if (!PEXELS_API_KEY) {
     throw new Error("PEXELS_API_KEY missing. Add it to .env and restart the backend, then retry stock.");
@@ -142,7 +143,7 @@ export async function fetchSceneStock(
     const key = `studio/projects/${projectId}/uploads/${id}${ext}`;
     await r2Put(key, bytes, mime);
     writeFileSync(studioUploadPath(id, ext), bytes);
-    saveUpload({
+    await saveUpload({
       id,
       project_id: projectId,
       filename: `${scene.heading.slice(0, 70).replace(/[^\w -]/g, "")}-${choice.id}${ext}`,
@@ -152,6 +153,7 @@ export async function fetchSceneStock(
       duration_s: choice.duration,
       r2_key: key,
       created_at: new Date().toISOString(),
+      owner_email: ownerEmail,
     });
     result.push({
       upload_id: id,
