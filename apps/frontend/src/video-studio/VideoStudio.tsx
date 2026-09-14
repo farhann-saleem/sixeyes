@@ -1,3 +1,4 @@
+import { apiUrl } from "../api";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SecurePrompt } from "../SecurePrompt";
 import { Preview } from "./Preview";
@@ -577,8 +578,8 @@ function StudioEditor({ projectId, onHome }: { projectId: string; onHome: () => 
             {done ? (
               <div className="nle-render">
                 <strong>Last export</strong>
-                <video src={`/api/studio/renders/${done.id}/output`} controls playsInline />
-                <a className="nle-btn" href={`/api/studio/renders/${done.id}/output?download=1`}>
+                <video src={apiUrl(`/api/studio/renders/${done.id}/output`)} controls playsInline />
+                <a className="nle-btn" href={apiUrl(`/api/studio/renders/${done.id}/output?download=1`)}>
                   Download mp4
                 </a>
               </div>

@@ -1,12 +1,12 @@
 # Current EC2 deployment — 2026-09-14
 
-EC2 serves **both the website and API** at `https://www.marketingstudioie.site`. Vercel is superseded as the live host; its project can remain. Google redirect stays `/callback` on the same domain.
+Vercel serves the frontend at `https://www.marketingstudioie.site`. EC2 serves only the backend at `https://api.marketingstudioie.site`. Google redirect stays `https://www.marketingstudioie.site/callback`; the frontend callback forwards to the API, which sets its host-only session cookie and redirects back to Vercel.
 
-Actual host: Amazon Linux 2023, x86_64, approximately 2 GB RAM, 20 GB root disk, 2 GB swap. SSH user `ec2-user`, public IP `13.49.134.103`. Set DNS A records for `www` and `@` to that IP; remove the conflicting Vercel CNAME/A and old AAAA records. Allow inbound HTTP 80 and HTTPS 443 publicly; SSH 22 only from your own IP. Do not expose port 3001. Check whether the public IP is Elastic before stopping the instance; an automatically assigned address can change.
+Actual host: Amazon Linux 2023, x86_64, approximately 2 GB RAM, 20 GB root disk, 2 GB swap. SSH user `ec2-user`, public IP `13.49.134.103`. In Hostinger DNS keep `www` and `@` on Vercel and add `A api -> 13.49.134.103`. Allow inbound HTTP 80 and HTTPS 443 publicly; SSH 22 only from your own IP. Do not expose port 3001. Check whether the public IP is Elastic before stopping the instance; an automatically assigned address can change.
 
 ## Automatic updates
 
-Push to `main` in `farhann-saleem/sixeyes`. `.github/workflows/deploy.yml` installs dependencies, runs tests/typechecks and builds the frontend on GitHub, then publishes a `deploy-<commit>` prerelease with an allowlisted archive and SHA-256 checksum. Failed checks publish nothing. EC2 checks releases every two minutes using outbound HTTPS; no admin SSH key or application secret is stored on GitHub. The public repository's release assets contain code and public catalog media only.
+Push to `main` in `farhann-saleem/sixeyes`. Vercel automatically builds the frontend. `.github/workflows/deploy.yml` installs dependencies, runs tests/typechecks and builds the frontend as a check, then publishes a backend `deploy-<commit>` prerelease with an allowlisted archive and SHA-256 checksum. Failed checks publish nothing. EC2 checks releases every two minutes using outbound HTTPS; no admin SSH key or application secret is stored on GitHub.
 
 `deploy/update-release.py` installs the latest deployment release, runs npm as the unprivileged app user, switches `current`, and checks `/health` for the expected revision. Failed startup restores the previous release. A failed revision is not retried until a new commit or manual removal of `incoming/failed-revision`. Only current and previous releases are retained. Shared data is never removed by updates. This single-process deployment briefly interrupts HTTP during restart; provider-backed jobs resume from persisted rows, while jobs without a provider id fail clearly rather than resubmitting paid work.
 
@@ -24,7 +24,7 @@ To pause deployment: `sudo systemctl stop ms-deploy.timer`. To roll back manuall
 
 ## Verification still required
 
-First GitHub release/install and HTTP startup, DNS/TLS, Google login, two-account live ownership checks, and an authorized generation with restart mid-job. Shared CPU timeline-v1 export remains a separate worker deployment gate. Do not call the complete project or multi-user capacity verified from unit tests alone. No paid generation is part of infrastructure smoke by default.
+First GitHub release/install and localhost HTTP startup passed for commit `332319e`. Split-host verification passes locally with 34 backend tests and the frontend production build. Still required: the `api` DNS record, TLS, Google login, two-account live ownership checks, the next automatic update, and an authorized generation with restart mid-job. Shared CPU timeline-v1 export remains a separate worker deployment gate. Do not call the complete project or multi-user capacity verified from unit tests alone. No paid generation is part of infrastructure smoke by default.
 
 ---
 

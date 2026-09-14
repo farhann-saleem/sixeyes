@@ -27,7 +27,7 @@ jobs:
       - run: npm test --prefix apps/backend
       - run: npx --prefix apps/frontend tsc --project apps/frontend/tsconfig.json --noEmit
       - run: npm run build --prefix apps/frontend
-      - name: Package public code and built frontend
+      - name: Package backend and public catalogs
         run: |
           bash deploy/package-release.sh "$RUNNER_TEMP/marketing-studio.tar.gz"
           cd "$RUNNER_TEMP"

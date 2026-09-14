@@ -168,9 +168,4 @@ export function snapTime(sec: number, playhead: number, pps: number) {
   return Math.max(0, Math.round(sec * 10) / 10);
 }
 
-export async function api<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init);
-  const body = (await res.json()) as T & { error?: string };
-  if (!res.ok) throw new Error(body.error || res.statusText);
-  return body;
-}
+export { apiJson as api } from "../api";

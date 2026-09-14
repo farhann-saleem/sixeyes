@@ -1,6 +1,7 @@
+import { apiUrl, apiFetch } from "./api";
 import { useEffect, useState } from "react";
 
-const ENDPOINT = `${window.location.origin}/api/mcp`;
+const ENDPOINT = new URL(apiUrl("/api/mcp"), window.location.origin).href;
 
 const CURSOR = `{
   "mcpServers": {
@@ -28,7 +29,7 @@ export function McpDesk() {
   const [health, setHealth] = useState<string>("Checking the endpoint…");
 
   useEffect(() => {
-    fetch(ENDPOINT)
+    apiFetch(ENDPOINT)
       .then((r) => r.json())
       .then((body: { name?: string; tools?: string[] }) => {
         setHealth(

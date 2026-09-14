@@ -4,6 +4,8 @@ Values live in gitignored `.env`. This file is **names only**. Fill `.env` from 
 
 Owner-written API notes (read before wiring): [apis/ai33pro.md](apis/ai33pro.md), [apis/openrouter.md](apis/openrouter.md), [apis/runpod-cpu.md](apis/runpod-cpu.md).
 
+Production is split-host: Vercel serves `https://www.marketingstudioie.site`; EC2 serves `https://api.marketingstudioie.site`. The frontend defaults `VITE_API_ORIGIN` to that API hostname. `FRONTEND_URL` remains the Vercel URL and is the sole credentialed CORS origin. Google OAuth still redirects through `https://www.marketingstudioie.site/callback`.
+
 ## Product keys in `.env`
 
 | Name | Where | Notes |

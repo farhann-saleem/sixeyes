@@ -1,3 +1,4 @@
+import { apiFetch, apiUrl } from "./api";
 export type User = {
   id?: string | null;
   email: string;
@@ -10,7 +11,7 @@ let cached: User | null | undefined = undefined;
 
 export async function fetchUser(): Promise<User | null> {
   try {
-    const res = await fetch("/api/auth/me");
+    const res = await apiFetch("/api/auth/me");
     if (!res.ok) { setUser(null); return null; }
     const body = (await res.json()) as { user: User | null };
     setUser(body.user ?? null);
@@ -29,12 +30,12 @@ export function getUser(): User | null | undefined {
 }
 
 export function googleLogin(next: string) {
-  window.location.assign(`/api/auth/login?next=${encodeURIComponent(next)}`);
+  window.location.assign(apiUrl(`/api/auth/login?next=${encodeURIComponent(next)}`));
 }
 
 export async function googleLogout() {
   try {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await apiFetch("/api/auth/logout", { method: "POST" });
   } finally {
     cached = null;
     window.location.assign("/");
