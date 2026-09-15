@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { json } from "./studio";
 import type { User } from "./auth";
 
-type QuotaKind = "avatars" | "images" | "videos" | "documentaries";
+type QuotaKind = "avatars" | "images" | "videos" | "documentaries" | "audio";
 
 type TierInfo = {
   id: "free" | "pro" | "premium";
@@ -23,6 +23,7 @@ type PlanState = {
   rate_per_min: number;
   month_key: string;
   tiers: TierInfo[];
+  signed_in?: boolean;
 };
 
 const QUOTA_ROWS: Array<{ kind: QuotaKind; label: string }> = [
@@ -30,6 +31,7 @@ const QUOTA_ROWS: Array<{ kind: QuotaKind; label: string }> = [
   { kind: "images", label: "Image recreations" },
   { kind: "videos", label: "Videos" },
   { kind: "documentaries", label: "Documentaries" },
+  { kind: "audio", label: "Audio credits" },
 ];
 
 const MULTIPLIER: Record<TierInfo["id"], string> = {
@@ -47,7 +49,8 @@ function fmtDate(iso: string | null): string {
   });
 }
 
-export function Pricing({ user }: { user: User }) {
+export function Pricing({ user }: { user: User | null }) {
+  const signedIn = Boolean(user?.email);
   const [plan, setPlan] = useState<PlanState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [buying, setBuying] = useState<TierInfo["id"] | null>(null);
@@ -58,20 +61,24 @@ export function Pricing({ user }: { user: User }) {
   );
 
   const load = () => {
-    json<PlanState>("/api/billing/plan")
-      .then(setPlan)
+    const path = signedIn ? "/api/billing/plan" : "/api/billing/plans";
+    json<PlanState>(path)
+      .then((body) => {
+        setPlan(body);
+        setError(null);
+      })
       .catch((err: Error) => setError(err.message));
   };
 
   useEffect(() => {
     load();
-  }, []);
+  }, [signedIn]);
 
   useEffect(() => {
-    if (!paid) return;
+    if (!paid || !signedIn) return;
     const timer = window.setInterval(load, 4000);
     return () => window.clearInterval(timer);
-  }, [paid]);
+  }, [paid, signedIn]);
 
   const current = useMemo(
     () => plan?.tiers.find((t) => t.id === plan.tier) ?? null,
@@ -80,6 +87,10 @@ export function Pricing({ user }: { user: User }) {
 
   async function checkout(e: FormEvent, tier: TierInfo) {
     e.preventDefault();
+    if (!signedIn) {
+      window.location.assign("/login");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -108,7 +119,7 @@ export function Pricing({ user }: { user: User }) {
         </div>
       </header>
 
-      {paid && (
+      {paid && signedIn && (
         <div className="pricing-banner">
           <strong>{plan ? `You're on ${plan.tier_name}.` : "Payment received."}</strong>
           <span>
@@ -121,7 +132,7 @@ export function Pricing({ user }: { user: User }) {
 
       {error && <p className="notice pricing-notice">{error}</p>}
 
-      {plan && current && (
+      {plan && current && signedIn && (
         <section className="plan-usage">
           <div className="plan-usage-head">
             <strong>Current plan: {current.name}</strong>
@@ -160,7 +171,7 @@ export function Pricing({ user }: { user: User }) {
 
       <section className="pricing-grid">
         {plan?.tiers.map((tier) => {
-          const isCurrent = plan.tier === tier.id;
+          const isCurrent = signedIn && plan.tier === tier.id;
           return (
             <article
               key={tier.id}
@@ -195,7 +206,15 @@ export function Pricing({ user }: { user: User }) {
                   Current plan
                 </button>
               ) : tier.id === "free" ? (
-                <p className="price-free-note">You're already on Free — go make a film.</p>
+                <p className="price-free-note">
+                  {signedIn
+                    ? "You're already on Free — go make a film."
+                    : "Free to start — sign in when you create."}
+                </p>
+              ) : !signedIn ? (
+                <a className="btn lime price-btn" href="/login">
+                  Sign in to get {tier.name}
+                </a>
               ) : buying === tier.id ? (
                 <form className="price-form" onSubmit={(e) => void checkout(e, tier)}>
                   <label>
@@ -211,7 +230,7 @@ export function Pricing({ user }: { user: User }) {
                     />
                   </label>
                   <p className="price-form-note">
-                    Paying as {user.name || user.email}. Swich sends the receipt
+                    Paying as {user?.name || user?.email}. Swich sends the receipt
                     to your number.
                   </p>
                   <button type="submit" className="btn lime price-btn" disabled={busy}>

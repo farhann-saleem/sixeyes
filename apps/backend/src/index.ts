@@ -54,7 +54,7 @@ import { listRenders } from "./studio-store.js";
 import { resumeInFlightStudioRenders } from "./studio-render.js";
 import { attachUser, authRouter, currentUser, requireAuth } from "./google-auth.js";
 import { billingRouter, swichWebhook } from "./billing-routes.js";
-import { faceswapQuotaKind, postQuota, quotaGuard, rateLimitPost } from "./billing-guard.js";
+import { faceswapQuotaKind, postQuota, quotaGuard, rateLimitPost, audioGenerateQuota } from "./billing-guard.js";
 import { recordUsage } from "./billing-store.js";
 
 const upload = multer({
@@ -85,7 +85,7 @@ app.use("/mcp", (req, res, next) => {
 });
 
 app.use("/api/billing", billingRouter);
-app.use("/api/audio", rateLimitPost, audioRouter);
+app.use("/api/audio", rateLimitPost, audioGenerateQuota, audioRouter);
 app.use(
   "/api/studio",
   rateLimitPost,

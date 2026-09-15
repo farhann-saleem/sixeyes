@@ -1,3 +1,25 @@
+# Current handoff — README product landing style (2026-09-15)
+
+Root + three worker READMEs reshaped to match the cursed-speech pattern: centered brand/headline, badges, one-liner why, 3 architecture beats, one sample request, link out to SETUP. Desks / agent handoff links stay in docs (SETUP · ARCHITECTURE · MODELS). Root ships `brand.svg` for the README mark. Docs only — no runtime code.
+
+---
+
+# Current handoff — README docs split + system canvas (2026-09-15)
+
+Docs only (no code). Root [README.md](../README.md) is short (intro + desks + four-repo map). Detail moved to [SETUP.md](SETUP.md), [ARCHITECTURE.md](ARCHITECTURE.md), [MODELS.md](MODELS.md). Interactive system design: [Marketing Studio system design](/home/farhann-saleem/.cursor/projects/home-farhann-saleem-Desktop-github-projects-hiigsfiled-marketing-studio-ie/canvases/marketing-studio-system-design.canvas.tsx). Same README → SETUP / ARCHITECTURE / MODELS pattern applied in sibling workers `ms-runpod-krea`, `ms-runpod-qwen`, `ms-runpod-cpu`. `RUNPOD_LESSONS.md` / app `docs/RUNPOD.md` untouched.
+
+---
+
+# Current handoff — Audio credit cap + public pricing (2026-09-15)
+
+Owner GO: voice/audio was uncapped against vendor spend. Free now has a **500 audio credits / month** cap (1 generate job = 1 credit): TTS, dialogue, clone, voice-change, dub, isolate, STT, SFX, music. Pro **5,000** · Premium **50,000**. Ledger is on-disk `DATA_DIR/audio-usage.json` so production needs **no Supabase migration**. Existing per-minute `rateLimitPost` on `/api/audio` stays. 429 message points to Pricing.
+
+Pricing page is public for signed-out visitors via `GET /api/billing/plans` (already allowlisted). Guests see tiers/quotas; Sign in to upgrade. Signed-in users still use `/api/billing/plan` for usage bars + checkout.
+
+Validation: billing tests 8/8 pass (incl. audio cap); frontend typecheck pass. Deploy the backend revision for the cap to take effect on EC2.
+
+---
+
 # Current handoff — Landing motion only (2026-09-14)
 
 Owner requested animation only, preserving landing copy, layout, colors and assets. Added `landing/useLandingMotion.ts` and `landing/landing-motion.css`, attached via one root ref/import in Landing. Hero elements enter in sequence; section headings, documentary steps, cards and footer columns reveal once on intersection. Existing ambient orbs drift slowly; workflow dots and divider strokes breathe. Refined existing card shimmer, hover lift, CTA press feedback and footer link movement. Existing equalizer now animates transform rather than height (18px fixed bar maximum).

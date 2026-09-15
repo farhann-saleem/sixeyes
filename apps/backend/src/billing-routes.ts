@@ -30,6 +30,27 @@ function tierCatalog() {
   }));
 }
 
+/** Public catalog — no auth. Used by the Pricing page for signed-out visitors. */
+billingRouter.get("/plans", (_req, res) => {
+  res.json({
+    tier: "free",
+    tier_name: TIERS.free.name,
+    tier_expires_at: null,
+    usage: {
+      avatars: 0,
+      images: 0,
+      videos: 0,
+      documentaries: 0,
+      audio: 0,
+    },
+    quotas: TIERS.free.quotas,
+    rate_per_min: TIERS.free.rate_per_min,
+    month_key: monthKey(),
+    tiers: tierCatalog(),
+    signed_in: false,
+  });
+});
+
 billingRouter.get("/plan", async (req, res) => {
   const user = currentUser(req);
   if (!user) {
@@ -48,6 +69,7 @@ billingRouter.get("/plan", async (req, res) => {
     rate_per_min: TIERS[tier].rate_per_min,
     month_key: monthKey(),
     tiers: tierCatalog(),
+    signed_in: true,
   });
 });
 

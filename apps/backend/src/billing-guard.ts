@@ -41,6 +41,17 @@ export async function rateLimitPost(req: Request, res: Response, next: NextFunct
   next();
 }
 
+const AUDIO_GENERATE = /^\/(?:tts|dialogue|clone|voice-change|dub|isolate|stt|sfx|music)\/?$/;
+
+/** Monthly audio-credit cap on generate POSTs only (not library/dictionary reads). */
+export async function audioGenerateQuota(req: Request, res: Response, next: NextFunction) {
+  if (req.method !== "POST" || !AUDIO_GENERATE.test(req.path)) {
+    next();
+    return;
+  }
+  await quotaGuard("audio")(req, res, next);
+}
+
 /** Refuses a request when the caller's monthly quota for `kind` is spent. */
 export function quotaGuard(kind: QuotaKind) {
   return async (req: Request, res: Response, next: NextFunction) => {

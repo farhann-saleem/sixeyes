@@ -240,7 +240,7 @@ export function Shell() {
       ) : route.name === "mcp" ? (
         <McpDesk />
       ) : route.name === "pricing" ? (
-        <Pricing user={user ?? { email: "", name: "", picture: "" }} />
+        <Pricing user={user ?? null} />
       ) : route.name === "terms" || route.name === "refund" || route.name === "delivery" || route.name === "cancellation" ? (
         <Policy page={route.name} />
       ) : route.name === "audio" ? (

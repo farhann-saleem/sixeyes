@@ -1,3 +1,9 @@
+# Current handoff — Audio credit cap + public pricing (2026-09-15)
+
+Owner GO: monthly **audio credits** cap on generate (TTS / dialogue / clone / change / dub / isolate / STT / SFX / music). Free **500**, Pro **5,000**, Premium **50,000** (1 job = 1 credit). Ledger: `DATA_DIR/audio-usage.json` — no Supabase migration. Existing `/api/audio` per-minute rate limit unchanged. Pricing is public: `GET /api/billing/plans` for guests; signed-in users still get usage + Swich checkout via `/plan`. Billing tests 8/8. Deploy backend for the cap to hit production.
+
+---
+
 # Current handoff — Landing motion only (2026-09-14)
 
 Owner requested animation only, preserving landing copy, layout, colors and assets. Added `landing/useLandingMotion.ts` and `landing/landing-motion.css`, attached via one root ref/import in Landing. Hero elements enter in sequence; section headings, documentary steps, cards and footer columns reveal once on intersection. Existing ambient orbs drift slowly; workflow dots and divider strokes breathe. Refined existing card shimmer, hover lift, CTA press feedback and footer link movement. Existing equalizer now animates transform rather than height (18px fixed bar maximum).

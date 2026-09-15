@@ -25,9 +25,9 @@ const { callbackChecksum, checkoutChecksum, verifyCallback } = await import("./s
 after(() => rmSync(process.env.STUDIO_TEST_DATA_DIR!, { recursive: true, force: true }));
 
 test("tier table matches the owner pricing lock", () => {
-  assert.deepEqual(TIERS.free.quotas, { avatars: 3, images: 10, videos: 3, documentaries: 20 });
-  assert.deepEqual(TIERS.pro.quotas, { avatars: 30, images: 100, videos: 30, documentaries: 200 });
-  assert.deepEqual(TIERS.premium.quotas, { avatars: 300, images: 1000, videos: 300, documentaries: 2000 });
+  assert.deepEqual(TIERS.free.quotas, { avatars: 3, images: 10, videos: 3, documentaries: 20, audio: 500 });
+  assert.deepEqual(TIERS.pro.quotas, { avatars: 30, images: 100, videos: 30, documentaries: 200, audio: 5000 });
+  assert.deepEqual(TIERS.premium.quotas, { avatars: 300, images: 1000, videos: 300, documentaries: 2000, audio: 50000 });
   assert.equal(TIERS.free.rate_per_min, 6);
   assert.equal(TIERS.pro.rate_per_min, 30);
   assert.equal(TIERS.premium.rate_per_min, 60);
@@ -37,7 +37,7 @@ test("tier table matches the owner pricing lock", () => {
   assert.equal(TIERS.premium.price_pkr, 42000);
   assert.equal(getTier("pro")?.name, "Pro");
   assert.equal(getTier("nope"), null);
-  assert.deepEqual(QUOTA_KINDS, ["avatars", "images", "videos", "documentaries"]);
+  assert.deepEqual(QUOTA_KINDS, ["avatars", "images", "videos", "documentaries", "audio"]);
 });
 
 test("usage counts against the free tier and blocks over quota", async () => {
@@ -105,5 +105,14 @@ test("unknown users read as free with empty usage", async () => {
   const row = await getBillingUser("fresh@test.dev");
   assert.equal(row.tier, "free");
   assert.equal(row.tier_expires_at, null);
-  assert.deepEqual(await usageForMonth("fresh@test.dev"), { avatars: 0, images: 0, videos: 0, documentaries: 0 });
+  assert.deepEqual(await usageForMonth("fresh@test.dev"), { avatars: 0, images: 0, videos: 0, documentaries: 0, audio: 0 });
+});
+
+test("audio credits count separately and block at the free cap", async () => {
+  const email = "audio-cap@test.dev";
+  assert.equal(await quotaOk(email, "audio"), true);
+  for (let i = 0; i < 500; i++) await recordUsage(email, "audio");
+  assert.equal((await usageForMonth(email)).audio, 500);
+  assert.equal(await quotaOk(email, "audio"), false);
+  assert.equal(await quotaOk(email, "avatars"), true);
 });

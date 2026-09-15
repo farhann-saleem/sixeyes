@@ -3,6 +3,7 @@ import path from "node:path";
 import { DATA_DIR } from "./env.js";
 import { db, dbEnabled, eq, ownerOf } from "./db.js";
 import { TIERS, type QuotaKind, type TierId } from "./plans.js";
+import { audioUsageForMonth, recordAudioUsage } from "./audio-usage.js";
 
 const USERS_PATH = path.join(DATA_DIR, "billing-users.json");
 const ORDERS_PATH = path.join(DATA_DIR, "billing-orders.json");
@@ -12,6 +13,7 @@ const EMPTY_USAGE: Record<QuotaKind, number> = {
   images: 0,
   videos: 0,
   documentaries: 0,
+  audio: 0,
 };
 
 export type BillingUser = {
@@ -96,6 +98,7 @@ function rowFromProfile(p: ProfileRow): BillingUser {
       images: p.usage_images ?? 0,
       videos: p.usage_videos ?? 0,
       documentaries: p.usage_documentaries ?? 0,
+      audio: 0,
     },
   };
 }
@@ -250,11 +253,19 @@ export async function setTier(email: string, tier: TierId, days: number): Promis
 export async function usageForMonth(email: string): Promise<Record<QuotaKind, number>> {
   const user = await getBillingUser(email);
   const key = monthKey();
-  if (user.month_key !== key) return { ...EMPTY_USAGE };
-  return { ...EMPTY_USAGE, ...user.usage };
+  const base =
+    user.month_key !== key
+      ? { ...EMPTY_USAGE }
+      : { ...EMPTY_USAGE, ...user.usage, audio: 0 };
+  base.audio = audioUsageForMonth(email);
+  return base;
 }
 
 export async function recordUsage(email: string, kind: QuotaKind): Promise<void> {
+  if (kind === "audio") {
+    recordAudioUsage(email, 1);
+    return;
+  }
   const key = ownerOf(email);
   const mk = monthKey();
   if (dbEnabled()) {

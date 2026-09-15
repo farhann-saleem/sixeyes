@@ -31,16 +31,16 @@ import {
 import { extractAudioMp3, ffmpegAvailable, probeDurationSeconds } from "./ffmpeg-local.js";
 import { extFromMime } from "./media.js";
 import { currentUser } from "./google-auth.js";
-
-
-
+import { effectiveTier, quotaOk, recordUsage } from "./billing-store.js";
+import { QUOTA_LABELS, TIERS } from "./plans.js";
 const cloneUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
 function sendErr(res: import("express").Response, err: unknown, status = 400) {
-  res.status(status).json({ error: err instanceof Error ? err.message : String(err) });
+  const code = typeof (err as { status?: number })?.status === "number" ? (err as { status: number }).status : status;
+  res.status(code).json({ error: err instanceof Error ? err.message : String(err) });
 }
 
 function newJob(partial: Omit<AudioJob, "created_at" | "updated_at" | "provider">): AudioJob {
@@ -320,6 +320,14 @@ audioRouter.post("/jobs/:id/cancel", async (req, res) => {
 });
 
 export async function enqueue(kind: AudioKind, title: string, params: Record<string, unknown>, extra?: Partial<AudioJob>, defer = false) {
+  const owner = extra?.owner_email || "anonymous";
+  if (!(await quotaOk(owner, "audio"))) {
+    const tier = TIERS[await effectiveTier(owner)];
+    throw Object.assign(
+      new Error(`${tier.name} allows ${tier.quotas.audio} ${QUOTA_LABELS.audio.toLowerCase()} per month. Upgrade on the Pricing page.`),
+      { status: 429 },
+    );
+  }
   const id = extra?.id || randomUUID();
   const job = newJob({
     id,
@@ -356,6 +364,7 @@ export async function enqueue(kind: AudioKind, title: string, params: Record<str
   if (kind !== "clone") await assertVoiceOwner(job.owner_email || "anonymous", params.voice_id);
   if (kind === "dialogue" && Array.isArray(params.speakers)) for (const speaker of params.speakers) await assertVoiceOwner(job.owner_email || "anonymous", speaker.voice_id);
   await saveAudioJob(job);
+  await recordUsage(job.owner_email || "anonymous", "audio");
   if (kind !== "clone" && !defer) void runAudioJob(id);
   return job;
 }
