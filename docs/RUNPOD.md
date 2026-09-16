@@ -224,3 +224,15 @@ Retired: `r59jmvkgw3a5m3`.
 **CPU (phase B):** same DC/volume/throttle/stale-worker rules. `op=swap` / `op=stitch`.
 
 **CPU smoke (2026-09-13):** ping `facefusion_ready` + `allow_generate`. Still ~8s. Video was **4K 30s** locally; we sent **720p** (raw 4K frame reserve is huge). 720p/30s swap **~456s**, audio kept. Product 15s 720×1280 + `avatar.jpeg` (`1fab1e69`) **133.7s**. Looking-down / profile / **back-of-head** frames barely change — FaceFusion needs a front-ish face. `estimated_usd` was **0** (worker `RUNPOD_CPU_USD_PER_HR` unset). Health showed **3 idle** workers; lock is max 1. If RunPod is `COMPLETED` with `output_key` and our row is still `IN_PROGRESS`, the R2 download hung — restart the backend and **resume the same id**. Do not `/run` again.
+
+
+## CPU throttle investigation — 2026-09-16
+
+Owner reported CPU blocked after creating an avatar. Read-only live endpoint health returned HTTP 200: workers idle=4, ready=4, running=0, initializing=0, throttled=5, unhealthy=0; jobs inQueue=0, inProgress=0, completed=30, failed=1. This is a mixed ready/throttled state, not proof that all CPU capacity is unavailable. `cpuBlockedReason()` in `apps/backend/src/providers/cpu.ts` blocks whenever throttled > 0, even with ready workers. The existing explicit throttle lock remains unchanged; no generation, purge, restart, or endpoint mutation was performed. Default avatar generation uses OpenRouter FLUX, separate from CPU FaceFusion/stitch. Root cause of the throttled workers requires worker logs; the health response alone cannot establish a crash or recovery time.
+
+Follow-up at 2026-09-16 06:21 UTC: owner reports no throttled workers visible in the RunPod dashboard. Repeated direct GET /health still returned ready=4, idle=4, throttled=5, unhealthy=0, and no queued/running jobs. Dashboard/API disagreement is confirmed by owner observation versus API response; stale counters are only a hypothesis. Do not assume five inspectable crashed workers exist or ask the owner to find logs for workers absent from the dashboard.
+
+
+## CPU partial-capacity gate fix — 2026-09-16
+
+Owner authorized fixing the false block and reported increasing the worker setting to 9. At 07:01 UTC direct health reported idle=6, ready=6, throttled=3, unhealthy=0, no queued/running jobs. `cpuBlockedReason` now blocks throttling only when **neither ready nor idle workers are reported**. This supersedes the CPU-specific blanket throttled > 0 lock; Qwen is unchanged. Ready and idle counts are not added because they may overlap. Running/initializing alone do not override the throttle gate. Scale-to-zero without throttling can still cold start. Existing `cpuPing` readiness, allow_generate and FFmpeg/timeline gates remain. No worker setting was changed by the agent. Regression tests cover mixed capacity, total throttle and cold start.

@@ -56,8 +56,12 @@ export async function cpuHealthCached(maxAgeMs = 10_000): Promise<RunpodHealth> 
 
 export function cpuBlockedReason(health: RunpodHealth): string | null {
   const t = health.workers?.throttled ?? 0;
-  if (t > 0) {
-    return `CPU endpoint throttled (${t}). Lock: do not swap while throttled > 0.`;
+  // RunPod can report throttled workers alongside available workers. Do not
+  // turn a partial capacity reduction into an endpoint-wide outage. The runner
+  // still checks the worker's capabilities with cpuPing before submitting work.
+  const available = (health.workers?.ready ?? 0) > 0 || (health.workers?.idle ?? 0) > 0;
+  if (t > 0 && !available) {
+    return `CPU workers are temporarily unavailable (${t} throttled, none ready). Please try again shortly.`;
   }
   return null;
 }
