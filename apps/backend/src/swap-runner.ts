@@ -154,6 +154,9 @@ async function pollSwapUntilDone(job: SwapJob, started: number) {
 
     const poll = await cpuPoll(job.provider_job_id);
     polls += 1;
+    job.phase_label = poll.status === "IN_QUEUE"
+      ? "Your job is queued and will start when a CPU worker is available."
+      : job.kind === "video" ? "Generating video…" : "Generating image…";
     const out = unwrapCpu(poll.output);
     job.provider_meta = {
       ...job.provider_meta,

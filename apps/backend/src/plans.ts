@@ -29,7 +29,7 @@ export const TIERS: Record<TierId, Tier> = {
     price_usd: 0,
     price_pkr: 0,
     rate_per_min: 6,
-    quotas: { avatars: 3, images: 10, videos: 3, documentaries: 20, audio: 500 },
+    quotas: { avatars: 1, images: 5, videos: 3, documentaries: 10, audio: 300 },
   },
   pro: {
     id: "pro",

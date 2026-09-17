@@ -58,7 +58,7 @@ export function checkoutUrl(input: {
     email,
     msisdn,
     currency: "PKR",
-    successRedirectUrl: `${FRONTEND_URL}/pricing?paid=1`,
+    successRedirectUrl: `${FRONTEND_URL}/pricing?paid=1&order=${encodeURIComponent(order.id)}`,
   });
   params.set("checksum", checkoutChecksum(order.id, item, order.amount_pkr));
   return `${SWICHNOW_PWA_URL}/?${params.toString()}`;

@@ -3,7 +3,7 @@ export function createApiClient(origin: string) {
   const base = origin.replace(/\/$/, "");
   const apiUrl = (url: string) => /^\/api(?:\/|\?|$)/.test(url) ? `${base}${url}` : url;
   const apiFetch = (url: string, init?: RequestInit) => fetch(apiUrl(url), { ...init, credentials: "include" });
-  const publicCatalogs = new Set(["/api/image-templates", "/api/video-templates", "/api/effects"]);
+  const publicCatalogs = new Set(["/api/image-templates", "/api/video-templates", "/api/effects", "/api/billing/plans"]);
   const catalogCache = new Map<string, { expires: number; request: Promise<unknown> }>();
   async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
     const res = await apiFetch(url, init);

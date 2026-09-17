@@ -126,6 +126,7 @@ billingRouter.get("/order/:id", async (req, res) => {
     status: order.status,
     amount_pkr: order.amount_pkr,
     created_at: order.created_at,
+    granted: order.granted,
   });
 });
 
@@ -140,6 +141,10 @@ export async function swichWebhook(req: express.Request, res: express.Response) 
   const order: BillingOrder | undefined = await getOrder(check.customerTransactionId!);
   if (order) {
     if (check.status === "success") {
+      if (Number(check.amount) !== order.amount_pkr) {
+        res.status(400).json({ status: "failed" });
+        return;
+      }
       if (dbEnabled()) await db.rpc("grant_paid_order", { p_id: order.id, p_order_id: check.orderId! });
       else if (!order.granted) {
         await setTier(order.email, order.tier, 30);

@@ -1,3 +1,33 @@
+# Owner reports SQL applied — credit allowances (2026-09-17)
+
+Owner requested SQL to run in Supabase. Prepared `supabase/migrations/20260917080000_plan_credit_limits.sql`: plan allowance table and private, security-invoker `user_credit_balances` view with effective tier, monthly allowance, used and remaining by category. Expired plans use Free; current usage uses UTC calendar months (production server assumption). Audio allowance is stored but audio used/remaining are NULL until disk-ledger migration, never misleading zero. Existing counters/payments untouched. Backend still enforces `plans.ts`; changing this table alone does not change application enforcement. Owner reports running the full SQL successfully after the initial SELECT failed because the view did not yet exist. Live database state has not been independently checked. Owner authorized pushing the pricing/loading/payment/analytics changes and SQL to GitHub; main push triggers the existing deployment workflow.
+
+---
+
+# Current handoff — pricing, payment feedback and loading (2026-09-17)
+
+Owner GO: Free monthly limits now 1 avatar / 5 images / 3 videos (unchanged) / 10 documentaries / 300 audio credits. Pro/Premium prices and allowances unchanged; RPM stays 6 / 30 / 60. Rate-limit messages include wait seconds and appropriate upgrades. CPU capacity messages remain distinct; accepted RunPod queued swaps show queue status. Owner clarified bulk is **coming-soon copy for all tools on Pro/Premium only**, no bulk backend.
+
+Pricing explains **up to 24 hours** for upgrade processing, only after verified payment; verified webhook still activates immediately. Return URL carries order id and UI checks its owner-scoped status before claiming success; amount checked before grant. Startup, lazy routes and pricing have loading states. Analytics uses Vite-compatible `@vercel/analytics/react`. Public catalog cache retained and extended to guest pricing; private billing/orders never cached.
+
+Supabase question: existing profile counters already show non-audio monthly usage; audio is still the disk ledger and needs a later migration/backfill for unified reporting. No DB migration, paid generation, or deployment performed. See spec 19 for exact behavior.
+
+Validation: frontend and backend typechecks passed; frontend production build passed. Billing/CPU/cache tests passed. Full backend suite passed 9/10 files in sandbox; security tests passed all 9 checks with localhost networking enabled. Local browser verified public pricing values, bulk coming-soon copy, 24-hour notice and loading state using an isolated mock API. No real payment, generation, or production deployment. Analytics 2.0.1 was reused from an existing local installation with matching npm lockfile metadata because registry access failed; a fresh registry install was not verified.
+
+---
+
+# Current handoff — CPU partial-capacity fix (2026-09-16)
+
+Owner GO: fix swaps blocked despite ready workers; owner increased worker setting to 9. Live health at 07:01 UTC: ready/idle=6, throttled=3, no queued/running jobs. Shared `cpuBlockedReason` now allows ready or idle CPU capacity despite a nonzero throttled counter, keeping the gate when no capacity is available. Existing per-worker ping/capability checks remain. Applies to template catalogs, swap/render runners, Studio health and MCP. Qwen unchanged. Regression tests: `apps/backend/cpu-health.test.ts`. Backend typecheck passed; 9/10 sandboxed test files passed, and the security file passed all 9 tests when rerun with local networking. Owner explicitly approved deployment. Commit `7715817` pushed to main using the existing gh credential helper. GitHub Actions run `35067884586` passed and the automatic updater installed the release. Public `/health` confirms full revision `77158175da447407ae2c7dc0124fa27dc543d9a6`; `/api/studio/health` returns `blocked: null` with ready/idle=7 and throttled=2. No generation submitted. Direct SSH timed out, but automatic deployment succeeded. Details in `docs/RUNPOD.md` latest section.
+
+---
+
+# Current handoff — LinkedIn product carousel (2026-09-16)
+
+Owner requested seven interconnected premium slides for creators and investors, HTML allowed. Created `output/linkedin-carousel/marketing-studio-carousel.html` with a matching PDF in `output/pdf/marketing-studio-linkedin-carousel.pdf`. Cream/navy/lime editorial styling, illustrative scene/timeline diagrams, architecture and commercial foundations. Copy accurately calls documentary footage stock choices (up to three), distinguishes hosted APIs from open-source workers, and discloses pending live cloud-export verification. No savings/traction claims. Claim sources and usage notes: `output/linkedin-carousel/README.md`. No app code, deployment, paid job, or LinkedIn publication.
+
+---
+
 # Current handoff — Audio credit cap + public pricing (2026-09-15)
 
 Owner GO: monthly **audio credits** cap on generate (TTS / dialogue / clone / change / dub / isolate / STT / SFX / music). Free **500**, Pro **5,000**, Premium **50,000** (1 job = 1 credit). Ledger: `DATA_DIR/audio-usage.json` — no Supabase migration. Existing `/api/audio` per-minute rate limit unchanged. Pricing is public: `GET /api/billing/plans` for guests; signed-in users still get usage + Swich checkout via `/plan`. Billing tests 8/8. Deploy backend for the cap to hit production.

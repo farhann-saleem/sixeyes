@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { json } from "./studio";
 import type { User } from "./auth";
+import { LoadingScreen } from "./LoadingScreen";
 
 type QuotaKind = "avatars" | "images" | "videos" | "documentaries" | "audio";
 
@@ -34,10 +35,10 @@ const QUOTA_ROWS: Array<{ kind: QuotaKind; label: string }> = [
   { kind: "audio", label: "Audio credits" },
 ];
 
-const MULTIPLIER: Record<TierInfo["id"], string> = {
-  free: "1×",
-  pro: "10× Free",
-  premium: "10× Pro · 100× Free",
+const PLAN_DESCRIPTION: Record<TierInfo["id"], string> = {
+  free: "Your free monthly allowance",
+  pro: "More room to create",
+  premium: "Our largest monthly allowance",
 };
 
 function fmtDate(iso: string | null): string {
@@ -56,9 +57,13 @@ export function Pricing({ user }: { user: User | null }) {
   const [buying, setBuying] = useState<TierInfo["id"] | null>(null);
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
-  const [paid, setPaid] = useState(
+  const [paid] = useState(
     () => new URLSearchParams(window.location.search).get("paid") === "1",
   );
+
+  const [retry, setRetry] = useState(0);
+  const [orderId] = useState(() => new URLSearchParams(window.location.search).get("order"));
+  const [order, setOrder] = useState<{ status: "pending" | "success" | "failed"; tier: TierInfo["id"]; granted: boolean } | null>(null);
 
   const load = () => {
     const path = signedIn ? "/api/billing/plan" : "/api/billing/plans";
@@ -75,10 +80,23 @@ export function Pricing({ user }: { user: User | null }) {
   }, [signedIn]);
 
   useEffect(() => {
-    if (!paid || !signedIn) return;
-    const timer = window.setInterval(load, 4000);
-    return () => window.clearInterval(timer);
-  }, [paid, signedIn]);
+    if (!paid || !signedIn || !orderId) return;
+    let cancelled = false;
+    let timer: number | undefined;
+    const check = async () => {
+      try {
+        const result = await json<NonNullable<typeof order>>(`/api/billing/order/${encodeURIComponent(orderId)}`);
+        if (cancelled) return;
+        setOrder(result);
+        if (result.status === "success" && result.granted) load();
+        else if (result.status === "pending") timer = window.setTimeout(check, 4000);
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+      }
+    };
+    void check();
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [paid, signedIn, orderId, retry]);
 
   const current = useMemo(
     () => plan?.tiers.find((t) => t.id === plan.tier) ?? null,
@@ -121,16 +139,19 @@ export function Pricing({ user }: { user: User | null }) {
 
       {paid && signedIn && (
         <div className="pricing-banner">
-          <strong>{plan ? `You're on ${plan.tier_name}.` : "Payment received."}</strong>
+          <strong>{order?.status === "failed" ? "Payment was not completed." : order?.status === "success" && order.granted ? `Your ${order.tier === "pro" ? "Pro" : "Premium"} upgrade is active.` : "Confirming your payment…"}</strong>
           <span>
-            {plan && plan.tier_expires_at
-              ? ` Enjoy it through ${fmtDate(plan.tier_expires_at)}.`
-              : " Confirming your plan…"}
+            {order?.status === "failed"
+              ? " Your plan has not changed. You can try checkout again."
+              : order?.status === "success" && order.granted
+                ? " Payment has been verified. Your new plan is ready to use."
+                : " Please allow up to 24 hours for your upgrade. Your plan changes only after payment has been processed and verified."}
           </span>
         </div>
       )}
 
-      {error && <p className="notice pricing-notice">{error}</p>}
+      {error && <p role="alert" className="notice pricing-notice">{error} <button type="button" className="btn ghost" onClick={() => { load(); setRetry((value) => value + 1); }}>Retry</button></p>}
+      {!plan && !error && <LoadingScreen label="Loading plans and credits…" />}
 
       {plan && current && signedIn && (
         <section className="plan-usage">
@@ -188,7 +209,7 @@ export function Pricing({ user }: { user: User | null }) {
               {tier.price_pkr > 0 && (
                 <p className="price-pkr">PKR {tier.price_pkr.toLocaleString()} per month</p>
               )}
-              <p className="price-mult">{MULTIPLIER[tier.id]}</p>
+              <p className="price-mult">{PLAN_DESCRIPTION[tier.id]}</p>
               <ul className="price-quotas">
                 {QUOTA_ROWS.map((row) => (
                   <li key={row.kind}>
@@ -200,6 +221,9 @@ export function Pricing({ user }: { user: User | null }) {
                   <span>Requests / minute</span>
                   <strong>{tier.rate_per_min}</strong>
                 </li>
+                {tier.id !== "free" && (
+                  <li><span>Bulk requests for all tools</span><strong>Coming soon</strong></li>
+                )}
               </ul>
               {isCurrent ? (
                 <button type="button" className="btn lime price-btn" disabled>
@@ -231,7 +255,8 @@ export function Pricing({ user }: { user: User | null }) {
                   </label>
                   <p className="price-form-note">
                     Paying as {user?.name || user?.email}. Swich sends the receipt
-                    to your number.
+                    to your number. Allow up to 24 hours for your upgrade after payment
+                    is processed and verified.
                   </p>
                   <button type="submit" className="btn lime price-btn" disabled={busy}>
                     {busy ? "Opening checkout…" : `Pay PKR ${tier.price_pkr.toLocaleString()}`}
@@ -264,6 +289,7 @@ export function Pricing({ user }: { user: User | null }) {
         })}
       </section>
 
+      <p className="plan-usage-note">Paid upgrades can take up to 24 hours. Your plan changes only after payment is processed and verified.</p>
       <p className="pricing-policies">
         <a href="/terms">Terms and Conditions</a> · <a href="/refund">Refund Policy</a> ·{" "}
         <a href="/cancellation">Cancellation Policy</a>

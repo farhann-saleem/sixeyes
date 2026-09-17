@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/react";
 import { apiUrl } from "./api";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
@@ -18,6 +19,7 @@ if (import.meta.env.PROD && window.location.hostname === "marketingstudioie.site
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <Shell />
+      <Analytics />
     </StrictMode>,
   );
 }

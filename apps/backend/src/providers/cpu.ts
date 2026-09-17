@@ -61,7 +61,7 @@ export function cpuBlockedReason(health: RunpodHealth): string | null {
   // still checks the worker's capabilities with cpuPing before submitting work.
   const available = (health.workers?.ready ?? 0) > 0 || (health.workers?.idle ?? 0) > 0;
   if (t > 0 && !available) {
-    return `CPU workers are temporarily unavailable (${t} throttled, none ready). Please try again shortly.`;
+    return "We’re experiencing high traffic. CPU workers are temporarily unavailable. Please wait for capacity to become available, then try again.";
   }
   return null;
 }

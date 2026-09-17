@@ -1,3 +1,11 @@
+## Owner SQL applied / GitHub push authorized — 2026-09-17
+
+Owner reports running the credit allowance SQL successfully: `plan_credit_limits` and `user_credit_balances`. Audio used/remaining remain NULL pending server-ledger migration. Owner now authorizes pushing the completed pricing, payment feedback, loading, analytics and cache changes to main, which triggers existing CI/deployment.
+
+## Pricing and feedback — 2026-09-17
+
+Free: 1 avatar / 5 images / 3 videos / 10 documentaries / 300 audio credits monthly. Pro/Premium unchanged, RPM 6/30/60. Bulk all-tools copy says coming soon (owner: no backend). Upgrade notice allows up to 24 hours; verified payment still activates immediately, and return UI verifies the order. Loading states, React Vercel Analytics, accurate CPU queue/capacity vs RPM messages, and public pricing cache added. No Supabase change: existing non-audio counters in profiles; audio remains on disk. Local implementation; not deployed. Details: [spec 19](../spec/19-credits-swichnow.md).
+
 # Current handoff — README product landing style (2026-09-15)
 
 Root + three worker READMEs reshaped to match the cursed-speech pattern: centered brand/headline, badges, one-liner why, 3 architecture beats, one sample request, link out to SETUP. Desks / agent handoff links stay in docs (SETUP · ARCHITECTURE · MODELS). Root ships `brand.svg` for the README mark. Docs only — no runtime code.

@@ -1,3 +1,4 @@
+import { LoadingScreen } from "./LoadingScreen";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 const AudioStudio = lazy(() => import("./Audio").then((module) => ({ default: module.AudioStudio })));
 const App = lazy(() => import("./App").then((module) => ({ default: module.App })));
@@ -153,7 +154,7 @@ export function Shell() {
         }
       />
       <div className="app-main">
-      <Suspense fallback={<div role="status" style={{ padding: "48px", textAlign: "center" }}>Loading studio…</div>}>
+      <Suspense fallback={<LoadingScreen />}>
       {route.name === "landing" ? (
         <Landing onGo={go} />
       ) : route.name === "login" ? (

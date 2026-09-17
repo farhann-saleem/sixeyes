@@ -38,3 +38,18 @@ test("failed catalogs are retried, mutations bypass cache", async () => {
     assert.equal(calls, 3);
   } finally { globalThis.fetch = before; }
 });
+
+
+test("public pricing is cached while payment orders always refresh", async () => {
+  const before = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => { calls++; return new Response(JSON.stringify({})); };
+  try {
+    const { apiJson } = createApiClient("");
+    await Promise.all([apiJson("/api/billing/plans"), apiJson("/api/billing/plans")]);
+    assert.equal(calls, 1);
+    await apiJson("/api/billing/order/123");
+    await apiJson("/api/billing/order/123");
+    assert.equal(calls, 3);
+  } finally { globalThis.fetch = before; }
+});

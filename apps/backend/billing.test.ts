@@ -25,7 +25,7 @@ const { callbackChecksum, checkoutChecksum, verifyCallback } = await import("./s
 after(() => rmSync(process.env.STUDIO_TEST_DATA_DIR!, { recursive: true, force: true }));
 
 test("tier table matches the owner pricing lock", () => {
-  assert.deepEqual(TIERS.free.quotas, { avatars: 3, images: 10, videos: 3, documentaries: 20, audio: 500 });
+  assert.deepEqual(TIERS.free.quotas, { avatars: 1, images: 5, videos: 3, documentaries: 10, audio: 300 });
   assert.deepEqual(TIERS.pro.quotas, { avatars: 30, images: 100, videos: 30, documentaries: 200, audio: 5000 });
   assert.deepEqual(TIERS.premium.quotas, { avatars: 300, images: 1000, videos: 300, documentaries: 2000, audio: 50000 });
   assert.equal(TIERS.free.rate_per_min, 6);
@@ -44,8 +44,8 @@ test("usage counts against the free tier and blocks over quota", async () => {
   const email = "quota@test.dev";
   assert.equal(await effectiveTier(email), "free");
   assert.equal(await quotaOk(email, "avatars"), true);
-  for (let i = 0; i < 3; i++) await recordUsage(email, "avatars");
-  assert.deepEqual((await usageForMonth(email)).avatars, 3);
+  for (let i = 0; i < 1; i++) await recordUsage(email, "avatars");
+  assert.deepEqual((await usageForMonth(email)).avatars, 1);
   assert.equal(await quotaOk(email, "avatars"), false);
   assert.equal(await quotaOk(email, "videos"), true);
 });
@@ -111,8 +111,38 @@ test("unknown users read as free with empty usage", async () => {
 test("audio credits count separately and block at the free cap", async () => {
   const email = "audio-cap@test.dev";
   assert.equal(await quotaOk(email, "audio"), true);
-  for (let i = 0; i < 500; i++) await recordUsage(email, "audio");
-  assert.equal((await usageForMonth(email)).audio, 500);
+  for (let i = 0; i < 300; i++) await recordUsage(email, "audio");
+  assert.equal((await usageForMonth(email)).audio, 300);
   assert.equal(await quotaOk(email, "audio"), false);
   assert.equal(await quotaOk(email, "avatars"), true);
+});
+
+
+test("only a verified successful payment for the correct amount activates an upgrade", async () => {
+  const { swichWebhook } = await import("./src/billing-routes.js");
+  process.env.SWICHNOW_SECRET = "webhook-test-secret";
+  const email = "verified-buyer@test.dev";
+  await createOrder({ id: "verified-payment", email, tier: "pro", amount_pkr: 5600 });
+  const invoke = async (status: string, amount = "5600", valid = true) => {
+    let code = 200;
+    const query = {
+      CustomerTransactionId: "verified-payment", OrderId: "SW-verified", Amount: amount, Status: status,
+      Checksum: valid ? callbackChecksum("verified-payment", "SW-verified", amount, status) : "invalid",
+    };
+    const res = { status(value: number) { code = value; return this; }, json() { return this; } };
+    await swichWebhook({ query } as any, res as any);
+    return code;
+  };
+  try {
+    assert.equal(await invoke("pending"), 200);
+    assert.equal(await effectiveTier(email), "free");
+    assert.equal(await invoke("success", "5600", false), 400);
+    assert.equal(await invoke("success", "1"), 400);
+    assert.equal(await effectiveTier(email), "free");
+    assert.equal(await invoke("success"), 200);
+    assert.equal(await effectiveTier(email), "pro");
+    const expiry = (await getBillingUser(email)).tier_expires_at;
+    await invoke("success");
+    assert.equal((await getBillingUser(email)).tier_expires_at, expiry);
+  } finally { delete process.env.SWICHNOW_SECRET; }
 });

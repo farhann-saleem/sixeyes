@@ -34,7 +34,10 @@ export async function rateLimitPost(req: Request, res: Response, next: NextFunct
   if (!verdict.allowed) {
     res.setHeader("Retry-After", String(verdict.retry_after));
     res.status(429).json({
-      error: `Rate limit reached — ${tier.name} allows ${tier.rate_per_min} requests per minute. Try again shortly.`,
+      error: `You have used your ${tier.rate_per_min} requests per minute on ${tier.name}. Wait ${verdict.retry_after} seconds and try again.${tier.id === "free" ? " Upgrade to Pro for 30 requests per minute." : tier.id === "pro" ? " Upgrade to Premium for 60 requests per minute." : ""}`,
+      code: "RATE_LIMITED",
+      retry_after: verdict.retry_after,
+      upgrade_url: tier.id === "premium" ? null : "/pricing",
     });
     return;
   }
