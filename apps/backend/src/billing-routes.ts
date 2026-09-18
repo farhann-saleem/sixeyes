@@ -32,6 +32,7 @@ function tierCatalog() {
 
 /** Public catalog — no auth. Used by the Pricing page for signed-out visitors. */
 billingRouter.get("/plans", (_req, res) => {
+  res.setHeader("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
   res.json({
     tier: "free",
     tier_name: TIERS.free.name,

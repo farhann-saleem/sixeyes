@@ -65,7 +65,7 @@ const STUDIO_COLS: StudioTile[][] = [
       label: "Image to Image",
       tag: "I2I",
       tagClass: "hf-tag-pink",
-      cap: "Rewrite the frame. Keep the subject.",
+      cap: "Adjust scene styling while preserving character consistency.",
       href: "/images-templates",
       route: { name: "templates" },
       kind: "image",
@@ -79,7 +79,7 @@ const STUDIO_COLS: StudioTile[][] = [
       label: "Wardrobe remap",
       tag: "I2I",
       tagClass: "hf-tag-pink",
-      cap: "Same person. New world.",
+      cap: "Update wardrobe and background in any frame.",
       href: "/images-templates",
       route: { name: "templates" },
       kind: "image",
@@ -96,7 +96,7 @@ const STUDIO_COLS: StudioTile[][] = [
       label: "Text to Image",
       tag: "T2I",
       tagClass: "hf-tag-lime",
-      cap: "Prompt in. Still out.",
+      cap: "Generate reference stills from text descriptions.",
       href: "/avatar",
       route: { name: "avatar" },
       kind: "image",
@@ -110,7 +110,7 @@ const STUDIO_COLS: StudioTile[][] = [
       label: "Lookbook",
       tag: "T2I",
       tagClass: "hf-tag-lime",
-      cap: "Another still. Another beat.",
+      cap: "Build a collection of reusable visual assets.",
       href: "/avatar",
       route: { name: "avatar" },
       kind: "image",
@@ -127,11 +127,12 @@ const STUDIO_COLS: StudioTile[][] = [
       label: "Text to Video",
       tag: "T2V",
       tagClass: "hf-tag-dark",
-      cap: "A documentary cut from a line of copy.",
+      cap: "Turn story outlines into assembled video scenes.",
       href: "/projects",
       route: { name: "projects" },
       kind: "video",
-      aspect: "hf-a-916",
+      aspect: "hf-a-vid",
+      interval: 3500,
       media: ["/landing/docs/coffee-1.mp4", "/landing/docs/coffee-2.mp4", "/landing/docs/coffee-3.mp4", "/landing/docs/coffee-4.mp4"],
     },
   ],
@@ -142,7 +143,7 @@ const STUDIO_COLS: StudioTile[][] = [
       label: "Image to Video",
       tag: "I2V",
       tagClass: "hf-tag-lilac",
-      cap: "A still that already is the shot.",
+      cap: "Animate still images into realistic motion shots.",
       href: "/effects",
       route: { name: "effects" },
       kind: "video",
@@ -162,7 +163,7 @@ const STUDIO_COLS: StudioTile[][] = [
       label: "World lock",
       tag: "I2V",
       tagClass: "hf-tag-lilac",
-      cap: "Person holds. Scene moves.",
+      cap: "Cinematic camera movement around a steady subject.",
       href: "/effects",
       route: { name: "effects" },
       kind: "video",
@@ -175,7 +176,7 @@ const STUDIO_COLS: StudioTile[][] = [
       label: "Cutdown",
       tag: "T2V",
       tagClass: "hf-tag-dark",
-      cap: "Wide cut from the same documentary.",
+      cap: "Wide-angle cut assembled for social video feeds.",
       href: "/projects",
       route: { name: "projects" },
       kind: "video",
@@ -332,54 +333,6 @@ const AVATARS = [
   },
 ];
 
-const AUDIO_DESKS = [
-  {
-    id: "voices" as const,
-    label: "VOICES",
-    tag: "TTS · CLONE · DIALOGUE",
-    tagClass: "hf-tag-lime",
-    title: "Text to speech",
-    body: "Script in. Voice out. Clone 3–30s with consent. Dialogue needs two speakers. Catalog previews play free.",
-    href: "/audio?desk=tts",
-    route: { name: "audio" as const, desk: "tts" as const },
-    cover: "/landing/audio/voices.svg",
-  },
-  {
-    id: "music" as const,
-    label: "MUSIC",
-    tag: "SUNO",
-    tagClass: "hf-tag-pink",
-    title: "Suno music",
-    body: "Simple or custom. Two clips possible. No vendor preview catalog — Play after the job is done.",
-    href: "/audio?desk=music",
-    route: { name: "audio" as const, desk: "music" as const },
-    cover: "/landing/audio/music.svg",
-  },
-  {
-    id: "sfx" as const,
-    label: "SFX",
-    tag: "SOUND EFFECT",
-    tagClass: "hf-tag-lilac",
-    title: "Text to sound",
-    body: "Generate the hit, then drop it on A2 in Studio. Same rule: no catalog preview until you have a clip.",
-    href: "/audio?desk=sfx",
-    route: { name: "audio" as const, desk: "sfx" as const },
-    cover: "/landing/audio/sfx.svg",
-  },
-];
-
-const JOB_JSON = `{
-  "job": "render",
-  "async": true,
-  "poll": true,
-  "desks": {
-    "image": "runpod",
-    "video": "modal",
-    "look": "runpod-cpu",
-    "stitch": "runpod-cpu"
-  }
-}`;
-
 const COFFEE_SCENES = [
   { src: "/landing/docs/coffee-1.mp4", n: "01", label: "Dawn", hint: "Espresso at first light" },
   { src: "/landing/docs/coffee-2.mp4", n: "02", label: "Baristas", hint: "Each drink is made" },
@@ -388,16 +341,14 @@ const COFFEE_SCENES = [
 ];
 
 const HERO_CLIPS = [
-  { src: "/landing/hero-1.mp4", label: "Incline — studio coffees" },
+  { src: "/landing/hero-1.mp4", label: "Incline: studio coffees" },
   { src: "/landing/hero-2.mp4", label: "Stop World" },
   { src: "/landing/hero-3.mp4", label: "Clones" },
 ];
 
 export function Landing({ onGo }: { onGo: (next: Route) => void }) {
   const motionRef = useLandingMotion();
-  const [copied, setCopied] = useState(false);
   const [studioOn, setStudioOn] = useState("i2i");
-  const [audioOn, setAudioOn] = useState<(typeof AUDIO_DESKS)[number]["id"]>("voices");
 
   useEffect(() => {
     document.documentElement.classList.add("lp-root");
@@ -409,12 +360,6 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
       e.preventDefault();
       onGo(route);
     };
-  }
-
-  function copyJson() {
-    void navigator.clipboard.writeText(JOB_JSON);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1400);
   }
 
   return (
@@ -442,36 +387,41 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
         </div>
         <section className="hf-hero">
           <div className="hf-wrap-hero">
-            <span className="hf-badge">MARKETING STUDIO</span>
+            <div className="hf-hero-brand-lockup">
+              <span className="hf-badge">MARKETING STUDIO</span>
+              <span className="hf-hero-tagline">Your Imagination Engine</span>
+            </div>
             <h1>
-              <span className="hf-hero-your">Your</span>
-              <span className="chip-lime-keyword">Imagination Engine</span>
+              Turn your script into a video you can{" "}
+              <span className="chip-lime-keyword">shape scene by scene</span>.
             </h1>
             <p>
-              Their Studio makes clips. One project here owns the script, the AI footage, the voice, and
-              the edit. That documentary loop is the product — a full generative pipeline, not another effects wall.
+              Choose the footage, add your narration, and refine the timeline in one workspace.
+              Create reusable avatars, images, and audio for your next story.
             </p>
             <div className="hf-hero-ctas">
               <a className="hf-btn-lime" href="/projects" onClick={go({ name: "projects" })}>
-                Start a documentary
+                Create your first video
               </a>
-              <a className="hf-btn-ghost-dark" href="/audio" onClick={go({ name: "audio" })}>
-                Open Audio
+              <a
+                className="hf-btn-ghost-dark"
+                href="#why-us"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById("why-us")?.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
+                Watch the product demo
               </a>
             </div>
-            <div className="hf-telem">
-              <span>
-                <i className="g" /> TOPIC
-              </span>
-              <span>
-                <i className="p" /> SCRIPT
-              </span>
-              <span>
-                <i className="v" /> CAST
-              </span>
-              <span>
-                <i className="g" /> MIX
-              </span>
+            <div className="hf-telem" aria-label="Workflow: Script, Scene Selection, Timeline, Sound">
+              <span className="hf-telem-step">SCRIPT</span>
+              <span className="hf-telem-sep" aria-hidden="true">·</span>
+              <span className="hf-telem-step">SCENE SELECTION</span>
+              <span className="hf-telem-sep" aria-hidden="true">·</span>
+              <span className="hf-telem-step">TIMELINE</span>
+              <span className="hf-telem-sep" aria-hidden="true">·</span>
+              <span className="hf-telem-step">SOUND</span>
             </div>
           </div>
         </section>
@@ -482,14 +432,13 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
       <section className="hf-cream hf-why" id="why-us">
         <div className="hf-wrap-hero">
           <div className="hf-why-head">
-            <div className="hf-kicker rose">DOCUMENTARY</div>
+            <div className="hf-kicker rose">CONNECTED CREATIVE WORKFLOW</div>
             <h2>
-              Type a topic. Finish a <span className="chip-lime-keyword">film</span>.
+              Your script, scene choices, narration, and edit stay together in{" "}
+              <span className="chip-lime-keyword">one project</span>.
             </h2>
             <p>
-              Write “coffee shop morning.” We draft a script you can edit. AI generates the shots —
-              Seedance, Kling, LTX. A voice sits on the picture. That is one project — a short
-              documentary, not four unrelated clips. Higgsfield’s Studio generates a look. This desk finishes a film.
+              Review your script, compare footage options for each scene, and bring your selections into an editable timeline. Keep making changes as your story develops.
             </p>
           </div>
 
@@ -500,31 +449,31 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
                 <span className="hf-tag hf-tag-lime">COFFEE SHOP MORNING</span>
               </div>
               <div className="hf-why-film-meta">
-                <strong>A film we already made</strong>
-                <span>Topic in the box. These four scenes came out of that one row.</span>
+                <strong>A finished story example</strong>
+                <span>Script in the editor. These four scenes assembled into one finished story.</span>
               </div>
             </a>
             <div className="hf-why-copy">
               <ol className="hf-why-read">
                 <li>
-                  <strong>You write the topic.</strong>
-                  <span>One line. That row is the whole film.</span>
+                  <strong>Review your script.</strong>
+                  <span>Read the draft and edit any voiceover line before generating footage.</span>
                 </li>
                 <li>
-                  <strong>You read the script.</strong>
-                  <span>Change any voiceover line before we generate the shots.</span>
+                  <strong>Choose your shots.</strong>
+                  <span>Compare footage options for each scene and keep the ones you like.</span>
                 </li>
                 <li>
-                  <strong>You pick AI footage.</strong>
-                  <span>Generated clips per scene — Seedance, Kling, LTX — or skip a beat.</span>
+                  <strong>Refine the timeline.</strong>
+                  <span>Adjust timing, trim clips, and shape the story in the built-in editor.</span>
                 </li>
                 <li>
-                  <strong>You mix the sound.</strong>
-                  <span>Voice on the picture. Music or a hit underneath. No lip-sync claim.</span>
+                  <strong>Add your sound.</strong>
+                  <span>Mix full narration with background audio and music beds.</span>
                 </li>
               </ol>
               <a className="hf-btn-lime" href="/projects" onClick={go({ name: "projects" })}>
-                Start a documentary
+                Create your first video
               </a>
             </div>
           </div>
@@ -563,8 +512,7 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
               </div>
               <h2 className="hf-display">GENERATE A LOOK</h2>
               <p className="hf-sub">
-                Still desks sit beside the documentary — they do not replace it. Text to image, image
-                to image, and clips from a still.
+                Still image and video desks work alongside your story projects. Create character portraits, style references, and motion clips.
               </p>
             </div>
             <a className="hf-btn-lime" href="/images-templates" onClick={go({ name: "templates" })}>
@@ -633,11 +581,10 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
           <div className="hf-center-copy">
             <span className="hf-badge">REFERENCE STILL</span>
             <h2>
-              Save a <span className="chip-lime-keyword">look</span>
+              Save a <span className="chip-lime-keyword">character look</span>
             </h2>
             <p>
-              Generate a portrait, name it, reuse it as a reference on images, video, and effects.
-              This is a still you own — not a twin farm.
+              Generate a portrait, name it, and reuse it as a consistent character reference across images, videos, and effects.
             </p>
           </div>
 
@@ -665,7 +612,7 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
                 </div>
                 <h2 className="hf-display">EFFECTS</h2>
                 <p className="hf-sub">
-                  Incline, Stop World, Clones, Vanish — person holds, the world moves. Our own packs.
+                  Incline, Stop World, Clones, and Vanish: motion packs where camera angles shift around a steady subject.
                 </p>
               </div>
               <a className="hf-btn-lime" href="/effects" onClick={go({ name: "effects" })}>
@@ -793,68 +740,57 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
             </div>
 
             <div className="hf-dir-side">
-              <div className="hf-json">
-                <div>
-                  <div className="hf-json-bar">
-                    <span style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "Space Mono, monospace", fontSize: 12, color: "#ffb1c8", fontWeight: 700 }}>
-                      <Icon name="terminal" /> job.json
-                    </span>
-                    <button className="hf-copy" type="button" onClick={copyJson}>
-                      <Icon name="content_copy" /> {copied ? "COPIED" : "COPY"}
-                    </button>
+              <div className="hf-render-card">
+                <div className="hf-render-card-head">
+                  <span className="hf-card-icon">
+                    <Icon name="bolt" />
+                  </span>
+                  <div>
+                    <h4>Async Job Pipeline</h4>
+                    <p className="hf-card-sub">Instant response · Background execution</p>
                   </div>
-                  <pre>
-                    <code>
-                      {"{\n  "}
-                      <span className="k">"job"</span>
-                      {": "}
-                      <span className="s">"render"</span>
-                      {",\n  "}
-                      <span className="k">"async"</span>
-                      {": "}
-                      <span className="s">true</span>
-                      {",\n  "}
-                      <span className="k">"poll"</span>
-                      {": "}
-                      <span className="s">true</span>
-                      {",\n  "}
-                      <span className="k">"desks"</span>
-                      {": {\n    "}
-                      <span className="k">"image"</span>
-                      {": "}
-                      <span className="s">"runpod"</span>
-                      {",\n    "}
-                      <span className="k">"video"</span>
-                      {": "}
-                      <span className="s">"modal"</span>
-                      {",\n    "}
-                      <span className="k">"look"</span>
-                      {": "}
-                      <span className="s">"runpod-cpu"</span>
-                      {",\n    "}
-                      <span className="k">"stitch"</span>
-                      {": "}
-                      <span className="s">"runpod-cpu"</span>
-                      {"\n  }\n}"}
-                    </code>
-                  </pre>
                 </div>
-                <div style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.1)", display: "flex", justifyContent: "space-between", fontFamily: "Space Mono, monospace", fontSize: 11, color: "#bdb8c0" }}>
-                  <span>JOB ROW + POLL</span>
-                  <span style={{ color: "#c2ef4e", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+                <p className="hf-card-desc">
+                  Every generation writes an asynchronous job row and returns immediately. Your browser never hangs or waits on heavy models.
+                </p>
+                <div className="hf-render-status-row">
+                  <span className="hf-status-tag">POLL /STATUS</span>
+                  <span className="hf-status-ready">
                     <span className="hf-dot hf-dot-ping" /> QUEUE READY
                   </span>
                 </div>
               </div>
+
+              <div className="hf-render-card">
+                <div className="hf-render-card-head">
+                  <span className="hf-card-icon">
+                    <Icon name="cloud_queue" />
+                  </span>
+                  <div>
+                    <h4>Dedicated Cloud Desks</h4>
+                    <p className="hf-card-sub">Targeted hardware per task</p>
+                  </div>
+                </div>
+                <ul className="hf-cloud-list">
+                  <li>
+                    <strong>RunPod GPU:</strong> Krea & Qwen for high-fidelity images
+                  </li>
+                  <li>
+                    <strong>Modal H200:</strong> LTX Video inference engine
+                  </li>
+                  <li>
+                    <strong>RunPod CPU:</strong> Look generation & FFmpeg timeline stitch
+                  </li>
+                </ul>
+              </div>
+
               <div className="hf-note">
                 <h4>
                   <Icon name="tune" />
                   Never block the model
                 </h4>
                 <p>
-                  Every generate writes a job and returns. We poll until the cloud desk finishes, then
-                  meter wall-clock. GPU stays off the laptop. CPU leftover is look generate and ffmpeg
-                  stitch — not a GPU.
+                  We poll until the cloud desk completes, keeping heavy GPU inference off your laptop while keeping your local workspace fast and responsive.
                 </p>
               </div>
             </div>
@@ -866,136 +802,24 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
 
       <section className="hf-night" id="audio-studio">
         <div className="hf-wrap-hero">
-          <div className="hf-pipe-intro">
-            <div className="hf-kicker lime">
+          <div className="hf-pipe-intro hf-audio-compact">
+            <div className="hf-kicker lime" style={{ justifyContent: "center" }}>
               <Icon name="graphic_eq" />
               AUDIO STUDIO
             </div>
             <h2>
               Voices, music, <span className="chip-lime-keyword">sound</span>
             </h2>
-            <p>
-              Text to speech, clone, dialogue, voice change, translate, isolate, speech to text, sound
-              effects, and Suno music. Same rule as render: job row, then poll. Translate changes the
-              soundtrack only — we do not claim lip-sync.
+            <p className="hf-audio-summary">
+              Generate studio-grade narration, realistic character dialogue, voice conversion, audio isolation, sound effects, and full Suno background music. Every track generates asynchronously in the cloud and drops directly onto your documentary timeline.
             </p>
-          </div>
-
-          <div className="hf-editor">
-            <div className="hf-editor-bar">
-              <div className="hf-aspects">
-                <span style={{ fontFamily: "Space Mono, monospace", fontSize: 12, fontWeight: 700, color: "#fff" }}>
-                  DESK:
-                </span>
-                <div className="hf-aspect-switch">
-                  {AUDIO_DESKS.map((desk) => (
-                    <button
-                      key={desk.id}
-                      type="button"
-                      className={audioOn === desk.id ? "is-on" : undefined}
-                      onClick={() => setAudioOn(desk.id)}
-                    >
-                      {desk.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <a className="hf-btn-lime" href={audioOn === "voices" ? "/audio?desk=tts" : `/audio?desk=${audioOn}`} onClick={go({ name: "audio", desk: audioOn === "voices" ? "tts" : audioOn })}>
-                Open Audio
+            <div className="hf-audio-cta-row">
+              <a className="hf-btn-lime" href="/audio" onClick={go({ name: "audio" })} style={{ color: "#150f23" }}>
+                Open Audio Studio
               </a>
-            </div>
-
-            <div className="hf-variants">
-              {AUDIO_DESKS.map((desk) => (
-                <a
-                  key={desk.id}
-                  className={`hf-var shimmer-mask${audioOn === desk.id ? " is-focus" : ""}`}
-                  href={desk.href}
-                  onClick={go(desk.route)}
-                  onMouseEnter={() => setAudioOn(desk.id)}
-                >
-                  <div className="hf-var-top">
-                    <span style={{ color: desk.id === "music" ? "#ffb1c8" : desk.id === "sfx" ? "#c7bfff" : "#c2ef4e", fontWeight: 700 }}>
-                      {desk.label}
-                    </span>
-                    <span style={{ color: "#bdb8c0" }}>{desk.tag}</span>
-                  </div>
-                  <div className="hf-var-shot hf-audio-shot">
-                    <img src={desk.cover} alt="" loading="lazy" decoding="async" />
-                    <div className="hf-eq hf-eq-lg">
-                      <i />
-                      <i />
-                      <i />
-                      <i />
-                      <i />
-                      <i />
-                      <i />
-                      <i />
-                    </div>
-                    <span className={`hf-tag ${desk.tagClass}`} style={{ top: "auto", bottom: 10 }}>
-                      {desk.title}
-                    </span>
-                  </div>
-                  <p>{desk.body}</p>
-                </a>
-              ))}
-            </div>
-
-            <div className="hf-nle">
-              <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "Space Mono, monospace", fontSize: 12, color: "#bdb8c0", borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: 12 }}>
-                <span style={{ color: "#c2ef4e", fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
-                  <Icon name="linear_scale" /> STUDIO MIX · FROM /AUDIO
-                </span>
-                <span style={{ color: "#c7bfff" }}>A1 NARRATION · A2 MUSIC / SFX</span>
-              </div>
-              <div className="hf-nle-row">
-                <span className="hf-nle-lab">A1 NARRATION</span>
-                <div className="hf-audio">
-                  <div className="hf-eq">
-                    <i />
-                    <i />
-                    <i />
-                    <i />
-                    <i />
-                    <i />
-                    <i />
-                  </div>
-                  <svg className="hf-wave-audio" fill="none" viewBox="0 0 500 12" width="70%" height="16">
-                    <path
-                      d="M0 6 Q 10 0, 20 6 T 40 6 T 60 12 T 80 0 T 100 6 T 140 10 T 180 2 T 220 11 T 260 4 T 300 9 T 340 1 T 380 6 T 420 12 T 460 0 T 500 6"
-                      stroke="#c2ef4e"
-                      strokeLinecap="round"
-                      strokeWidth="2"
-                    />
-                  </svg>
-                </div>
-              </div>
-              <div className="hf-nle-row">
-                <span className="hf-nle-lab">A2 MUSIC</span>
-                <div className="hf-idlock">
-                  <Icon name="library_music" /> SUNO JOB · DRAG FROM AUDIO BIN
-                </div>
-              </div>
-              <div className="hf-nle-row">
-                <span className="hf-nle-lab">A2 SFX</span>
-                <div className="hf-audio">
-                  <div className="hf-eq">
-                    <i />
-                    <i />
-                    <i />
-                    <i />
-                    <i />
-                  </div>
-                  <svg className="hf-wave-audio" fill="none" viewBox="0 0 500 12" width="70%" height="16">
-                    <path
-                      d="M0 6 Q 10 0, 20 6 T 40 6 T 60 12 T 80 0 T 100 6 T 140 10 T 180 2 T 220 11 T 260 4 T 300 9 T 340 1 T 380 6 T 420 12 T 460 0 T 500 6"
-                      stroke="#ffb1c8"
-                      strokeLinecap="round"
-                      strokeWidth="2"
-                    />
-                  </svg>
-                </div>
-              </div>
+              <a className="hf-btn-ghost-dark" href="/projects" onClick={go({ name: "projects" })}>
+                Start a documentary
+              </a>
             </div>
           </div>
         </div>
@@ -1012,21 +836,17 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
         <div className="hf-wrap-hero">
           <div className="hf-enterprise">
             <div>
-              <span className="hf-orbit" style={{ background: "#422082", color: "#c7bfff" }}>
-                ONE PROJECT · ONE FILM
-              </span>
-              <h3>Start with a topic. Finish in Studio.</h3>
+              <h3>Start with a script. Finish with a complete edit.</h3>
               <p>
-                Script, AI shots, voice, and mix share one id. Studio is the edit of that documentary —
-                a full generative pipeline, not Higgsfield’s generate playground. Translate changes the soundtrack only.
+                Review your script, compare footage options for each scene, and bring your selections into an editable timeline. Keep making changes as your story develops.
               </p>
             </div>
             <div className="hf-ent-btns">
               <a className="hf-btn-lime" href="/projects" onClick={go({ name: "projects" })}>
-                Start a documentary
+                Create your first video
               </a>
-              <a className="hf-btn-ghost-dark" href="/audio" onClick={go({ name: "audio" })}>
-                Open Audio
+              <a className="hf-btn-ghost-dark" href="/pricing" onClick={go({ name: "pricing" })}>
+                View pricing plans
               </a>
             </div>
           </div>
@@ -1050,7 +870,7 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
                 </span>
               </div>
               <p className="hf-footer-tagline">Your Imagination Engine</p>
-              <p className="hf-footer-blurb">A documentary from a topic — not a generate wall.</p>
+              <p className="hf-footer-blurb">Connected video creation with scene-by-scene control.</p>
             </div>
             <nav className="hf-footer-col" aria-label="Start creating">
               <p className="hf-footer-col-title">Start creating</p>
@@ -1098,6 +918,9 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
               </a>
               <a href="/cancellation" onClick={go({ name: "cancellation" })}>
                 Cancellation
+              </a>
+              <a href="/contact" onClick={go({ name: "contact" })}>
+                Contact Us
               </a>
             </nav>
           </div>

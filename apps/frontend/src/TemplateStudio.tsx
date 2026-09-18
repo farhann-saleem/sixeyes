@@ -268,7 +268,7 @@ export function TemplateStudio({
           </h1>
           <p className="lede">
             {shown
-              ? "Original on the left. Yours on the right. Saved to the library — download it, or run the prompt again with a different still."
+              ? "Original on the left. Yours on the right. Saved to the library. Download it, or run the prompt again with a different still."
               : videoLook
                 ? `Pick a video model, add a reference still or saved identity. A ${formatClip(template?.duration_s) || "30s clip"} generates async.`
                 : "Pick an image model, select a saved identity or reference still, then generate."}
@@ -286,7 +286,7 @@ export function TemplateStudio({
             {identities.length === 0 ? (
               <div className="need-avatar">
                 <strong>Create an avatar first</strong>
-                <p>Looks need a saved identity. Generate a portrait, name it, save it — then pick it here.</p>
+                <p>Looks need a saved identity. Generate a portrait, name it, and save it. Then pick it here.</p>
                 <button type="button" className="btn lime" onClick={onGoAvatar}>
                   Create avatar
                 </button>

@@ -372,7 +372,7 @@ export function AudioStudio({ desk }: { desk?: AudioDesk } = {}) {
   }, [mode]);
 
   const lede = useMemo(() => {
-    if (mode === "tts") return "Paste a script or SRT, pick a voice, generate speech. Async — we poll the vendor.";
+    if (mode === "tts") return "Paste a script or SRT, pick a voice, and generate speech.";
     if (mode === "voices") return "Hover a cover to preview. Voices are free demos. Effects and music need Generate before they play.";
     if (mode === "change") return "Swap the speaker. Upload audio, or a video and we mux the new voice onto the same picture.";
     if (mode === "dub") return "Translate the soundtrack and get SRT. This is audio dubbing, not lip-sync.";

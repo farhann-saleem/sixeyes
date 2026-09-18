@@ -51,23 +51,24 @@ export function McpDesk() {
     <main className="studio mcp-page">
       <header className="page-head">
         <div>
-          <p className="kicker">MCPs</p>
-          <h1>Talk to this studio from Cursor or Claude</h1>
+          <p className="kicker">Model Context Protocol</p>
+          <h1>Connect your AI assistant to Marketing Studio</h1>
           <p className="lede">
-            Same product, agent-sized. Documentaries, catalog looks, saved identities, library.
-            Generate is async. Famous models on every desk. Not lip-sync.
+            Control your studio directly from Cursor or Claude. Let your AI assistant create documentaries,
+            generate visual looks, list your saved avatars, and check render jobs. Hosted and provided directly
+            by Marketing Studio at no extra charge, included free with your plan using your standard account credits.
           </p>
         </div>
       </header>
 
       <div className="mcp-desk">
         <section className="compose-panel">
-          <p className="kicker">Endpoint</p>
+          <p className="kicker">Hosted Endpoint</p>
           <h2>{ENDPOINT}</h2>
           <p className="lede">{health}</p>
           <p className="muted">
-            JSON-RPC POST. Requires your Google session. A shared <code>MCP_TOKEN</code> alone does not identify a user; standalone client sign-in is not configured.
-            Values stay in gitignored <code>.env</code>.
+            Direct JSON-RPC connection hosted by Marketing Studio. Authenticates with your signed-in Google session.
+            No separate server to maintain or host.
           </p>
           <div className="head-side">
             <button type="button" className="btn lime" onClick={() => void copy("url", ENDPOINT)}>

@@ -1,0 +1,27 @@
+# Marketing Studio: Your Imagination Engine
+
+> A creative studio for creators who want control over the finished story.
+
+Marketing Studio is an integrated generative video and audio platform that lets creators turn any topic or script into an edited documentary video with scene-by-scene control.
+
+## Core Workflows
+
+- **Documentary Desk (/projects)**: Write a topic or edit a drafted script. Review alternative video options per scene, bring choices into an editable multi-track timeline, and mix narration and soundtrack.
+- **Avatar Studio (/avatar)**: Generate and save reusable character identities across image, video, and scene-based storytelling.
+- **Audio Studio (/audio)**: Generate speech, dialogue, voice cloning, and audio effects in an integrated audio suite.
+- **Video & Image Templates (/video-templates, /images-templates, /effects)**: Recreate camera moves, lighting, and scene setups while maintaining subject continuity.
+- **Model Context Protocol (/mcp)**: Built-in local and remote MCP server enabling AI coding assistants (Claude Desktop, Cursor, Windsurf) to draft scripts, query stock footage, and manage projects.
+
+## Technical Architecture
+
+- **Frontend**: Single Page Application built on React 19, TypeScript, and Vite, served at `https://www.marketingstudioie.site`.
+- **Backend API**: Node.js & Express API with async job execution, served at `https://api.marketingstudioie.site`.
+- **Database & Storage**: Multi-user tenancy with Supabase Postgres and Cloudflare R2 for zero-egress presigned media storage.
+- **Compute Runners**: Serverless GPU (RunPod) for image and edit models, serverless CPU for video timeline stitching and audio processing, and Modal H200 for accelerated generative video.
+
+## Pricing & Usage
+
+- **Free**: 1 avatar, 5 images, 3 videos, 10 documentaries, and 300 audio credits per month. No credit card required.
+- **Pro**: 30 avatars, 100 images, 30 videos, 200 documentaries, and 5,000 audio credits per month.
+- **Premium**: 300 avatars, 1,000 images, 300 videos, 2,000 documentaries, and 50,000 audio credits per month.
+- **Contact & Support**: Phone support available at `+92-300-4084760`.

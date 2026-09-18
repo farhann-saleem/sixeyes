@@ -245,8 +245,8 @@ export function App({ onIdentities }: { onIdentities?: (rows: SavedAvatar[]) => 
       <header className="page-head avatar-heading">
         <div>
           <p className="kicker">Avatars</p>
-          <h1>Imagine it. Then be in it.</h1>
-          <p className="lede">Upload a face. Generate your look. Save the identity — then step into images, videos, and effects.</p>
+          <h1>Create reusable character identities</h1>
+          <p className="lede">Upload a reference photo to generate and save your avatar identity for your videos, images, and scenes.</p>
         </div>
       </header>
 

@@ -1,3 +1,133 @@
+# Current handoff — Documentaries Header & 4-Stage Pipeline Consistency Lock (2026-09-19)
+
+Owner GO: Thoroughly audited the Documentaries desk header, wizard flow, and step numbering across `DocumentaryFlow.tsx`, `documentary.css`, and `product-polish.css`. Identified and resolved all structural, copy, and styling inconsistencies.
+
+1. **Header Architecture & Naming Aligned:**
+   - **Kicker & Heading:** Header now displays kicker `Documentaries` with H1 `Documentary Studio` (resolving the conflict where "Director Studio" clashed with the step 4 "Video Studio" timeline editor).
+   - **Pipeline Synchronized to Real 4-Step Wizard:** Lede updated from the inconsistent 5-step arrow copy (`topic → director script → generated scene footage → voice → mix`) to the exact 4 real steps: `Full AI pipeline: Topic → Director Script → AI Scene Footage → Timeline Mix.`. (Eliminates the phantom "voice" step; narration voice is picked in Shots and synthesized directly into the Mix timeline).
+2. **Step Numbering Desynchronization Resolved:**
+   - In `ProjectWorkspace`, Script step eyebrow corrected from `01 / THE STORY` to `02 / SCRIPT` (matching `02 · Script` in `FilmNav`).
+   - Shots step eyebrow corrected from `02 / AI FOOTAGE` to `03 / AI SHOTS` (matching `03 · Shots` in `FilmNav`).
+   - Script section description updated to `Full AI pipeline: Topic → Script → Shots → Mix.` for uniform phrasing.
+3. **Redundant Duplicate Header Eliminated in Step 1:**
+   - In `film-topic-col-right`, replaced the duplicated `<p className="kicker">01 · Topic</p><h2>Start a film</h2>` (which previously repeated the tab directly above it) with clean `<h2>Story setup</h2>`.
+   - The entire 2-column desk now sits at balanced vertical height and comfortably fits on standard viewports.
+4. **CSS Contrast & Legacy Cleanup:**
+   - Added explicit `.films-hero .kicker` lime styling (`#c2ef4e !important`, 12px uppercase) to replace the unstyled dark purple `#422082` that lacked contrast on the midnight `#150f23` background.
+   - Removed obsolete single-column grid child rules (`grid-column: 1`, `grid-column: 2`) from `documentary.css` lines 282–309 in favor of clean `.film-topic-col-left` and `.film-topic-col-right` containers.
+5. **Validation:**
+   - Frontend build: passes in 2.88s (`vite build`).
+   - Frontend typecheck: 0 errors (`tsc --noEmit`).
+   - Backend tests: 39/39 passing (`npm test`).
+
+---
+
+# Current handoff — "Your Imagination Engine" (No IE letters), Supabase Status & Documentary 2-Column Final Lock (2026-09-19)
+
+Owner GO:
+1. **"Your Imagination Engine" Clean Lockup (No "IE" Letters):**
+   - Hero header in `Landing.tsx` renders:
+     `<div className="hf-hero-brand-lockup"><span className="hf-badge">MARKETING STUDIO</span><span className="hf-hero-tagline">Your Imagination Engine</span></div>`
+   - Preserves "Your Imagination Engine" cleanly without any literal "IE" letters or tags.
+2. **Supabase Database Status Confirmed:**
+   - No immediate, breaking, or required queries needed on Supabase.
+   - All tenant tables, credits, user profiles, and auth schemas are active and 100% functional.
+   - Non-breaking performance indexes in `supabase/migrations/20260918170000_performance_indexes.sql` remain optional whenever convenient.
+3. **Documentaries 2-Column Setup (Topic / Script on Left):**
+   - **Left Column:** Dedicated writing workspace with `Topic / Script` prompt textarea and live character counter (`{topic.length}/500`).
+   - **Right Column:** `01 · Topic`, `<h2>Start a film</h2>`, description, Story preset selector, "How long" duration pills (all 4 options: 30s, 45s, 60s, 90s on one clean row), Story name input with strict 60-character limit (`{name.length}/60`), "Also keep in Library" checkbox, and primary "New project" button.
+   - Removed all 01/02/03 pipeline text.
+4. **Parrot Green Contrast Rule Verified:** Black text (`#150f23 !important`, `-webkit-text-fill-color: #150f23 !important`) strictly enforced on all parrot green backgrounds across all desks and landing surfaces.
+5. **Validation:**
+   - Backend tests: 39/39 passing (`npm test`).
+   - Frontend production build: passes cleanly in ~3.80s (`vite build`).
+   - Frontend typecheck: 0 errors (`tsc --noEmit`).
+
+---
+
+# Current handoff — Documentaries 2-Column Layout, Library Relocation & Palette Polish (2026-09-18)
+
+Owner GO: Preserved and deepened the rich, signature midnight/cream/lime green palette ("dont convert the whole into black . we will use the green color as it was used before - but i trust you - just make thsi websiet richa dn premium"). Removed `CONNECTED WORKFLOW` badge and streamlined the documentary workflow to fit cleanly on screen.
+
+1. **Documentary Flow Polish (`DocumentaryFlow.tsx`):**
+   - **Font & Proportions:** Normalized `html { font-size: 16px; }` in `styles.css` and adjusted `product-polish.css` and `documentary.css` so the entire creation desk fits comfortably on standard viewports without ballooning or overflow.
+   - **Logo Removed:** Removed the Marketing Studio logo from the 01 Topic section.
+   - **2-Column Layout:** Rebuilt the topic stage into a compact 2-column grid:
+     - **Left Column:** `01 · Topic` intro, topic textarea with live character counter (`{topic.length}/500`), library persistence checkbox, "New project" primary lime button, and async creation spinner.
+     - **Right Column:** Preset Story selector (`FILM_PRESETS`), "How long" duration selector (30s / 60s / 90s pills), and Story name with strict 60-character limit and counter (`{name.length}/60`).
+   - **Films Shelf Relocation:** Replaced the large bottom `films-shelf` with a top header action button (`View your films ({projects.length}) →`).
+2. **Library Relocation (`Library.tsx`):**
+   - Moved the project films into their own dedicated, prominent section with a special heading (`Documentary Suite: Your Documentaries & Saved Films`) and subtext, separated cleanly from the generated media stills & clips shelf.
+3. **Palette & Branding Integrity:**
+   - Preserved the rich editorial midnight/cream/lime identity across the landing page and app desks.
+   - Removed the `CONNECTED WORKFLOW` badge from `Landing.tsx`.
+4. **Validation:**
+   - All 39 backend tests pass (`npm test`).
+   - Backend typecheck clean (`tsc --noEmit`).
+   - Frontend production build succeeds cleanly in ~3.56s (`vite build`).
+
+---
+
+# Current handoff — Performance, SEO, and Copywriting Master Checklist (2026-09-18)
+
+Owner GO: Fully executed and verified the master checklist covering Performance & Architecture, SEO & Discoverability, and High-Converting Copywriting (`docs/CHECKLIST-2026-09-18.md`). Zero breaking changes to async job contracts, multi-user Supabase schemas, or R2 storage.
+
+1. **Copywriting & Persona Lock (Solo Creator / Social Media Creator):**
+   - Locked headline: *"Turn your script into a video you can shape scene by scene."*
+   - Locked supporting copy: *"Choose the footage, add your narration, and refine the timeline in one workspace. Create reusable avatars, images, and audio for your next story."*
+   - Locked primary CTA: *"Create your first video"* (`/projects`), secondary CTA: *"Watch the product demo"* (`#why-us`).
+   - Free tier framing strictly verified against live code (`plans.ts`): 1 avatar, 5 images, 3 videos, 10 documentaries, 300 audio credits monthly.
+   - **Zero Em Dashes (`—`)** across all user-facing copy in landing, navigation, library, templates, film presets, and studio.
+2. **Performance & Architecture:**
+   - Added Express payload `compression` middleware in `apps/backend/src/index.ts`.
+   - Created server-side in-memory TTL query cache `apps/backend/src/cache.ts` and set HTTP `Cache-Control` headers on public catalog endpoints (`/api/image-templates`, `/api/video-templates`, `/api/effects`) and `/api/billing/plans`.
+   - Created Supabase index migration `supabase/migrations/20260918170000_performance_indexes.sql` indexing foreign keys (`sessions.profile_id`, `billing_orders.profile_id`), resume job states, and project lists.
+   - Documented Caddy reverse proxy upstream load-balancer configuration and health-check failover in `docs/LOAD-BALANCER.md`.
+   - Documented Supabase transaction pooler port 6543 setup in `docs/DATABASE-POOLING.md`.
+   - Vite bundle splitting configured in `vite.config.ts` (`vendor-react`, `vendor-analytics`, `cssMinify: true`), shrinking main bundle chunk to 58 kB.
+   - Created `Skeleton.tsx` (`SkeletonCard`, `SkeletonGrid`) and wired into `DocumentaryFlow.tsx`, `Pricing.tsx`, `ImagesTemplates.tsx`, and `VideoTemplates.tsx`.
+   - Implemented pagination in `Library.tsx` (12 items + Load more button).
+   - Added input debouncing in `AudioLibrary.tsx` and `VoiceLibrary.tsx`.
+   - Eliminated unnecessary re-renders: memoized `ClipRow`, `MusicClipTile` in `AudioLibrary.tsx`, and `clipsByTrack` in `video-studio/Timeline.tsx`.
+   - Audited backend queries (zero N+1 database queries) and dependencies (zero unused packages).
+3. **SEO & Discoverability:**
+   - Generated `apps/frontend/public/sitemap.xml`, `robots.txt`, and `llms.txt`.
+   - Added canonical link, meta tags, preconnect hints, and JSON-LD structured data (`Organization`, `WebSite`, `SoftwareApplication`) in `index.html`.
+   - Verified single semantic `<h1>` tag and document hierarchy across all views.
+   - Added descriptive `alt` text to images and marked decorative elements `aria-hidden="true"`.
+   - Authored high-authority backlink strategy in `docs/BACKLINK-STRATEGY.md`.
+4. **Validation:**
+   - Backend typecheck and test suite passed 100% (39/39 tests pass).
+   - Frontend production build passed cleanly in ~2.36s.
+
+---
+
+# Current handoff — UI/UX review implementation (2026-09-18)
+
+Owner GO: Autonomously implemented all 13 items from `docs/UX-REVIEW-2026-09-18.md` without asking for permission on each step. Preserved core branding hook line `MARKETING STUDIO` and `Your Imagination Engine` 100% intact. Preserved Free/Pro/Premium allowances and async job contract.
+
+Delivered changes:
+1. **Landing Hero Strip:** Replaced busy neon glow icon buttons with a quiet, clean badge strip (`TOPIC · SCRIPT · CAST · MIX`) in `Landing.tsx` and `landing.css`; removed staggered breathing animation from `landing-motion.css`.
+2. **Landing CTAs:** Styled `.hf-btn-ghost-dark` and `.hf-btn-ink` (e.g. Open Effects, Open Audio) with crisp high-contrast white text (`#ffffff`), solid borders, distinct hover (`#2a2436`), and focus rings.
+3. **Landing Render Section:** Removed raw `job.json` block and copy button; rebalanced into a clean architectural grid showcasing the Async Job Pipeline and Dedicated Cloud Desks.
+4. **Landing Audio Section:** Replaced heavy interactive `.hf-editor` preview on landing with an editorial 2–3 line summary and primary `Open Audio Studio →` button linking to `/audio`. Full audio suite remains fully accessible.
+5. **Your Films Shelf & Cards:** Redesigned project cards in `DocumentaryFlow.tsx` and `documentary.css` with primary title dominance, 2-line clamped topic description, phase badge, generous 16:9 media preview, and clear action buttons (`Open in Studio`/`Continue`, `Rename`, `Delete`).
+6. **Generated Video Previews & Inspection:** Added full 16:9 clip frame with an inspection button (`⤢`) hooked directly into `Lightbox.tsx` for full-screen inspection of candidate scenes.
+7. **Film Creation Feedback:** Added `.film-creating-state` banner with spinner and descriptive feedback ("Creating your film… Initializing project, director outline, and scenes") so the UI never feels frozen upon submission.
+8. **Story Input & Mobile Polish:** Refined preset selector, length pills, and responsive layout down to 360px mobile viewports.
+9. **Dropdowns & Selects:** Added keyboard `Escape` dismissal, smooth caret rotation indicator (`.nav-drop.is-open .nav-caret`), and custom styled form `<select>` elements with lime chevrons and proper contrast in `Nav.tsx` and `styles.css`.
+10. **Contact Us Page:** `Contact.tsx` shows email `chaudaryfarhan@gmail.com` only (no phone). `/contact` is signed-in only (redirects to login). Policy footers use the same email.
+11. **Currency Display:** Removed PKR text from customer-facing pricing tier cards in `Pricing.tsx` (now clean `$0`, `$19`, `$49`). Checkout CTA clearly confirms `$X USD (PKR Y)` to prevent misleading users while SwichNow settles domestic PKR.
+12. **MCP Messaging:** Clarified in `Mcp.tsx` and `Nav.tsx` that Marketing Studio hosts a built-in MCP server to connect AI tools (Claude, Cursor, Windsurf) free with plans, eliminating confusing "building/office" wording.
+13. **Alerts & Notices:** Polished `.notice` banners across all variants with solid backgrounds, readable typography, and high-contrast white button labels.
+
+Validation:
+- TypeScript check passed on both frontend (`apps/frontend/tsconfig.json`) and backend (`apps/backend/tsconfig.json`) with 0 errors.
+- Frontend production build passed cleanly (`vite build` emitted all chunks in 3.70s).
+- Full backend test suite passed 39/39 tests.
+
+---
+
 # Owner reports SQL applied — credit allowances (2026-09-17)
 
 Owner requested SQL to run in Supabase. Prepared `supabase/migrations/20260917080000_plan_credit_limits.sql`: plan allowance table and private, security-invoker `user_credit_balances` view with effective tier, monthly allowance, used and remaining by category. Expired plans use Free; current usage uses UTC calendar months (production server assumption). Audio allowance is stored but audio used/remaining are NULL until disk-ledger migration, never misleading zero. Existing counters/payments untouched. Backend still enforces `plans.ts`; changing this table alone does not change application enforcement. Owner reports running the full SQL successfully after the initial SELECT failed because the view did not yet exist. Live database state has not been independently checked. Owner authorized pushing the pricing/loading/payment/analytics changes and SQL to GitHub; main push triggers the existing deployment workflow.

@@ -10,7 +10,7 @@ const TERMS: PolicySection[] = [
   {
     title: "2. The service",
     body: [
-      "Marketing Studio is a generative-media workspace: create avatars, recreate images, generate video clips, and build documentary films from a topic. Generation is asynchronous — you submit a job and the studio works on it in the background.",
+      "Marketing Studio is a generative-media workspace: create avatars, recreate images, generate video clips, and build documentary films from a topic. Generation is asynchronous; you submit a job and the studio works on it in the background.",
     ],
   },
   {
@@ -51,7 +51,7 @@ const TERMS: PolicySection[] = [
   },
   {
     title: "9. Contact",
-    body: ["Questions about these terms: contact us at the address and number in the footer below."],
+    body: ["Questions about these terms: contact us at our Contact page (signed-in) or email chaudaryfarhan@gmail.com."],
   },
 ];
 
@@ -190,7 +190,9 @@ export function Policy({ page }: { page: PolicyPage }) {
       </article>
       <footer className="policy-foot">
         <p>Marketing Studio · marketingstudioie.site</p>
-        <p>+92-300-4084760</p>
+        <p>
+          <a href="mailto:chaudaryfarhan@gmail.com">chaudaryfarhan@gmail.com</a>
+        </p>
       </footer>
     </div>
   );

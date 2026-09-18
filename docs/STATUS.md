@@ -1,3 +1,60 @@
+## Documentaries Header & 4-Stage Pipeline Consistency Lock — 2026-09-19
+
+Owner GO:
+- **Header Naming & Pipeline Consistency:**
+  - Header displays kicker `Documentaries` and H1 `Documentary Studio` (avoiding collision with step 4 NLE Video Studio).
+  - Lede updated from the 5-step arrow copy with phantom voice step (`topic → director script → generated scene footage → voice → mix`) to match the real 4-step pipeline: `Full AI pipeline: Topic → Director Script → AI Scene Footage → Timeline Mix.`.
+- **Step Numbering Desynchronization Resolved:**
+  - Script step eyebrow aligned to `02 / SCRIPT` (matching `02 · Script` in `FilmNav`).
+  - Shots step eyebrow aligned to `03 / AI SHOTS` (matching `03 · Shots` in `FilmNav`).
+- **Duplicate "01 · Topic" Header Eliminated:** Replaced redundant `<p className="kicker">01 · Topic</p><h2>Start a film</h2>` in the right column with clean `<h2>Story setup</h2>` to balance vertical height and fit the screen cleanly.
+- **CSS Contrast & Legacy Cleanup:** Added explicit lime color (`#c2ef4e !important`) to `.films-hero .kicker` to eliminate dark purple unreadable contrast; removed legacy single-grid child rules from `documentary.css`.
+- **Validation:** 39/39 backend tests pass; frontend builds in 2.88s; 0 TypeScript errors.
+
+## "Your Imagination Engine" (No IE Letters), Supabase Status & Documentary 2-Column Final Lock — 2026-09-19
+
+Owner GO:
+- **"Your Imagination Engine" Clean Tagline:** Kept the tagline "Your Imagination Engine" on the landing page hero without the literal "IE" letters or tags (`<div className="hf-hero-brand-lockup"><span className="hf-badge">MARKETING STUDIO</span><span className="hf-hero-tagline">Your Imagination Engine</span></div>`).
+- **Supabase Query Status:** Confirmed that no breaking or required queries are needed on Supabase. Optional performance enhancement indexes (`supabase/migrations/20260918170000_performance_indexes.sql`) can be run whenever convenient.
+- **Documentaries 2-Column Swapped:**
+  - Left column: Dedicated `Topic / Script` prompt workspace with live character counter (`{topic.length}/500`).
+  - Right column: `01 · Topic`, `<h2>Start a film</h2>`, description, Story preset dropdown, "How long" duration pills (all 4 options: 30s, 45s, 60s, 90s in one clean row), Story name (`{name.length}/60`), library checkbox, and "New project" primary button.
+  - 01/02/03 pipeline text completely removed.
+- **Parrot Green Contrast Rule Enforced:** Black text (`#150f23 !important`, `-webkit-text-fill-color: #150f23 !important`) strictly enforced on all parrot green elements.
+- **Validation:** 39/39 backend tests pass; frontend builds in ~3.80s; 0 TypeScript errors.
+
+## "Your Imagination Engine" Brand Lockup & Final Master Polish — 2026-09-18
+
+Owner GO:
+- **"Your Imagination Engine" Domain Integration:** Added the tagline and domain lockup to the landing hero (`Landing.tsx`) directly explaining `marketingstudioie.site` (`ie` = Imagination Engine). Rendered as an illuminated glass pill beside the `MARKETING STUDIO` brand badge: `<span className="hf-hero-ie-badge"><span className="hf-ie-tag">IE</span> Your Imagination Engine</span>`.
+- **Global Navigation Pill:** Added `IE` badge in `Nav.tsx` brand anchor (`<span className="brand-ie-pill" title="marketingstudioie.site: Your Imagination Engine">IE</span>`).
+- **Signature Palette Preserved:** Kept the rich midnight navy (`#150f23`), energetic lime green (`#c2ef4e`), and editorial cream (`#f7f5f0`) styling.
+- **Documentary 2-Column Workflow & Library Move Verified:** Compact 2-column topic screen, 500-char topic limit, 60-char story name limit, removed bottom shelf from flow, top jump button to library, and dedicated "Documentary Suite: Your Documentaries & Saved Films" shelf in Library.
+- **Master Checklist Fully Enforced:** API response caching, Express gzip/brotli compression, database indexing migration, loading skeletons, query cache, input debouncing, zero N+1 queries, zero em dashes (`—`), single `<h1>` hierarchy, SEO metadata, sitemap.xml, robots.txt, llms.txt, and backlink strategy.
+- **Validation:** 39/39 backend tests pass; frontend builds cleanly in ~4.29s; 0 TypeScript errors.
+
+## Documentaries 2-Column Layout, Library Relocation & Palette Polish — 2026-09-18
+
+Owner GO:
+- **Palette Preserved:** Retained the rich, signature midnight/cream/lime green aesthetic across the marketing landing and app desks.
+- **CONNECTED WORKFLOW Removed:** Stripped the orbit badge from `Landing.tsx`.
+- **Documentaries 2-Column Form:** Converted topic creation in `DocumentaryFlow.tsx` into a 2-column layout that fits cleanly on desktop viewports:
+  - Left column: `01 · Topic` intro, topic prompt with live counter (`{topic.length}/500`), library checkbox, and "New project" primary button.
+  - Right column: Preset story selector, "How long" duration pills (30s/60s/90s), and Story name with 60-character limit and counter (`{name.length}/60`).
+  - Removed the Marketing Studio logo.
+  - Replaced the large bottom `films-shelf` with a top header button `View your films ({projects.length}) →`.
+- **Library Relocation:** Added a dedicated section with a prominent heading (`Documentary Suite: Your Documentaries & Saved Films`) in `Library.tsx`.
+- **Typography & Scale:** Normalized `html { font-size: 16px; }` and toned down oversized clamp headers.
+- **Validation:** 39/39 backend tests pass; frontend builds cleanly in ~3.56s.
+
+## Performance, SEO, and Copywriting Master Checklist Verified — 2026-09-18
+
+Executed all items from `docs/CHECKLIST-2026-09-18.md`:
+- **Performance & Architecture:** Mounted Express `compression` middleware, in-memory TTL query caching (`apps/backend/src/cache.ts`) with HTTP `Cache-Control` on public catalog and plans endpoints, database indexing migration (`supabase/migrations/20260918170000_performance_indexes.sql`), upstream Caddy load balancer guide (`docs/LOAD-BALANCER.md`), Supabase port 6543 connection pooler guide (`docs/DATABASE-POOLING.md`), Vite bundle splitting (`vendor-react`, `vendor-analytics`, 58 kB main chunk), loading skeletons (`Skeleton.tsx` across 4 desks), library pagination, search debouncing (`AudioLibrary.tsx`, `VoiceLibrary.tsx`), and re-render optimizations (`memo` on audio clips, `useMemo` on timeline lanes).
+- **SEO & Discoverability:** Added `sitemap.xml`, `robots.txt`, and `llms.txt` in `public/`. Added canonical tag, meta tags, preconnect hints, and JSON-LD schema (`Organization`, `WebSite`, `SoftwareApplication`) to `index.html`. Audited document outline (1 semantic `<h1>` per page). Created `docs/BACKLINK-STRATEGY.md`.
+- **Copywriting:** Locked copy to Solo Creator / Social Media Creator persona. Locked headline: *"Turn your script into a video you can shape scene by scene."* Supporting copy: *"Choose the footage, add your narration, and refine the timeline in one workspace. Create reusable avatars, images, and audio for your next story."* Zero em dashes (`—`) across all user-facing copy.
+- **Validation:** 39/39 backend tests pass; backend typecheck clean; frontend production build succeeds in ~2.36s.
+
 ## Owner SQL applied / GitHub push authorized — 2026-09-17
 
 Owner reports running the credit allowance SQL successfully: `plan_credit_limits` and `user_credit_balances`. Audio used/remaining remain NULL pending server-ledger migration. Owner now authorizes pushing the completed pricing, payment feedback, loading, analytics and cache changes to main, which triggers existing CI/deployment.

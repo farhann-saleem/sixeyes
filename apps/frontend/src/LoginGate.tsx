@@ -1,6 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { googleLogin, type User } from "./auth";
-import { Squiggle } from "./landing/BrandMark";
 
 export function LoginPage() {
   const authError = new URLSearchParams(window.location.search).get("auth_error");
@@ -62,7 +61,7 @@ export function LoginPage() {
       </div>
 
       <div className="login-foot-wave" aria-hidden="true">
-        <Squiggle fill="#150f23" />
+        <div className="site-foot-seam" />
       </div>
     </main>
   );

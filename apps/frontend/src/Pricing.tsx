@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { json } from "./studio";
 import type { User } from "./auth";
 import { LoadingScreen } from "./LoadingScreen";
+import { SkeletonGrid } from "./Skeleton";
 
 type QuotaKind = "avatars" | "images" | "videos" | "documentaries" | "audio";
 
@@ -131,8 +132,7 @@ export function Pricing({ user }: { user: User | null }) {
           <p className="kicker">Plans</p>
           <h1>Pricing</h1>
           <p className="lede">
-            Start free. Upgrade when your films need more room — every plan runs
-            the same studio, the same models, the same quality.
+            Start free. No credit card required. Try the creative workflow before choosing a paid plan.
           </p>
         </div>
       </header>
@@ -151,7 +151,7 @@ export function Pricing({ user }: { user: User | null }) {
       )}
 
       {error && <p role="alert" className="notice pricing-notice">{error} <button type="button" className="btn ghost" onClick={() => { load(); setRetry((value) => value + 1); }}>Retry</button></p>}
-      {!plan && !error && <LoadingScreen label="Loading plans and credits…" />}
+      {!plan && !error && <SkeletonGrid count={3} />}
 
       {plan && current && signedIn && (
         <section className="plan-usage">
@@ -206,9 +206,6 @@ export function Pricing({ user }: { user: User | null }) {
                 </span>
                 <span className="price-per">/ month</span>
               </p>
-              {tier.price_pkr > 0 && (
-                <p className="price-pkr">PKR {tier.price_pkr.toLocaleString()} per month</p>
-              )}
               <p className="price-mult">{PLAN_DESCRIPTION[tier.id]}</p>
               <ul className="price-quotas">
                 {QUOTA_ROWS.map((row) => (
@@ -232,8 +229,8 @@ export function Pricing({ user }: { user: User | null }) {
               ) : tier.id === "free" ? (
                 <p className="price-free-note">
                   {signedIn
-                    ? "You're already on Free — go make a film."
-                    : "Free to start — sign in when you create."}
+                    ? "You are currently on the Free plan."
+                    : "Start free. No credit card required."}
                 </p>
               ) : !signedIn ? (
                 <a className="btn lime price-btn" href="/login">
@@ -259,7 +256,7 @@ export function Pricing({ user }: { user: User | null }) {
                     is processed and verified.
                   </p>
                   <button type="submit" className="btn lime price-btn" disabled={busy}>
-                    {busy ? "Opening checkout…" : `Pay PKR ${tier.price_pkr.toLocaleString()}`}
+                    {busy ? "Opening checkout…" : `Pay $${tier.price_usd} USD (PKR ${tier.price_pkr.toLocaleString()})`}
                   </button>
                   <button
                     type="button"

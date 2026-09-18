@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { VIDEO_MODELS } from "./model-catalog";
 import { ModelStrip } from "./ModelStrip";
 import { formatClip, isLive, isVideoJob, type Catalog, type SwapJob, type Template } from "./studio";
+import { SkeletonGrid } from "./Skeleton";
 import { DeferredVideo } from "./viewport-media";
 
 function effectName(t: Template) {
@@ -24,7 +25,7 @@ export function VideoTemplates({
   onOpen,
   kicker = "Videos",
   title = "Image to video",
-  lede = "Pick a clip. Choose a video model. Generate motion from your still — full AI pipeline.",
+  lede = "Pick a clip. Choose a video model. Generate motion from your still image.",
   emptyHint = "Add clips to the video-template folder and they appear here.",
   groupByEffect = false,
 }: {
@@ -134,11 +135,7 @@ export function VideoTemplates({
       {error ? <p className="notice">{error}</p> : null}
 
       {catalog === null && !error ? (
-        <div className={`gallery${groupByEffect ? "" : " video-wall"}`}>
-          {[0, 1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="tile skeleton" />
-          ))}
-        </div>
+        <SkeletonGrid count={6} />
       ) : templates.length === 0 ? (
         <div className="empty">
           <div className="empty-art" aria-hidden="true" />

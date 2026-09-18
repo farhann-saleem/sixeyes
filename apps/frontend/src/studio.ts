@@ -102,7 +102,7 @@ export function formatElapsed(fromIso: string, now: number) {
 }
 
 export function formatDuration(ms: number | null) {
-  if (ms == null) return "—";
+  if (ms == null) return "--";
   if (ms < 1000) return `${ms}ms`;
   const s = ms / 1000;
   return s < 60 ? `${s.toFixed(1)}s` : `${Math.floor(s / 60)}m ${Math.round(s % 60)}s`;

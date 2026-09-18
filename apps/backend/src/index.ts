@@ -57,6 +57,9 @@ import { billingRouter, swichWebhook } from "./billing-routes.js";
 import { faceswapQuotaKind, postQuota, quotaGuard, rateLimitPost, audioGenerateQuota } from "./billing-guard.js";
 import { recordUsage } from "./billing-store.js";
 
+import compression from "compression";
+import { queryCache } from "./cache.js";
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
@@ -64,6 +67,7 @@ const upload = multer({
 
 initArtifactDirs();
 export const app = express();
+app.use(compression());
 app.use(cors({ origin: FRONTEND_URL, credentials: true }));
 app.use(express.json({ limit: "12mb" }));
 app.use(sameOriginWrites);
@@ -287,34 +291,38 @@ app.get("/api/costs", async (_req, res) => {
 });
 
 app.get("/api/image-templates", async (_req, res) => {
-  let health = null;
-  let blocked = null;
-  let r2 = { uploaded: [] as string[], skipped: [] as string[], error: null as string | null };
-  try {
-    r2 = { ...(await ensureTemplatesOnR2()), error: null };
-  } catch (err) {
-    r2.error = err instanceof Error ? err.message : String(err);
-  }
-  try {
-    health = await cpuHealthCached();
-    blocked = cpuBlockedReason(health);
-  } catch (err) {
-    blocked = err instanceof Error ? err.message : String(err);
-  }
-  res.json({
-    templates: listImageTemplates().map((t) => ({
-      id: t.id,
-      kind: "image" as const,
-      label: labelFromImageFilename(t.filename),
-      filename: t.filename,
-      bytes: t.bytes,
-      mime: t.mime,
-      r2_key: t.r2_key,
-      image_url: t.image_url,
-    })),
-    r2,
-    cpu: { blocked, health },
+  res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=120");
+  const payload = await queryCache.getOrSet("image-templates", 60, async () => {
+    let health = null;
+    let blocked = null;
+    let r2 = { uploaded: [] as string[], skipped: [] as string[], error: null as string | null };
+    try {
+      r2 = { ...(await ensureTemplatesOnR2()), error: null };
+    } catch (err) {
+      r2.error = err instanceof Error ? err.message : String(err);
+    }
+    try {
+      health = await cpuHealthCached();
+      blocked = cpuBlockedReason(health);
+    } catch (err) {
+      blocked = err instanceof Error ? err.message : String(err);
+    }
+    return {
+      templates: listImageTemplates().map((t) => ({
+        id: t.id,
+        kind: "image" as const,
+        label: labelFromImageFilename(t.filename),
+        filename: t.filename,
+        bytes: t.bytes,
+        mime: t.mime,
+        r2_key: t.r2_key,
+        image_url: t.image_url,
+      })),
+      r2,
+      cpu: { blocked, health },
+    };
   });
+  res.json(payload);
 });
 
 app.get("/api/image-templates/:id/image", async (req, res) => {
@@ -364,7 +372,11 @@ async function cpuCatalogPayload(list: VideoTemplate[]) {
 }
 
 app.get("/api/video-templates", async (_req, res) => {
-  res.json(await cpuCatalogPayload(listVideoTemplates()));
+  res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=120");
+  const payload = await queryCache.getOrSet("video-templates", 60, () =>
+    cpuCatalogPayload(listVideoTemplates()),
+  );
+  res.json(payload);
 });
 
 app.get("/api/video-templates/:id/video", async (req, res) => {
@@ -388,7 +400,11 @@ app.get("/api/video-templates/:id/poster", async (req, res) => {
 });
 
 app.get("/api/effects", async (_req, res) => {
-  res.json(await cpuCatalogPayload(listEffectTemplates()));
+  res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=120");
+  const payload = await queryCache.getOrSet("effects", 60, () =>
+    cpuCatalogPayload(listEffectTemplates()),
+  );
+  res.json(payload);
 });
 
 app.get("/api/effects/:id/video", async (req, res) => {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { CoverArt, togglePreview, usePlayingId, WaveBars } from "./audio-ui";
 import { json } from "./studio";
 
@@ -43,7 +43,7 @@ function durationLabel(seconds?: number) {
   return `${seconds}s`;
 }
 
-function MusicClipTile({ clip }: { clip: LibraryClip }) {
+const MusicClipTile = memo(function MusicClipTile({ clip }: { clip: LibraryClip }) {
   const playing = usePlayingId() === clip.id;
   return (
     <article className={playing ? "album-tile on" : "album-tile"}>
@@ -61,9 +61,9 @@ function MusicClipTile({ clip }: { clip: LibraryClip }) {
       </div>
     </article>
   );
-}
+});
 
-function ClipRow({ clip }: { clip: LibraryClip }) {
+const ClipRow = memo(function ClipRow({ clip }: { clip: LibraryClip }) {
   const playing = usePlayingId() === clip.id;
   const altId = `${clip.id}-alt`;
   const playingAlt = usePlayingId() === altId;
@@ -93,7 +93,7 @@ function ClipRow({ clip }: { clip: LibraryClip }) {
       ) : null}
     </article>
   );
-}
+});
 
 export function AssetLibraryBrowse({
   pane,
@@ -106,8 +106,14 @@ export function AssetLibraryBrowse({
 }) {
   const [err, setErr] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [sfx, setSfx] = useState<Shelf>({ starters: [], clips: [] });
   const [music, setMusic] = useState<Shelf>({ starters: [], clips: [] });
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedQuery(query), 200);
+    return () => window.clearTimeout(timer);
+  }, [query]);
 
   useEffect(() => {
     json<{ sfx?: Shelf; music?: Shelf }>("/api/audio/asset-library")
@@ -120,7 +126,7 @@ export function AssetLibraryBrowse({
   }, []);
 
   const shelf = pane === "sfx" ? sfx : music;
-  const q = query.trim().toLowerCase();
+  const q = debouncedQuery.trim().toLowerCase();
   const starters = useMemo(() => {
     const rows = shelf.starters;
     if (!q) return rows;

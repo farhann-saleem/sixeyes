@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   clipEnd,
   collision,
@@ -49,6 +49,17 @@ export function Timeline({
   ppsRef.current = pps;
   const duration = projectDuration(project);
   const width = Math.max(800, duration * pps + 80);
+
+  const clipsByTrack = useMemo(() => {
+    const map = new Map<string, StudioClip[]>();
+    for (const tr of project.tracks) map.set(tr.id, []);
+    for (const c of project.clips) {
+      const list = map.get(c.track_id);
+      if (list) list.push(c);
+      else map.set(c.track_id, [c]);
+    }
+    return map;
+  }, [project.tracks, project.clips]);
 
   useEffect(() => {
     const move = (e: PointerEvent) => {
@@ -196,9 +207,7 @@ export function Timeline({
         </div>
         {project.tracks.map((tr) => (
           <div key={tr.id} className="nle-lane" style={{ width }}>
-            {project.clips
-              .filter((c) => c.track_id === tr.id)
-              .map((c) => (
+            {(clipsByTrack.get(tr.id) ?? []).map((c) => (
                 <button
                   type="button"
                   key={c.id}
@@ -239,7 +248,7 @@ export function Timeline({
         ))}
         <div className="nle-playhead" style={{ left: project.playhead_sec * pps }} />
         {project.clips.length === 0 ? (
-          <div className="nle-empty-timeline">Empty timeline — drag a clip from the bin, or drop a file</div>
+          <div className="nle-empty-timeline">Empty timeline: drag a clip from the bin or drop a media file</div>
         ) : null}
       </div>
     </div>

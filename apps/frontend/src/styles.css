@@ -1,7 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Space+Grotesk:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap");
 
 html {
-  font-size: 24px;
+  font-size: 16px;
   overflow-x: hidden;
 }
 
@@ -217,7 +217,14 @@ body {
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
   border-top: 5px solid currentColor;
-  opacity: 0.55;
+  opacity: 0.65;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.nav-drop.is-open .nav-caret,
+.nav-top[aria-expanded="true"] .nav-caret {
+  transform: rotate(180deg);
+  opacity: 1;
 }
 
 .nav-soon {
@@ -226,6 +233,26 @@ body {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #c2ef4e;
+}
+
+select {
+  font: inherit;
+  color: #f3effa;
+  background: #181226 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c2ef4e' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 12px center;
+  background-size: 12px;
+  padding: 11px 36px 11px 14px;
+  border: 1px solid #3d335c;
+  border-radius: 8px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--lime);
+  box-shadow: 0 0 0 2px rgba(194, 239, 78, 0.25);
 }
 
 .nav-menu {
@@ -566,13 +593,50 @@ main.studio > .compose-panel {
 }
 
 .notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
   margin: 0 0 18px;
-  padding: 12px 14px;
-  border: 1px solid rgba(242, 139, 139, 0.28);
-  border-radius: var(--radius-sm);
-  background: rgba(242, 139, 139, 0.08);
-  color: #f4c0c0;
-  font-size: 0.9rem;
+  padding: 14px 18px;
+  border: 1px solid rgba(242, 139, 139, 0.35);
+  border-radius: 12px;
+  background: rgba(242, 139, 139, 0.1);
+  color: #ffc8c8;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.notice.warn {
+  border-color: rgba(230, 180, 80, 0.4);
+  background: rgba(230, 180, 80, 0.1);
+  color: #fce1a6;
+}
+
+.notice.success {
+  border-color: rgba(194, 239, 78, 0.4);
+  background: rgba(194, 239, 78, 0.1);
+  color: #e5fbc0;
+}
+
+.notice .btn,
+.notice button {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff !important;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.notice .btn:hover,
+.notice button:hover {
+  background: rgba(255, 255, 255, 0.24);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 /* ---------- buttons ---------- */
@@ -2235,21 +2299,16 @@ pre {
 
 .site-foot {
   margin-top: auto;
+  overflow-x: hidden;
 }
 
-.site-foot .hf-wave {
-  display: block;
-  line-height: 0;
-}
-
-.site-foot .hf-wave svg {
+/* Straight lime seam — app pages use this instead of the landing squiggle wave. */
+.site-foot-seam {
   display: block;
   width: 100%;
-  height: 48px;
-}
-
-.site-foot .hf-lime-glow {
-  filter: drop-shadow(0 0 6px rgba(194, 239, 78, 0.55));
+  height: 3px;
+  background: #c2ef4e;
+  box-shadow: 0 0 10px rgba(194, 239, 78, 0.55);
 }
 
 .site-footer {

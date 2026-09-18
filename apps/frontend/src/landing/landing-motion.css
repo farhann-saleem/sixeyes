@@ -3,10 +3,6 @@
 .hf .hf-orb-a { animation: hf-atmosphere-center 16s ease-in-out infinite; }
 .hf .hf-orb-b { animation: hf-atmosphere-drift 19s ease-in-out infinite alternate; }
 .hf .hf-orb-c { animation: hf-atmosphere-drift 23s ease-in-out -9s infinite alternate-reverse; }
-.hf .hf-telem i { animation: hf-signal-breathe 3.6s ease-in-out infinite; }
-.hf .hf-telem span:nth-child(2) i { animation-delay: .45s; }
-.hf .hf-telem span:nth-child(3) i { animation-delay: .9s; }
-.hf .hf-telem span:nth-child(4) i { animation-delay: 1.35s; }
 .hf :is(.hf-lime-glow, .hf-pink-glow) { animation: hf-divider-breathe 7s ease-in-out infinite; }
 /* Same equalizer, compositor-only movement instead of animating layout height. */
 .hf .hf-eq i { height: 18px; animation-name: hf-equalizer-motion; transform-origin: center bottom; }

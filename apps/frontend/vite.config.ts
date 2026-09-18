@@ -13,4 +13,22 @@ export default defineConfig({
       "/health": "http://localhost:3001",
     },
   },
+  build: {
+    target: "es2022",
+    minify: "esbuild",
+    cssMinify: true,
+    chunkSizeWarningLimit: 800,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules/react/") || id.includes("node_modules/react-dom/")) {
+            return "vendor-react";
+          }
+          if (id.includes("node_modules/@vercel/analytics")) {
+            return "vendor-analytics";
+          }
+        },
+      },
+    },
+  },
 });

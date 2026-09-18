@@ -58,6 +58,7 @@ export function Library({
   const [now, setNow] = useState(Date.now());
   const [busyId, setBusyId] = useState<string | null>(null);
   const [films, setFilms] = useState<StudioProject[]>([]);
+  const [limit, setLimit] = useState(12);
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 30_000);
@@ -132,7 +133,7 @@ export function Library({
         <div className="empty">
           <div className="empty-art" aria-hidden="true" />
           <h2>Nothing here yet</h2>
-          <p className="muted">Create an avatar first if you have none. Then generate a look — it lands here.</p>
+          <p className="muted">Create an avatar first if you have none. Generated looks and films appear here.</p>
           <div className="panel-actions">
             {onGoAvatar ? (
               <button type="button" className="btn lime" onClick={onGoAvatar}>
@@ -153,109 +154,150 @@ export function Library({
           </div>
         </div>
       ) : (
-        <div className="gallery library-grid">
-          {films.map((film) => {
-            const still = filmStill(film);
-            return (
-              <figure key={film.id} className="tile">
-                <button
-                  type="button"
-                  className="tile-open"
-                  onClick={() => onOpenFilm(film.id, filmStep(film))}
-                  aria-label={`Open ${film.name}`}
-                >
-                  {still ? (
-                    still.video ? (
-                      <DeferredVideo src={still.src} muted playsInline loop autoPlay />
-                    ) : (
-                      <img src={still.src} alt="" loading="lazy" decoding="async" />
-                    )
-                  ) : (
-                    <span className="tile-letter">{film.name.slice(0, 1).toUpperCase()}</span>
-                  )}
-                </button>
-                <figcaption className="tile-meta">
-                  <div className="tile-meta-text">
-                    <strong>{film.name}</strong>
-                    <span>Documentary · {film.phase}</span>
-                  </div>
-                  <div className="tile-actions">
-                    <button type="button" className="btn ghost small" onClick={() => onOpenFilm(film.id, filmStep(film))}>
-                      Open film
-                    </button>
-                  </div>
-                </figcaption>
-              </figure>
-            );
-          })}
-          {done.map((job, i) => {
-            const video = isVideoJob(job);
-            return (
-              <figure
-                key={job.id}
-                className="tile stagger"
-                style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
-              >
-                <button
-                  type="button"
-                  className="tile-open"
-                  onClick={() => setOpen(i)}
-                  aria-label={`Open ${labels.get(job.template_id) ?? (video ? "video" : "image")} full screen`}
-                >
-                  {video ? (
-                    <DeferredVideo src={outputUrl(job)} muted playsInline loop autoPlay />
-                  ) : (
-                    <img src={outputUrl(job)} alt={labels.get(job.template_id) ?? "Generated image"} loading="lazy" decoding="async" />
-                  )}
-                  <span className="tile-scrim" aria-hidden="true" />
-                  <span className="tile-zoom" aria-hidden="true">
-                    ⤢
-                  </span>
-                </button>
-                <figcaption className="tile-meta">
-                  <div className="tile-meta-text">
-                    <strong>{labels.get(job.template_id) ?? "Generated"}</strong>
-                    <span className="muted" title={formatClock(job.created_at)}>
-                      {formatAgo(job.created_at, now)} · {formatDuration(job.duration_ms)}
-                      {video ? " · video" : ""}
-                    </span>
-                  </div>
-                  <div className="tile-actions">
-                    <a
-                      className="btn ghost small"
-                      href={downloadUrl(job)}
-                      download
-                      onClick={(e) => e.stopPropagation()}
+        <>
+          {films.length > 0 && (
+            <section className="library-shelf" style={{ marginBottom: done.length > 0 ? "48px" : "0" }}>
+              <div className="library-shelf-head" style={{ marginBottom: "18px" }}>
+                <p className="kicker" style={{ margin: "0 0 4px" }}>Documentary Suite</p>
+                <h2 style={{ margin: "0 0 6px", fontSize: "1.5rem" }}>Your Documentaries & Saved Films</h2>
+                <p className="muted" style={{ margin: 0 }}>
+                  {films.length} documentary {films.length === 1 ? "film" : "films"}. Open any project to continue scripting, casting scene shots, or timeline editing.
+                </p>
+              </div>
+              <div className="gallery library-grid">
+                {films.map((film) => {
+                  const still = filmStill(film);
+                  return (
+                    <figure key={film.id} className="tile">
+                      <button
+                        type="button"
+                        className="tile-open"
+                        onClick={() => onOpenFilm(film.id, filmStep(film))}
+                        aria-label={`Open ${film.name}`}
+                      >
+                        {still ? (
+                          still.video ? (
+                            <DeferredVideo src={still.src} muted playsInline loop autoPlay />
+                          ) : (
+                            <img src={still.src} alt={film.name ? `${film.name} preview` : "Film preview"} loading="lazy" decoding="async" />
+                          )
+                        ) : (
+                          <span className="tile-letter">{film.name.slice(0, 1).toUpperCase()}</span>
+                        )}
+                      </button>
+                      <figcaption className="tile-meta">
+                        <div className="tile-meta-text">
+                          <strong>{film.name}</strong>
+                          <span>Documentary · {film.phase}</span>
+                        </div>
+                        <div className="tile-actions">
+                          <button type="button" className="btn ghost small" onClick={() => onOpenFilm(film.id, filmStep(film))}>
+                            Open film
+                          </button>
+                        </div>
+                      </figcaption>
+                    </figure>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {done.length > 0 && (
+            <section className="library-shelf">
+              {films.length > 0 && (
+                <div className="library-shelf-head" style={{ marginBottom: "18px" }}>
+                  <p className="kicker" style={{ margin: "0 0 4px" }}>Studio Media</p>
+                  <h2 style={{ margin: "0 0 6px", fontSize: "1.5rem" }}>Generated Stills & Video Clips</h2>
+                  <p className="muted" style={{ margin: 0 }}>
+                    {done.length} item{done.length === 1 ? "" : "s"} from your image and video creations.
+                  </p>
+                </div>
+              )}
+              <div className="gallery library-grid">
+                {done.slice(0, limit).map((job, i) => {
+                  const video = isVideoJob(job);
+                  return (
+                    <figure
+                      key={job.id}
+                      className="tile stagger"
+                      style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
                     >
-                      Download
-                    </a>
-                    <button
-                      type="button"
-                      className="btn ghost small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void onEditInStudio(job.id);
-                      }}
-                    >
-                      Edit in Studio
-                    </button>
-                    <button
-                      type="button"
-                      className="btn ghost small"
-                      disabled={busyId === job.id}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void remove(job.id);
-                      }}
-                    >
-                      {busyId === job.id ? "Deleting…" : "Delete"}
-                    </button>
-                  </div>
-                </figcaption>
-              </figure>
-            );
-          })}
-        </div>
+                      <button
+                        type="button"
+                        className="tile-open"
+                        onClick={() => setOpen(i)}
+                        aria-label={`Open ${labels.get(job.template_id) ?? (video ? "video" : "image")} full screen`}
+                      >
+                        {video ? (
+                          <DeferredVideo src={outputUrl(job)} muted playsInline loop autoPlay />
+                        ) : (
+                          <img src={outputUrl(job)} alt={labels.get(job.template_id) ?? "Generated image"} loading="lazy" decoding="async" />
+                        )}
+                        <span className="tile-scrim" aria-hidden="true" />
+                        <span className="tile-zoom" aria-hidden="true">
+                          ⤢
+                        </span>
+                      </button>
+                      <figcaption className="tile-meta">
+                        <div className="tile-meta-text">
+                          <strong>{labels.get(job.template_id) ?? "Generated"}</strong>
+                          <span className="muted" title={formatClock(job.created_at)}>
+                            {formatAgo(job.created_at, now)} · {formatDuration(job.duration_ms)}
+                            {video ? " · video" : ""}
+                          </span>
+                        </div>
+                        <div className="tile-actions">
+                          <a
+                            className="btn ghost small"
+                            href={downloadUrl(job)}
+                            download
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Download
+                          </a>
+                          <button
+                            type="button"
+                            className="btn ghost small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void onEditInStudio(job.id);
+                            }}
+                          >
+                            Edit in Studio
+                          </button>
+                          <button
+                            type="button"
+                            className="btn ghost small"
+                            disabled={busyId === job.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void remove(job.id);
+                            }}
+                          >
+                            {busyId === job.id ? "Deleting…" : "Delete"}
+                          </button>
+                        </div>
+                      </figcaption>
+                    </figure>
+                  );
+                })}
+              </div>
+
+              {done.length > limit ? (
+                <div style={{ textAlign: "center", margin: "24px 0" }}>
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    onClick={() => setLimit((l) => l + 12)}
+                  >
+                    Load more ({done.length - limit} remaining)
+                  </button>
+                </div>
+              ) : null}
+            </section>
+          )}
+        </>
       )}
 
       {open !== null && items[open] ? (

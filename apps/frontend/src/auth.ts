@@ -44,7 +44,7 @@ export async function googleLogout() {
 
 function askAndGo() {
   const ok = window.confirm(
-    "Creating asks Google to authorize this app — it reads your name, email and profile picture. Continue to sign in?",
+    "Creating asks Google to authorize this app. It reads your name, email and profile picture. Continue to sign in?",
   );
   if (ok) googleLogin(`${window.location.pathname}${window.location.search}`);
 }

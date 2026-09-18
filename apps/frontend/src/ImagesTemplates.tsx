@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { IMAGE_MODELS } from "./model-catalog";
 import { ModelStrip } from "./ModelStrip";
+import { SkeletonGrid } from "./Skeleton";
 import { isLive, type Catalog, type SwapJob } from "./studio";
 
 export function ImagesTemplates({
@@ -37,7 +38,7 @@ export function ImagesTemplates({
           <p className="kicker">Images</p>
           <h1>Image to image</h1>
           <p className="lede">
-            Pick a still. Choose an image model. Generate from your reference — full AI stills, not stock.
+            Pick a still setup. Choose an image model. Generate from your reference photo.
           </p>
         </div>
         <div className="head-side">
@@ -57,11 +58,7 @@ export function ImagesTemplates({
       {error ? <p className="notice">{error}</p> : null}
 
       {catalog === null && !error ? (
-        <div className="gallery">
-          {[0, 1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="tile skeleton" />
-          ))}
-        </div>
+        <SkeletonGrid count={6} />
       ) : templates.length === 0 ? (
         <div className="empty">
           <div className="empty-art" aria-hidden="true" />

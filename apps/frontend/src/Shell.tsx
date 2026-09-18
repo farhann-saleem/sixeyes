@@ -17,6 +17,7 @@ import { fetchUser, googleLogout, setUser as setCachedUser, type User } from "./
 import { AuthBadge, LoginPage } from "./LoginGate";
 const Pricing = lazy(() => import("./Pricing").then((module) => ({ default: module.Pricing })));
 const Policy = lazy(() => import("./Policy").then((module) => ({ default: module.Policy })));
+const Contact = lazy(() => import("./Contact").then((module) => ({ default: module.Contact })));
 
 export function Shell() {
   const [user, setAuthUser] = useState<User | null | undefined>(undefined);
@@ -135,6 +136,15 @@ export function Shell() {
     if (route.name === "login" && user) go({ name: "projects" });
   }, [route.name, user, go]);
 
+  useEffect(() => {
+    if (route.name !== "contact" || user === undefined || user) return;
+    const path = `/login?next=${encodeURIComponent("/contact")}`;
+    if (`${window.location.pathname}${window.location.search}` !== path) {
+      window.history.pushState({}, "", path);
+    }
+    setRoute({ name: "login" });
+  }, [route.name, user]);
+
   return (
     <div
       className={`app-shell${route.name === "landing" ? " is-landing" : ""}${route.name === "login" ? " is-login" : ""}${inStudio ? " is-nle" : ""}`}
@@ -242,6 +252,8 @@ export function Shell() {
         <McpDesk />
       ) : route.name === "pricing" ? (
         <Pricing user={user ?? null} />
+      ) : route.name === "contact" ? (
+        user ? <Contact /> : <LoadingScreen />
       ) : route.name === "terms" || route.name === "refund" || route.name === "delivery" || route.name === "cancellation" ? (
         <Policy page={route.name} />
       ) : route.name === "audio" ? (
@@ -250,7 +262,10 @@ export function Shell() {
         <ProjectWorkspace key={route.id} id={route.id!} step={route.name === "project" ? route.step : "studio"}
           onStep={(step) => go({ name: "project", id: route.id!, step })} onHome={() => go({ name: "projects" })} />
       ) : route.name === "projects" || route.name === "studio" ? (
-        <ProjectsHome onOpen={(id, step) => go({ name: "project", id, step })} />
+        <ProjectsHome
+          onOpen={(id, step) => go({ name: "project", id, step })}
+          onGoLibrary={() => go({ name: "library" })}
+        />
       ) : (
         <App key="avatar-page" onIdentities={setIdentities} />
       )}

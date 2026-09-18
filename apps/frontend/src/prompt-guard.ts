@@ -45,7 +45,7 @@ export function promptIssue(raw: string, kind: PromptKind): string | null {
   if (text.length > limit.max) return `${limit.label} is too long (max ${limit.max} characters)`;
   if (text.trim().length < limit.min) return `${limit.label} required`;
   if (INJECTION.some((re) => re.test(text))) {
-    return `${limit.label} looks like an instruction override. Write the subject only — not system or model commands.`;
+    return `${limit.label} looks like an instruction override. Write the subject only, not system or model commands.`;
   }
   return null;
 }

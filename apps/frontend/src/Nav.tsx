@@ -33,6 +33,7 @@ export type Route =
   | { name: "library" }
   | { name: "mcp" }
   | { name: "pricing" }
+  | { name: "contact" }
   | { name: "login" }
   | { name: "terms" }
   | { name: "refund" }
@@ -93,7 +94,7 @@ const MENUS: Menu[] = [
         title: "Generate",
         items: [
           { label: "Create avatar", hint: "Upload a face. Generate. Name it.", href: "/avatar", route: { name: "avatar" } },
-          { label: "Text to Image", hint: "Same desk — portrait from a reference photo.", href: "/avatar", route: { name: "avatar" } },
+          { label: "Text to Image", hint: "Portrait created from your reference photo.", href: "/avatar", route: { name: "avatar" } },
           { label: "Image to Image", hint: "Rewrite a still from a reference.", href: "/images-templates", route: { name: "templates" } },
         ],
       },
@@ -110,7 +111,7 @@ const MENUS: Menu[] = [
         items: [
           { label: "Text to Video", hint: "AI documentary from a line of copy.", href: "/projects", route: { name: "projects" } },
           { label: "Image to Video", hint: "A still that already is the shot.", href: "/video-templates", route: { name: "videos" } },
-          { label: "Effects", hint: "Baked motion packs — person holds, world moves.", href: "/effects", route: { name: "effects" } },
+          { label: "Effects", hint: "Preset motion packs where the world moves around the subject.", href: "/effects", route: { name: "effects" } },
         ],
       },
     ],
@@ -214,15 +215,15 @@ const MENUS: Menu[] = [
   },
   {
     id: "mcps",
-    label: "MCPs",
+    label: "MCP",
     href: "/mcp",
     route: { name: "mcp" },
     groups: [
       {
-        title: "Connect",
+        title: "AI Integration",
         items: [
-          { label: "Setup", hint: "Cursor / Claude → this studio. JSON-RPC on :3001/mcp.", href: "/mcp", route: { name: "mcp" } },
-          { label: "Tools", hint: "Films, looks, identities, library. Generate is async.", href: "/mcp", route: { name: "mcp" } },
+          { label: "Connect Assistant", hint: "Use Marketing Studio tools in Cursor or Claude. Included free.", href: "/mcp", route: { name: "mcp" } },
+          { label: "Capabilities", hint: "Films, looks, identities, library. Powered directly by your studio.", href: "/mcp", route: { name: "mcp" } },
         ],
       },
     ],
@@ -242,6 +243,7 @@ export function pathToRoute(path: string, search = ""): Route {
   if (path.startsWith("/library")) return { name: "library" };
   if (path.startsWith("/mcp")) return { name: "mcp" };
   if (path === "/pricing" || path === "/pricing/") return { name: "pricing" };
+  if (path === "/contact" || path === "/contact/") return { name: "contact" };
   if (path === "/login" || path === "/login/") return { name: "login" };
   if (path === "/terms" || path === "/terms/") return { name: "terms" };
   if (path === "/refund" || path === "/refund/") return { name: "refund" };
@@ -281,6 +283,7 @@ export function routeToPath(route: Route): string {
   if (route.name === "library") return "/library";
   if (route.name === "mcp") return "/mcp";
   if (route.name === "pricing") return "/pricing";
+  if (route.name === "contact") return "/contact";
   if (route.name === "login") return "/login";
   if (route.name === "terms") return "/terms";
   if (route.name === "refund") return "/refund";
@@ -300,36 +303,32 @@ export function routeToPath(route: Route): string {
 }
 
 export function routeTitle(route: Route): string {
-  if (route.name === "landing") return "Marketing Studio — Your Imagination Engine";
-  if (route.name === "projects" || route.name === "project") return "Marketing Studio — Your films";
-  if (route.name === "library") return "Marketing Studio — Library";
-  if (route.name === "mcp") return "Marketing Studio — MCP";
-  if (route.name === "pricing") return "Marketing Studio — Pricing";
-  if (route.name === "login") return "Marketing Studio — Sign in";
-  if (route.name === "terms") return "Marketing Studio — Terms";
-  if (route.name === "refund") return "Marketing Studio — Refunds";
-  if (route.name === "delivery") return "Marketing Studio — Delivery";
-  if (route.name === "cancellation") return "Marketing Studio — Cancellation";
-  if (route.name === "audio") return "Marketing Studio — Audio";
-  if (route.name === "studio") return "Marketing Studio — Mix";
-  if (route.name === "videos" || route.name === "video") return "Marketing Studio — Videos";
-  if (route.name === "effects" || route.name === "effect") return "Marketing Studio — Effects";
-  if (route.name === "templates" || route.name === "template") return "Marketing Studio — Images";
-  return "Marketing Studio — Be in it";
+  if (route.name === "landing") return "Marketing Studio: Your Imagination Engine";
+  if (route.name === "projects" || route.name === "project") return "Marketing Studio: Your Films";
+  if (route.name === "library") return "Marketing Studio: Library";
+  if (route.name === "mcp") return "Marketing Studio: MCP";
+  if (route.name === "pricing") return "Marketing Studio: Pricing Plans";
+  if (route.name === "contact") return "Marketing Studio: Contact Us";
+  if (route.name === "login") return "Marketing Studio: Sign In";
+  if (route.name === "terms") return "Marketing Studio: Terms";
+  if (route.name === "refund") return "Marketing Studio: Refunds";
+  if (route.name === "delivery") return "Marketing Studio: Delivery";
+  if (route.name === "cancellation") return "Marketing Studio: Cancellation";
+  if (route.name === "audio") return "Marketing Studio: Audio Studio";
+  if (route.name === "studio") return "Marketing Studio: Mix";
+  if (route.name === "videos" || route.name === "video") return "Marketing Studio: Videos";
+  if (route.name === "effects" || route.name === "effect") return "Marketing Studio: Effects";
+  if (route.name === "templates" || route.name === "template") return "Marketing Studio: Images";
+  return "Marketing Studio: Avatar Studio";
 }
 
 function menuActive(menu: Menu, route: Route): boolean {
   if (menu.id === "images") return route.name === "templates" || route.name === "template";
   if (menu.id === "avatars") return route.name === "avatar";
   if (menu.id === "videos") return route.name === "videos" || route.name === "video";
-  if (menu.id === "docs") {
-    return route.name === "projects" || (route.name === "project" && route.step !== "studio");
-  }
-  if (menu.id === "audio") return route.name === "audio";
-  if (menu.id === "studio") {
-    return route.name === "studio" || (route.name === "project" && route.step === "studio");
-  }
   if (menu.id === "effects") return route.name === "effects" || route.name === "effect";
+  if (menu.id === "audio") return route.name === "audio";
+  if (menu.id === "projects") return route.name === "projects" || route.name === "project" || route.name === "studio";
   if (menu.id === "mcps") return route.name === "mcp";
   return false;
 }
@@ -399,8 +398,15 @@ export function Nav({
       const target = e.target as HTMLElement | null;
       if (!target?.closest(".nav-drop")) setOpen(null);
     }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(null);
+    }
     document.addEventListener("click", onDoc);
-    return () => document.removeEventListener("click", onDoc);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("click", onDoc);
+      window.removeEventListener("keydown", onKey);
+    };
   }, []);
 
   return (

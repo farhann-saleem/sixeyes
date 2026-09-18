@@ -1,4 +1,4 @@
-import { BrandMark, Squiggle } from "./landing/BrandMark";
+import { BrandMark } from "./landing/BrandMark";
 import { routeToPath, type Route } from "./Nav";
 
 const START_CREATING: Array<{ label: string; route: Route }> = [
@@ -21,6 +21,7 @@ const LEGAL_LINKS: Array<{ label: string; route: Route }> = [
   { label: "Refund Policy", route: { name: "refund" } },
   { label: "Delivery Policy", route: { name: "delivery" } },
   { label: "Cancellation Policy", route: { name: "cancellation" } },
+  { label: "Contact Us", route: { name: "contact" } },
 ];
 
 function FootLink({
@@ -48,7 +49,7 @@ function FootLink({
 export function Footer({ onGo }: { onGo: (next: Route) => void }) {
   return (
     <div className="site-foot">
-      <Squiggle fill="#150f23" />
+      <div className="site-foot-seam" aria-hidden="true" />
       <footer className="site-footer">
         <div className="site-footer-grid">
           <div className="site-footer-brand-col">
@@ -61,7 +62,7 @@ export function Footer({ onGo }: { onGo: (next: Route) => void }) {
               </strong>
             </div>
             <p className="site-footer-tagline">Your Imagination Engine</p>
-            <p className="site-footer-blurb">Topic → script → AI shots → mix. One project is a film.</p>
+            <p className="site-footer-blurb">Connected video creation with scene-by-scene control.</p>
           </div>
           <nav className="site-footer-col" aria-label="Start creating">
             <p className="site-footer-col-title">Start creating</p>

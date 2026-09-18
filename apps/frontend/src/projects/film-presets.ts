@@ -18,9 +18,9 @@ function pack(title: string, scenes: PresetScript["scenes"]): PresetScript {
 export const FILM_PRESETS: FilmPreset[] = [
   {
     id: "coffee-morning",
-    label: "Coffee shop morning — first grind to the rush",
+    label: "Coffee shop morning: first grind to the rush",
     name: "Coffee shop morning",
-    topic: "Coffee shop morning — first grind to the rush. Dawn street, keys in the door, first grind, steam, first cup, then the line.",
+    topic: "Coffee shop morning: first grind to the rush. Dawn street, keys in the door, first grind, steam, first cup, then the line.",
     script: pack("First grind", [
       { heading: "The street before open", voiceover_line: "Before the lock turns, the street is still half asleep.", stock_query: "empty cafe street dawn", duration_sec: 8 },
       { heading: "Keys and light", voiceover_line: "A key finds the lock. Light spills onto the floor.", stock_query: "barista unlocking cafe door", duration_sec: 7 },
@@ -32,7 +32,7 @@ export const FILM_PRESETS: FilmPreset[] = [
   },
   {
     id: "coffee-friend",
-    label: "Coffee with a friend — two cups, one table",
+    label: "Coffee with a friend: two cups, one table",
     name: "Coffee with a friend",
     topic: "Coffee with a friend. Two cups on one table. Talk, hands on mugs, window light, a shared plate, then the street.",
     script: pack("Two cups", [
@@ -46,7 +46,7 @@ export const FILM_PRESETS: FilmPreset[] = [
   },
   {
     id: "coffee-rain",
-    label: "Coffee after rain — wet street, warm cup",
+    label: "Coffee after rain: wet street, warm cup",
     name: "Coffee after rain",
     topic: "Coffee after rain. Wet street, fogged window, dripping coat, a quiet cup, steam, then walking home.",
     script: pack("After the rain", [
@@ -60,7 +60,7 @@ export const FILM_PRESETS: FilmPreset[] = [
   },
   {
     id: "coffee-night",
-    label: "Coffee after dark — last table still open",
+    label: "Coffee after dark: last table still open",
     name: "Coffee after dark",
     topic: "Coffee after dark. Neon, last tables, espresso at night, a book, the barista wiping down, lights out.",
     script: pack("Last table", [

@@ -1,0 +1,10 @@
+# Marketing Studio robots.txt
+# https://www.marketingstudioie.site
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /callback
+Disallow: /studio-work/
+
+Sitemap: https://www.marketingstudioie.site/sitemap.xml
