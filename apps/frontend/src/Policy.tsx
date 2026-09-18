@@ -51,7 +51,7 @@ const TERMS: PolicySection[] = [
   },
   {
     title: "9. Contact",
-    body: ["Questions about these terms: contact us at our Contact page (signed-in) or email chaudaryfarhan@gmail.com."],
+    body: ["Questions about these terms: contact us at our Contact page (signed-in) or email chaudaryfarhann@gmail.com."],
   },
 ];
 
@@ -191,7 +191,7 @@ export function Policy({ page }: { page: PolicyPage }) {
       <footer className="policy-foot">
         <p>Marketing Studio · marketingstudioie.site</p>
         <p>
-          <a href="mailto:chaudaryfarhan@gmail.com">chaudaryfarhan@gmail.com</a>
+          <a href="mailto:chaudaryfarhann@gmail.com">chaudaryfarhann@gmail.com</a>
         </p>
       </footer>
     </div>

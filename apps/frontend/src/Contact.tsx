@@ -13,7 +13,7 @@ export function Contact() {
           <h2>Direct Contact</h2>
           <p>
             For questions regarding accounts, subscriptions, billing, or policies, contact us at{" "}
-            <a href="mailto:chaudaryfarhan@gmail.com">chaudaryfarhan@gmail.com</a>.
+            <a href="mailto:chaudaryfarhann@gmail.com">chaudaryfarhann@gmail.com</a>.
           </p>
         </section>
         <section>
@@ -26,7 +26,7 @@ export function Contact() {
       <footer className="policy-foot">
         <p>Marketing Studio · marketingstudioie.site</p>
         <p>
-          <a href="mailto:chaudaryfarhan@gmail.com">chaudaryfarhan@gmail.com</a>
+          <a href="mailto:chaudaryfarhann@gmail.com">chaudaryfarhann@gmail.com</a>
         </p>
       </footer>
     </div>

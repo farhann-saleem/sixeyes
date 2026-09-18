@@ -116,7 +116,7 @@ Delivered changes:
 7. **Film Creation Feedback:** Added `.film-creating-state` banner with spinner and descriptive feedback ("Creating your film… Initializing project, director outline, and scenes") so the UI never feels frozen upon submission.
 8. **Story Input & Mobile Polish:** Refined preset selector, length pills, and responsive layout down to 360px mobile viewports.
 9. **Dropdowns & Selects:** Added keyboard `Escape` dismissal, smooth caret rotation indicator (`.nav-drop.is-open .nav-caret`), and custom styled form `<select>` elements with lime chevrons and proper contrast in `Nav.tsx` and `styles.css`.
-10. **Contact Us Page:** `Contact.tsx` shows email `chaudaryfarhan@gmail.com` only (no phone). `/contact` is signed-in only (redirects to login). Policy footers use the same email.
+10. **Contact Us Page:** `Contact.tsx` shows email `chaudaryfarhann@gmail.com` only (no phone). `/contact` is signed-in only (redirects to login). Policy footers use the same email.
 11. **Currency Display:** Removed PKR text from customer-facing pricing tier cards in `Pricing.tsx` (now clean `$0`, `$19`, `$49`). Checkout CTA clearly confirms `$X USD (PKR Y)` to prevent misleading users while SwichNow settles domestic PKR.
 12. **MCP Messaging:** Clarified in `Mcp.tsx` and `Nav.tsx` that Marketing Studio hosts a built-in MCP server to connect AI tools (Claude, Cursor, Windsurf) free with plans, eliminating confusing "building/office" wording.
 13. **Alerts & Notices:** Polished `.notice` banners across all variants with solid backgrounds, readable typography, and high-contrast white button labels.
