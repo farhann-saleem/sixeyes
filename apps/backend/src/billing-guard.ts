@@ -11,6 +11,13 @@ function emailOf(req: Request): string {
   return currentUser(req)?.email || "anonymous";
 }
 
+function rateLimitKey(req: Request): string {
+  const user = currentUser(req);
+  if (user?.email) return user.email;
+  const ip = req.ip || req.socket.remoteAddress || "anonymous";
+  return `anon:${ip}`;
+}
+
 /** Pure sliding-window check: `allowed` false once `limit` hits fall in the window. */
 export function allowHit(email: string, limit: number, now = Date.now()): { allowed: boolean; retry_after: number } {
   const list = (hits.get(email) ?? []).filter((t) => now - t < WINDOW_MS);
@@ -29,8 +36,9 @@ export async function rateLimitPost(req: Request, res: Response, next: NextFunct
     return;
   }
   const email = emailOf(req);
+  const key = rateLimitKey(req);
   const tier = TIERS[await effectiveTier(email)];
-  const verdict = allowHit(email, tier.rate_per_min);
+  const verdict = allowHit(key, tier.rate_per_min);
   if (!verdict.allowed) {
     res.setHeader("Retry-After", String(verdict.retry_after));
     res.status(429).json({

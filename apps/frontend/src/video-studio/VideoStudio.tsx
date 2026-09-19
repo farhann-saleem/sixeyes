@@ -334,11 +334,22 @@ function StudioEditor({ projectId, onHome }: { projectId: string; onHome: () => 
   }, [media, tab]);
 
   if (!project) {
+    const isAuth = /sign in|auth|unauthorized/i.test(error || "");
     return (
       <div className="nle-page">
         <div className="nle-home">
           <p className="nle-kicker">Video studio</p>
-          <p>{error || "Loading project…"}</p>
+          {isAuth ? (
+            <div className="film-auth-gate-card">
+              <h3>Sign in to access Video Studio</h3>
+              <p>This timeline workspace is private to its creator. Sign in with Google to access your clips and edits.</p>
+              <a className="btn lime" href="/login" style={{ display: "inline-block", padding: "12px 24px" }}>
+                Sign in with Google
+              </a>
+            </div>
+          ) : (
+            <p>{error || "Loading project…"}</p>
+          )}
         </div>
       </div>
     );

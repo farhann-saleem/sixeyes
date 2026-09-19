@@ -38,7 +38,8 @@ export type Route =
   | { name: "terms" }
   | { name: "refund" }
   | { name: "delivery" }
-  | { name: "cancellation" };
+  | { name: "cancellation" }
+  | { name: "not-found" };
 
 type MenuChild = {
   label: string;
@@ -197,18 +198,18 @@ const MENUS: Menu[] = [
         title: "Packs",
         items: [
           { label: "All packs", hint: "Incline, Stop World, Clones, and the rest.", href: "/effects", route: { name: "effects" } },
-          { label: "Incline", hint: "World tips. Person holds.", href: "/effects", route: { name: "effects" } },
-          { label: "Stop World", hint: "Street freezes around the subject.", href: "/effects", route: { name: "effects" } },
-          { label: "Clones", hint: "One person, many copies.", href: "/effects", route: { name: "effects" } },
+          { label: "Incline", hint: "World tips. Person holds.", href: "/effects?pack=Incline", route: { name: "effects" } },
+          { label: "Stop World", hint: "Street freezes around the subject.", href: "/effects?pack=Stop%20World", route: { name: "effects" } },
+          { label: "Clones", hint: "One person, many copies.", href: "/effects?pack=Clones", route: { name: "effects" } },
         ],
       },
       {
         title: "More packs",
         items: [
-          { label: "Vanish", hint: "Subject stays. Scene lets go.", href: "/effects", route: { name: "effects" } },
-          { label: "Act Natural", hint: "Handheld, unposed motion.", href: "/effects", route: { name: "effects" } },
-          { label: "Frozen in Motion", hint: "Hold the beat mid-move.", href: "/effects", route: { name: "effects" } },
-          { label: "Studio Slide", hint: "Locked face, sliding set.", href: "/effects", route: { name: "effects" } },
+          { label: "Vanish", hint: "Subject stays. Scene lets go.", href: "/effects?pack=Vanish", route: { name: "effects" } },
+          { label: "Act Natural", hint: "Handheld, unposed motion.", href: "/effects?pack=Act%20Natural", route: { name: "effects" } },
+          { label: "Frozen in Motion", hint: "Hold the beat mid-move.", href: "/effects?pack=Frozen%20in%20Motion", route: { name: "effects" } },
+          { label: "Studio Slide", hint: "Locked face, sliding set.", href: "/effects?pack=Studio%20Slide", route: { name: "effects" } },
         ],
       },
     ],
@@ -273,7 +274,8 @@ export function pathToRoute(path: string, search = ""): Route {
     return id ? { name: "template", id } : { name: "templates" };
   }
   if (path.startsWith("/images-templates")) return { name: "templates" };
-  return { name: "avatar" };
+  if (path === "/avatar" || path === "/avatar/") return { name: "avatar" };
+  return { name: "not-found" };
 }
 
 export function routeToPath(route: Route): string {
@@ -299,7 +301,8 @@ export function routeToPath(route: Route): string {
   if (route.name === "effect") return `/effects/${encodeURIComponent(route.id)}`;
   if (route.name === "templates") return "/images-templates";
   if (route.name === "template") return `/images-templates/${encodeURIComponent(route.id)}`;
-  return "/avatar";
+  if (route.name === "avatar") return "/avatar";
+  return typeof window !== "undefined" ? window.location.pathname : "/404";
 }
 
 export function routeTitle(route: Route): string {
@@ -319,6 +322,7 @@ export function routeTitle(route: Route): string {
   if (route.name === "videos" || route.name === "video") return "Marketing Studio: Videos";
   if (route.name === "effects" || route.name === "effect") return "Marketing Studio: Effects";
   if (route.name === "templates" || route.name === "template") return "Marketing Studio: Images";
+  if (route.name === "not-found") return "Marketing Studio: Page Not Found";
   return "Marketing Studio: Avatar Studio";
 }
 
@@ -388,9 +392,11 @@ export function Nav({
   auth?: ReactNode;
 }) {
   const [open, setOpen] = useState<string | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     setOpen(null);
+    setMobileOpen(false);
   }, [route]);
 
   useEffect(() => {
@@ -399,7 +405,10 @@ export function Nav({
       if (!target?.closest(".nav-drop")) setOpen(null);
     }
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(null);
+      if (e.key === "Escape") {
+        setOpen(null);
+        setMobileOpen(false);
+      }
     }
     document.addEventListener("click", onDoc);
     window.addEventListener("keydown", onKey);
@@ -426,7 +435,18 @@ export function Nav({
           Marketing<em>Studio</em>
         </span>
       </a>
-      <nav aria-label="Primary">
+      <button
+        type="button"
+        className={`nav-hamburger ${mobileOpen ? "is-active" : ""}`}
+        aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+        aria-expanded={mobileOpen}
+        onClick={() => setMobileOpen((cur) => !cur)}
+      >
+        <span className="hamburger-bar" />
+        <span className="hamburger-bar" />
+        <span className="hamburger-bar" />
+      </button>
+      <nav aria-label="Primary" className="nav-desktop-menu">
         {MENUS.map((menu) => {
           const active = menuActive(menu, route);
           const shown = open === menu.id;
@@ -517,18 +537,7 @@ export function Nav({
           >
             Start Creating
           </a>
-        ) : route.name === "avatar" ? (
-          <a
-            className="nav-cta"
-            href="/projects"
-            onClick={(e) => {
-              e.preventDefault();
-              onGo({ name: "projects" });
-            }}
-          >
-            New documentary
-          </a>
-        ) : (
+        ) : route.name === "projects" || route.name === "project" || route.name === "studio" ? (
           <a
             className="nav-cta"
             href="/avatar"
@@ -539,7 +548,171 @@ export function Nav({
           >
             Create Avatar
           </a>
+        ) : (
+          <a
+            className="nav-cta"
+            href="/projects"
+            onClick={(e) => {
+              e.preventDefault();
+              onGo({ name: "projects" });
+            }}
+          >
+            New documentary
+          </a>
         )}
+      </div>
+
+      {mobileOpen && (
+        <div
+          className="nav-drawer-overlay"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+      <div
+        className={`nav-drawer ${mobileOpen ? "is-open" : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Site navigation"
+      >
+        <div className="nav-drawer-header">
+          <a
+            className="brand"
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              setMobileOpen(false);
+              onGo({ name: "landing" });
+            }}
+          >
+            <span className="brand-mark" aria-hidden="true">
+              <BrandMark />
+            </span>
+            <span className="brand-word">
+              Marketing<em>Studio</em>
+            </span>
+          </a>
+          <button
+            type="button"
+            className="nav-drawer-close"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close menu"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="nav-drawer-body">
+          <div className="nav-drawer-cta">
+            {route.name === "landing" ? (
+              <a
+                className="nav-cta"
+                href="/projects"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setMobileOpen(false);
+                  onGo({ name: "projects" });
+                }}
+              >
+                Start Creating
+              </a>
+            ) : route.name === "projects" || route.name === "project" || route.name === "studio" ? (
+              <a
+                className="nav-cta"
+                href="/avatar"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setMobileOpen(false);
+                  onGo({ name: "avatar" });
+                }}
+              >
+                Create Avatar
+              </a>
+            ) : (
+              <a
+                className="nav-cta"
+                href="/projects"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setMobileOpen(false);
+                  onGo({ name: "projects" });
+                }}
+              >
+                New Documentary
+              </a>
+            )}
+          </div>
+
+          <div className="nav-drawer-primary-links">
+            <a
+              className={`nav-drawer-link ${route.name === "pricing" ? "is-active" : ""}`}
+              href="/pricing"
+              onClick={(e) => {
+                e.preventDefault();
+                setMobileOpen(false);
+                onGo({ name: "pricing" });
+              }}
+            >
+              Pricing Plans
+            </a>
+            <a
+              className={`nav-drawer-link ${route.name === "library" ? "is-active" : ""}`}
+              href="/library"
+              onClick={(e) => {
+                e.preventDefault();
+                setMobileOpen(false);
+                onGo({ name: "library" });
+              }}
+            >
+              Library {libraryCount > 0 ? `(${libraryCount})` : ""}
+            </a>
+            <a
+              className={`nav-drawer-link ${route.name === "mcp" ? "is-active" : ""}`}
+              href="/mcp"
+              onClick={(e) => {
+                e.preventDefault();
+                setMobileOpen(false);
+                onGo({ name: "mcp" });
+              }}
+            >
+              MCP Integration
+            </a>
+            <a
+              className={`nav-drawer-link ${route.name === "contact" ? "is-active" : ""}`}
+              href="/contact"
+              onClick={(e) => {
+                e.preventDefault();
+                setMobileOpen(false);
+                onGo({ name: "contact" });
+              }}
+            >
+              Contact Us
+            </a>
+          </div>
+
+          <div className="nav-drawer-groups">
+            {MENUS.map((menu) => (
+              <div key={menu.id} className="nav-drawer-group">
+                <p className="nav-drawer-group-title">{menu.label}</p>
+                <div className="nav-drawer-items">
+                  {menu.groups.flatMap((g) => g.items).map((item) => (
+                    <Choice
+                      key={item.label}
+                      item={item}
+                      libraryCount={libraryCount}
+                      onGo={(r) => {
+                        setMobileOpen(false);
+                        onGo(r);
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {auth && <div className="nav-drawer-auth-bottom">{auth}</div>}
+        </div>
       </div>
     </header>
   );

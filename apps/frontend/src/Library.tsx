@@ -15,6 +15,15 @@ import { DeferredVideo } from "./viewport-media";
 
 type FilmStep = "script" | "cast" | "studio";
 
+type LibraryAudio = {
+  id: string;
+  kind: string;
+  title: string;
+  created_at: string;
+  status: string;
+  has_cover?: boolean;
+};
+
 function filmStep(p: StudioProject): FilmStep {
   return ["studio", "exported"].includes(p.phase) ? "studio" : p.phase === "cast" ? "cast" : "script";
 }
@@ -57,7 +66,10 @@ export function Library({
   const [open, setOpen] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [films, setFilms] = useState<StudioProject[]>([]);
+  const [audioJobs, setAudioJobs] = useState<LibraryAudio[]>([]);
+  const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [limit, setLimit] = useState(12);
 
   useEffect(() => {
@@ -79,6 +91,34 @@ export function Library({
     };
   }, []);
 
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/audio/jobs", { headers: { Accept: "application/json" } })
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data: { jobs?: LibraryAudio[] }) => {
+        if (alive && Array.isArray(data?.jobs)) {
+          setAudioJobs(data.jobs.filter((j) => j.status === "COMPLETED"));
+        }
+      })
+      .catch(() => {
+        if (alive) setAudioJobs([]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  function togglePlayAudio(id: string) {
+    if (playingAudioId === id) {
+      setPlayingAudioId(null);
+      return;
+    }
+    const audio = new Audio(`/api/audio/jobs/${encodeURIComponent(id)}/output`);
+    setPlayingAudioId(id);
+    audio.play().catch(() => setPlayingAudioId(null));
+    audio.onended = () => setPlayingAudioId(null);
+  }
+
   const labels = useMemo(() => {
     const map = new Map<string, string>();
     for (const t of imageCatalog?.templates ?? []) map.set(t.id, t.label);
@@ -99,13 +139,12 @@ export function Library({
     id: job.id,
     src: outputUrl(job),
     download: downloadUrl(job),
-        title: labels.get(job.template_id) ?? "Generated",
+    title: labels.get(job.template_id) ?? "Generated",
     subtitle: `${formatClock(job.created_at)} · ${formatDuration(job.duration_ms)}`,
     kind: isVideoJob(job) ? "video" : "image",
   }));
 
   async function remove(id: string, after?: () => void) {
-    if (!window.confirm("Delete this from your library? The file is removed.")) return;
     setBusyId(id);
     try {
       await onDelete(id);
@@ -115,6 +154,8 @@ export function Library({
     }
   }
 
+  const totalCount = done.length + films.length + audioJobs.length;
+
   return (
     <main className="studio">
       <header className="page-head">
@@ -122,18 +163,18 @@ export function Library({
           <p className="kicker">Your library</p>
           <h1>Everything you have generated</h1>
           <p className="lede">
-            {done.length + films.length === 0
+            {totalCount === 0
               ? "Generated images, videos, and films you save land here."
-              : `${done.length + films.length} item${done.length + films.length === 1 ? "" : "s"}. Open one, download it, or jump back into a film.`}
+              : `${totalCount} item${totalCount === 1 ? "" : "s"}. Open one, download it, or jump back into a film.`}
           </p>
         </div>
       </header>
 
-      {done.length === 0 && films.length === 0 ? (
+      {totalCount === 0 ? (
         <div className="empty">
           <div className="empty-art" aria-hidden="true" />
           <h2>Nothing here yet</h2>
-          <p className="muted">Create an avatar first if you have none. Generated looks and films appear here.</p>
+          <p className="muted">Create an avatar first if you have none. Generated looks, audio, and films appear here.</p>
           <div className="panel-actions">
             {onGoAvatar ? (
               <button type="button" className="btn lime" onClick={onGoAvatar}>
@@ -156,7 +197,7 @@ export function Library({
       ) : (
         <>
           {films.length > 0 && (
-            <section className="library-shelf" style={{ marginBottom: done.length > 0 ? "48px" : "0" }}>
+            <section className="library-shelf" style={{ marginBottom: done.length > 0 || audioJobs.length > 0 ? "48px" : "0" }}>
               <div className="library-shelf-head" style={{ marginBottom: "18px" }}>
                 <p className="kicker" style={{ margin: "0 0 4px" }}>Documentary Suite</p>
                 <h2 style={{ margin: "0 0 6px", fontSize: "1.5rem" }}>Your Documentaries & Saved Films</h2>
@@ -272,7 +313,7 @@ export function Library({
                             disabled={busyId === job.id}
                             onClick={(e) => {
                               e.stopPropagation();
-                              void remove(job.id);
+                              setConfirmDeleteId(job.id);
                             }}
                           >
                             {busyId === job.id ? "Deleting…" : "Delete"}
@@ -297,7 +338,110 @@ export function Library({
               ) : null}
             </section>
           )}
+
+          {audioJobs.length > 0 && (
+            <section className="library-shelf" style={{ marginTop: "48px" }}>
+              <div className="library-shelf-head" style={{ marginBottom: "18px" }}>
+                <p className="kicker" style={{ margin: "0 0 4px" }}>Sound & Music</p>
+                <h2 style={{ margin: "0 0 6px", fontSize: "1.5rem" }}>Generated Audio & Soundtracks</h2>
+                <p className="muted" style={{ margin: 0 }}>
+                  {audioJobs.length} audio track{audioJobs.length === 1 ? "" : "s"} from your speech, SFX, and Suno music creations.
+                </p>
+              </div>
+              <div className="gallery library-grid">
+                {audioJobs.map((aj) => {
+                  const isPlaying = playingAudioId === aj.id;
+                  return (
+                    <figure key={aj.id} className="tile">
+                      <div className="tile-open" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#1a1429", color: "#c2ef4e", minHeight: "160px" }}>
+                        <button
+                          type="button"
+                          onClick={() => togglePlayAudio(aj.id)}
+                          style={{
+                            width: "56px",
+                            height: "56px",
+                            borderRadius: "50%",
+                            background: isPlaying ? "#fa7faa" : "#c2ef4e",
+                            border: "none",
+                            color: "#150f23",
+                            fontSize: "20px",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            boxShadow: "0 4px 12px rgba(0,0,0,0.3)"
+                          }}
+                          aria-label={isPlaying ? "Pause audio preview" : "Play audio preview"}
+                        >
+                          {isPlaying ? "❚❚" : "▶"}
+                        </button>
+                        <span style={{ marginTop: "12px", fontSize: "0.8rem", color: "#a59cb8", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 700 }}>
+                          {aj.kind}
+                        </span>
+                      </div>
+                      <figcaption className="tile-meta">
+                        <div className="tile-meta-text">
+                          <strong>{aj.title || "Audio Track"}</strong>
+                          <span className="muted">{formatClock(aj.created_at)}</span>
+                        </div>
+                        <div className="tile-actions">
+                          <a
+                            className="btn ghost small"
+                            href={`/api/audio/jobs/${encodeURIComponent(aj.id)}/output`}
+                            download
+                          >
+                            Download
+                          </a>
+                        </div>
+                      </figcaption>
+                    </figure>
+                  );
+                })}
+              </div>
+            </section>
+          )}
         </>
+      )}
+
+      {confirmDeleteId && (
+        <div
+          className="nav-drawer-overlay"
+          style={{ zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center" }}
+          onClick={() => setConfirmDeleteId(null)}
+        >
+          <div
+            className="film-auth-gate-card"
+            style={{ margin: "auto", maxWidth: "420px", background: "#fffdf8" }}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <h3>Delete from library?</h3>
+            <p>This action is permanent. The media file will be removed from your cloud storage.</p>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={() => setConfirmDeleteId(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn primary"
+                style={{ background: "#e53e3e", borderColor: "#c53030", color: "#fff" }}
+                disabled={busyId !== null}
+                onClick={async () => {
+                  const id = confirmDeleteId;
+                  setConfirmDeleteId(null);
+                  if (id) await remove(id);
+                }}
+              >
+                {busyId ? "Deleting…" : "Yes, delete"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {open !== null && items[open] ? (
@@ -307,7 +451,8 @@ export function Library({
           onIndex={setOpen}
           onClose={() => setOpen(null)}
           onDelete={(id) => {
-            void remove(id, () => setOpen(null));
+            setConfirmDeleteId(id);
+            setOpen(null);
           }}
         />
       ) : null}

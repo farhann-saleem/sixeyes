@@ -13,7 +13,7 @@ export function ImagesTemplates({
   catalog: Catalog | null;
   jobs: SwapJob[];
   error: string | null;
-  onOpen: (templateId: string) => void;
+  onOpen: (templateId: string, engine?: string) => void;
 }) {
   const templates = catalog?.templates ?? [];
   const blocked = catalog?.cpu?.blocked ?? null;
@@ -76,7 +76,7 @@ export function ImagesTemplates({
                 className={`tile stagger${running ? " running" : ""}`}
                 style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
               >
-                <button type="button" className="tile-open" onClick={() => onOpen(t.id)}>
+                <button type="button" className="tile-open" onClick={() => onOpen(t.id, engine)}>
                   <img src={t.image_url} alt={t.label} loading="lazy" decoding="async" />
                   <span className="tile-scrim" aria-hidden="true" />
                   <span className="tile-cta">{running ? "Generating…" : "Generate"}</span>

@@ -301,7 +301,25 @@ export function ProjectWorkspace({ id, step, onStep, onHome, chrome = "full" }: 
   }
   async function approve() { setBusy(true); setError(""); try { if (dirty.current) await saveScript(); await action("fetch-stock"); } catch(e) { setError(message(e)); } finally { setBusy(false); } }
   function edit(next: ProjectScript) { dirty.current = true; setHasEdits(true); setDraft(next); }
-  if (!project) return <div className="film-stage-empty"><button type="button" className="project-primary" onClick={onHome}>← Films</button><p role="status">{error || "Loading project…"}</p></div>;
+  if (!project) {
+    const isAuth = /sign in|auth|unauthorized/i.test(error || "");
+    return (
+      <div className="film-stage-empty">
+        <button type="button" className="project-primary" onClick={onHome}>← Films</button>
+        {isAuth ? (
+          <div className="film-auth-gate-card">
+            <h3>Sign in to access your film</h3>
+            <p>This documentary project is private to its creator. Sign in with Google to view and edit it.</p>
+            <a className="btn lime" href="/login" style={{ display: "inline-block", padding: "12px 24px" }}>
+              Sign in with Google
+            </a>
+          </div>
+        ) : (
+          <p role="status">{error || "Loading project…"}</p>
+        )}
+      </div>
+    );
+  }
   const running = project.status === "running"; const disabled = running || busy;
   const assembled = ["studio", "exported"].includes(project.phase);
   const editable = project.phase === "script" && !disabled;

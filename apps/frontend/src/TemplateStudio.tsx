@@ -51,9 +51,13 @@ export function TemplateStudio({
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
   const [zoom, setZoom] = useState<number | null>(null);
-  const [engine, setEngine] = useState(
-    () => (mode === "video" ? VIDEO_MODELS[0]?.id : IMAGE_MODELS[0]?.id) ?? "",
-  );
+  const [engine, setEngine] = useState(() => {
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search).get("engine");
+      if (p) return p;
+    }
+    return (mode === "video" ? VIDEO_MODELS[0]?.id : IMAGE_MODELS[0]?.id) ?? "";
+  });
   const fileRef = useRef<HTMLInputElement>(null);
 
   const template = catalog?.templates.find((t) => t.id === templateId) ?? null;
@@ -143,6 +147,21 @@ export function TemplateStudio({
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
+  }
+
+  if (!catalog) {
+    return (
+      <main className="studio">
+        <button type="button" className="btn ghost back" onClick={onBack}>
+          ‹ All templates
+        </button>
+        <div className="empty" style={{ padding: "4rem 2rem" }}>
+          <div className="empty-art" aria-hidden="true" />
+          <h2>Loading template…</h2>
+          <p className="muted">Fetching template setup and models.</p>
+        </div>
+      </main>
+    );
   }
 
   if (catalog && !template) {

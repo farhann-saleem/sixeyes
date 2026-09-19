@@ -1,3 +1,29 @@
+## Comprehensive Audit Implementation & UI/UX Resolution — 2026-09-19
+
+Owner GO:
+- **Full Resolution of `WEBSITE_AUDIT.md` & `FULL_APP_AUDIT.md`:**
+  - **Visual & Contrast (AUDIT-01, AUDIT-02, APP-CRIT-02, APP-CRIT-04):** Strictly enforced `#150f23` text color on all parrot/lime green buttons and CTAs (`.btn.lime`, `.hf-btn-lime`, pricing cards, MCP endpoint copy, Library empty state, Audio desk submit buttons). Fixed low-contrast hero headlines on documentaries.
+  - **Mobile Responsive Navigation & Drawer (AUDIT-03, APP-HIGH-04):** Implemented hamburger toggle (`.nav-hamburger`) and accessible off-canvas drawer (`.nav-drawer`) for viewports < 768px with full menu hierarchy, links, auth state, and CTA.
+  - **Documentaries 2-Column Layout Order (AUDIT-04, APP-HIGH-06):** Corrected CSS column ordering (`order: 1` on Topic/Script, `order: 2` on Story setup).
+  - **Effects Pack Deep-Links (AUDIT-05):** Menus now link with `?pack=...` query parameters, and `VideoTemplates.tsx` auto-scrolls to the requested pack.
+  - **Static Contact Page Ungated (AUDIT-06, APP-HIGH-05):** Removed Google login redirect; guest visitors can freely view support and contact channels.
+  - **Model Engine Persistence (AUDIT-07, APP-MED-02):** Selected engine is passed via `?engine=...` URL parameter and preserved on the detail studio pages.
+  - **FOUC Prevention in Template Studio (AUDIT-08, APP-MED-04):** Added loading guard before catalog load to eliminate broken media boxes.
+  - **Audio Studio in User Library (AUDIT-09, APP-MED-05):** Unified audio generations in `Library.tsx` with dedicated Sound & Music shelf, inline audio preview playback, download action, and total count.
+  - **Dedicated 404 Route (AUDIT-10, APP-MED-06):** Added `{ name: "not-found" }` route and styled 404 Not Found page with return-home CTAs.
+  - **Non-Blocking Confirmation Modals (AUDIT-11, APP-LOW-02):** Replaced synchronous `window.confirm` with accessible React confirmation modals.
+  - **Styled Auth Gate Card for Private Studios (AUDIT-12, APP-LOW-03):** Replaced unstyled text with branded Google sign-in cards in `DocumentaryFlow.tsx` and `VideoStudio.tsx`.
+  - **Audio Tabs Horizontal Scroll (AUDIT-13, APP-LOW-04):** Audio desk tabs scroll horizontally on mobile screens instead of wrapping into multi-row stacks.
+  - **Context-Aware Navbar CTA (AUDIT-14, APP-LOW-05):** Dynamically adjusts between "Start Creating", "Create Avatar", and "New documentary".
+  - **Backend Protocol & Security Hardening (APP-CRIT-01, APP-CRIT-03, APP-HIGH-01, APP-HIGH-03, APP-MED-01, APP-MED-07, APP-LOW-01):**
+    - Unblocked MCP JSON-RPC by mounting before `privateApi` and exempting from CSRF/cookie gates.
+    - SwichNow webhook supports POST and urlencoded body payloads (`app.all`).
+    - Constant-time HMAC verification using `crypto.timingSafeEqual`.
+    - Anonymous rate limiting isolated per IP address `anon:${req.ip}`.
+    - Project name safely sanitized and bounded with `assertSafePrompt`.
+    - Resilient R2 deletion prevents trapped library jobs.
+- **Validation:** 39/39 backend tests pass; backend typecheck clean; frontend production build succeeds in 3.36s with zero errors.
+
 ## Documentaries Header & 4-Stage Pipeline Consistency Lock — 2026-09-19
 
 Owner GO:

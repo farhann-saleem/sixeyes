@@ -136,15 +136,6 @@ export function Shell() {
     if (route.name === "login" && user) go({ name: "projects" });
   }, [route.name, user, go]);
 
-  useEffect(() => {
-    if (route.name !== "contact" || user === undefined || user) return;
-    const path = `/login?next=${encodeURIComponent("/contact")}`;
-    if (`${window.location.pathname}${window.location.search}` !== path) {
-      window.history.pushState({}, "", path);
-    }
-    setRoute({ name: "login" });
-  }, [route.name, user]);
-
   return (
     <div
       className={`app-shell${route.name === "landing" ? " is-landing" : ""}${route.name === "login" ? " is-login" : ""}${inStudio ? " is-nle" : ""}`}
@@ -174,7 +165,11 @@ export function Shell() {
           catalog={imageCatalog}
           jobs={jobs}
           error={error}
-          onOpen={(id) => go({ name: "template", id })}
+          onOpen={(id, engine) => {
+            const q = engine ? `?engine=${encodeURIComponent(engine)}` : "";
+            window.history.pushState({}, "", `/images-templates/${encodeURIComponent(id)}${q}`);
+            setRoute({ name: "template", id });
+          }}
         />
       ) : route.name === "template" ? (
         <TemplateStudio
@@ -194,7 +189,11 @@ export function Shell() {
           catalog={videoCatalog}
           jobs={jobs}
           error={error}
-          onOpen={(id) => go({ name: "video", id })}
+          onOpen={(id, engine) => {
+            const q = engine ? `?engine=${encodeURIComponent(engine)}` : "";
+            window.history.pushState({}, "", `/video-templates/${encodeURIComponent(id)}${q}`);
+            setRoute({ name: "video", id });
+          }}
         />
       ) : route.name === "video" ? (
         <TemplateStudio
@@ -214,7 +213,11 @@ export function Shell() {
           catalog={effectCatalog}
           jobs={jobs}
           error={error}
-          onOpen={(id) => go({ name: "effect", id })}
+          onOpen={(id, engine) => {
+            const q = engine ? `?engine=${encodeURIComponent(engine)}` : "";
+            window.history.pushState({}, "", `/effects/${encodeURIComponent(id)}${q}`);
+            setRoute({ name: "effect", id });
+          }}
           kicker="Effects"
           title="Generate an effect"
           lede="Each pack is a baked motion. Pick an effects engine, add a reference or saved identity, and generate."
@@ -253,7 +256,7 @@ export function Shell() {
       ) : route.name === "pricing" ? (
         <Pricing user={user ?? null} />
       ) : route.name === "contact" ? (
-        user ? <Contact /> : <LoadingScreen />
+        <Contact />
       ) : route.name === "terms" || route.name === "refund" || route.name === "delivery" || route.name === "cancellation" ? (
         <Policy page={route.name} />
       ) : route.name === "audio" ? (
@@ -266,8 +269,22 @@ export function Shell() {
           onOpen={(id, step) => go({ name: "project", id, step })}
           onGoLibrary={() => go({ name: "library" })}
         />
-      ) : (
+      ) : route.name === "avatar" ? (
         <App key="avatar-page" onIdentities={setIdentities} />
+      ) : (
+        <main className="not-found-page">
+          <p className="not-found-code">404</p>
+          <h1>Page Not Found</h1>
+          <p>The page or resource you are looking for does not exist or may have been relocated.</p>
+          <div className="not-found-actions">
+            <button type="button" className="btn lime" onClick={() => go({ name: "landing" })}>
+              Return Home
+            </button>
+            <button type="button" className="btn primary" onClick={() => go({ name: "projects" })}>
+              Documentary Studio
+            </button>
+          </div>
+        </main>
       )}
       </Suspense>
       </div>

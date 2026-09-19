@@ -32,7 +32,7 @@ export function VideoTemplates({
   catalog: Catalog | null;
   jobs: SwapJob[];
   error: string | null;
-  onOpen: (templateId: string) => void;
+  onOpen: (templateId: string, engine?: string) => void;
   kicker?: string;
   title?: string;
   lede?: string;
@@ -67,6 +67,17 @@ export function VideoTemplates({
     return [...map.entries()].map(([name, clips]) => ({ name, clips }));
   }, [groupByEffect, templates]);
 
+  useEffect(() => {
+    if (!packs || typeof window === "undefined") return;
+    const requested = new URLSearchParams(window.location.search).get("pack");
+    if (!requested) return;
+    const targetId = requested.toLowerCase().replace(/\s+/g, "-");
+    const el = document.getElementById(targetId);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [packs]);
+
   function renderTile(t: Template, i: number) {
     const running = live?.template_id === t.id;
     const made = countByTemplate.get(t.id) ?? 0;
@@ -76,7 +87,7 @@ export function VideoTemplates({
         className={`tile stagger${running ? " running" : ""}`}
         style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
       >
-        <button type="button" className="tile-open" onClick={() => onOpen(t.id)}>
+        <button type="button" className="tile-open" onClick={() => onOpen(t.id, engine)}>
           {t.video_url ? (
             <DeferredVideo
               src={t.video_url}

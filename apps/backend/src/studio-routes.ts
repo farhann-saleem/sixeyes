@@ -249,13 +249,14 @@ studioRouter.post("/projects", async (req, res) => {
       duration_sec?: unknown;
       from?: { type: StudioClipSource["type"]; id: string };
     };
+    const safeName = typeof body.name === "string" ? assertSafePrompt(body.name, "name").slice(0, 80) : undefined;
     if ("topic" in body) {
-      const project = await createTopicProject(body.topic, body.name, body.in_library, body.script, body.duration_sec, email);
+      const project = await createTopicProject(body.topic, safeName, body.in_library, body.script, body.duration_sec, email);
       await recordUsage(email, "documentaries");
       res.status(202).json(project);
       return;
     }
-    const project = emptyProject(randomUUID(), body.name?.trim() || "Untitled");
+    const project = emptyProject(randomUUID(), safeName?.trim() || "Untitled");
     project.owner_email = email;
     let counted: "videos" | null = null;
     if (body.from) {

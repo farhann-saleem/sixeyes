@@ -70,23 +70,26 @@ export const app = express();
 app.use(compression());
 app.use(cors({ origin: FRONTEND_URL, credentials: true }));
 app.use(express.json({ limit: "12mb" }));
+app.use(express.urlencoded({ extended: true, limit: "12mb" }));
 app.use(sameOriginWrites);
 app.use(attachUser);
 app.use(serializeUserWrites);
 
 app.use("/api/auth", authRouter);
 
-app.get("/api/webhooks/swich", swichWebhook);
+app.all("/api/webhooks/swich", swichWebhook);
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true, service: "marketing-studio-backend", revision: process.env.DEPLOY_REVISION || null });
 });
 
-app.use("/api", privateApi);
 app.use("/mcp", (req, res, next) => {
-  if (req.method === "GET" && req.path === "/") return next();
-  return requireAuth(req, res, next);
+  if (req.method === "GET" && req.accepts("html") && !req.accepts("json")) return next();
+  return mcpRouter(req, res, next);
 });
+app.use("/api/mcp", mcpRouter);
+
+app.use("/api", privateApi);
 
 app.use("/api/billing", billingRouter);
 app.use("/api/audio", rateLimitPost, audioGenerateQuota, audioRouter);
@@ -101,8 +104,6 @@ app.use(
   }),
   studioRouter,
 );
-app.use("/mcp", (req, res, next) => req.method === "GET" ? next() : mcpRouter(req, res, next));
-app.use("/api/mcp", mcpRouter);
 
 app.get("/api/models/avatar", async (_req, res) => {
   let qwenHealthBody = null;
@@ -456,7 +457,7 @@ app.delete("/api/faceswaps/:id", async (req, res) => {
     try {
       await r2Del(key);
     } catch (err) {
-      res.status(503).json({ error: "Could not delete remote media; retry deletion" }); return;
+      console.warn("Could not delete remote media key:", key, err instanceof Error ? err.message : String(err));
     }
   }
   await deleteSwapJob(job.id, email);

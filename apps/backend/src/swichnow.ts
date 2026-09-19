@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { FRONTEND_URL } from "./env.js";
 import type { BillingOrder } from "./billing-store.js";
 
@@ -72,16 +72,18 @@ export function verifyCallback(query: Record<string, string | undefined>): {
   amount?: string;
   status?: string;
 } {
-  const customerTransactionId = String(query.CustomerTransactionId ?? "");
-  const orderId = String(query.OrderId ?? "");
-  const amount = String(query.Amount ?? "");
-  const status = String(query.Status ?? "");
-  const checksum = String(query.Checksum ?? "");
+  const customerTransactionId = String(query.CustomerTransactionId ?? query.customerTransactionId ?? "");
+  const orderId = String(query.OrderId ?? query.orderId ?? "");
+  const amount = String(query.Amount ?? query.amount ?? "");
+  const status = String(query.Status ?? query.status ?? "");
+  const checksum = String(query.Checksum ?? query.checksum ?? "");
   if (!customerTransactionId || !orderId || !amount || !status || !checksum) {
     return { ok: false, error: "missing callback parameters" };
   }
   const expected = callbackChecksum(customerTransactionId, orderId, amount, status);
-  if (expected !== checksum) {
+  const expBuf = Buffer.from(expected, "utf-8");
+  const gotBuf = Buffer.from(checksum, "utf-8");
+  if (expBuf.length !== gotBuf.length || !timingSafeEqual(expBuf, gotBuf)) {
     return { ok: false, error: "checksum mismatch" };
   }
   return { ok: true, customerTransactionId, orderId, amount, status };

@@ -133,10 +133,13 @@ billingRouter.get("/order/:id", async (req, res) => {
 
 /** Public Swich callback (doc §16). Verify, grant, answer `{"status":"success"}`. */
 export async function swichWebhook(req: express.Request, res: express.Response) {
-  const query = req.query as Record<string, string | undefined>;
-  const check = verifyCallback(query);
+  const payload: Record<string, string | undefined> = {
+    ...(req.query as Record<string, string | undefined>),
+    ...(typeof req.body === "object" && req.body !== null ? (req.body as Record<string, string | undefined>) : {}),
+  };
+  const check = verifyCallback(payload);
   if (!check.ok) {
-    res.status(400).json({ status: "failed" });
+    res.status(400).json({ status: "failed", error: check.error });
     return;
   }
   const order: BillingOrder | undefined = await getOrder(check.customerTransactionId!);

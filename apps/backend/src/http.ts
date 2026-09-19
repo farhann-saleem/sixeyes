@@ -8,12 +8,16 @@ import { currentUser, requireAuth } from "./google-auth.js";
 const PUBLIC = /^\/(?:mcp|models\/avatar|image-templates(?:\/[^/]+\/image)?|video-templates(?:\/[^/]+\/(?:video|poster))?|effects(?:\/[^/]+\/(?:video|poster))?|billing\/plans|audio\/(?:health|voices|voice-library)|studio\/health)\/?$/;
 export const privateApi: RequestHandler = (req, res, next) => {
   if ((req.method === "GET" || req.method === "HEAD") && PUBLIC.test(req.path)) return next();
+  if (req.path === "/mcp" || req.path.startsWith("/mcp")) return next();
   res.setHeader("Cache-Control", "private, no-store");
   res.vary("Cookie");
   if (currentUser(req)) return next();
   return requireAuth(req, res, next);
 };
 export const sameOriginWrites: RequestHandler = (req, res, next) => {
+  if (req.path.startsWith("/api/webhooks/") || req.path === "/mcp" || req.path === "/api/mcp") {
+    return next();
+  }
   if (!["GET", "HEAD", "OPTIONS"].includes(req.method)) {
     const origin = req.get("Origin");
     if (req.get("Sec-Fetch-Site") === "cross-site" || (origin && origin !== new URL(FRONTEND_URL).origin)) {
