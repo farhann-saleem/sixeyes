@@ -25,7 +25,7 @@ type CastVoice = {
 const FILM_NAV: Array<{ id: Desk; kicker: string; title: string; hint: string }> = [
   { id: "topic", kicker: "01 · Topic", title: "Start a film", hint: "Topic, name, and length." },
   { id: "script", kicker: "02 · Script", title: "Director writes", hint: "AI narration and scenes." },
-  { id: "cast", kicker: "03 · Shots", title: "Generate footage", hint: "AI clips — Seedance · Kling · LTX." },
+  { id: "cast", kicker: "03 · Shots", title: "Generate footage", hint: "Seedance 1.5 Pro · Kling 3.0 · LTX-2.5." },
   { id: "studio", kicker: "04 · Mix", title: "Assemble", hint: "Narration on A1. Music on A2." },
 ];
 
@@ -40,9 +40,7 @@ function FilmNav({ desk, onDesk }: { desk: Desk; onDesk: (d: Desk) => void }) {
           aria-current={desk === item.id ? "step" : undefined}
           onClick={() => onDesk(item.id)}
         >
-          <p className="kicker">{item.kicker}</p>
-          <h2>{item.title}</h2>
-          <p>{item.hint}</p>
+          {item.title}
         </button>
       ))}
     </nav>

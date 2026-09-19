@@ -9,9 +9,11 @@ alwaysApply: false
 ## Stage color (never cream on Script / Shots)
 
 - `.film-stage` for **topic, script, cast** stays **midnight** `#150f23` with light text (`#fffdf8` / `#efe8fb` / `#cfc8d6`).
-- Do **not** restyle Script or Generate footage (Shots) to cream `#fffdf8` / `#f7f5f0` with dark headings — that is what made “Pick generated shots” invisible.
-- Film step rail inside `.film-workbench`: transparent inactive steps, **lime** active (`.on`), no cream sticker cards with hard drop shadows.
-- Keep nav title **Generate footage** for step 03; do not rename the tab to “Pick footage” unless the owner asks.
+- Empty states (`.film-stage-empty` h2/p) must stay **light** on midnight — never `#150f23` / `#2f283d` (black-on-black).
+- Do **not** restyle Script or Generate footage (Shots) to cream `#fffdf8` / `#f7f5f0` with dark headings.
+- Film step rail: cream bar on the workbench (`#fffdf8`). Short centered title pills (`flex` + `width: auto`) — never `grid` / `repeat(4, 1fr)` stretch, never tall sticker cards. Inactive `#150f23`; active lime `#c2ef4e`.
+- Stage body under the rail stays midnight `#150f23` with light copy (never cream stage + faint headings).
+- Keep nav title **Generate footage** for step 03.
 
 ## Voice preview (0 credits)
 

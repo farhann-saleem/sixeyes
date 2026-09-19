@@ -1,3 +1,21 @@
+# Current handoff — Cream rail + short centered pills (2026-09-19)
+
+Owner: film steps sit as a **cream rail on top of the midnight workbench**. Pills are **short and centered** (titles only, auto width) — never `repeat(4, 1fr)` stretched tabs, never tall sticker cards. Dark inactive `#150f23` on `#fffdf8`; lime `.on`. Stage body stays midnight.
+
+---
+
+# Current handoff — Compact cream film pill rail (2026-09-19)
+
+Owner screenshot: cream strip under site nav, lime pill on **Generate footage**, inactive labels were light-on-cream (unreadable). Restored that compact pill rail with **dark inactive text** `#150f23` on `#fffdf8`; active stays lime. Kickers/hints hidden. Stage body stays midnight.
+
+---
+
+# Current handoff — Sticker film-step rail restored (2026-09-19)
+
+Owner: the **cream raised cards** (black hard shadow + lime active) on Generate footage were the wanted navbar — not the flat transparent rail. Restored that sticker rail for **all four steps** (Topic → Mix). Stage body stays midnight.
+
+---
+
 # Current handoff — Shots midnight stage + free Play voice (2026-09-19)
 
 1. **Cream-on-light bug:** Script/Shots stage was cream with near-invisible headings. Forced `.is-script` / `.is-cast` to midnight `#150f23` + light type; film-steps match Topic (transparent / lime `.on`). Keep title **Generate footage**.

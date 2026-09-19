@@ -141,12 +141,53 @@
 
 /* The documentary board owns its step rail and stage; the film shelf remains outside. */
 .film-workbench { border: 1px solid #362d59; border-radius: 24px; background: #150f23; box-shadow: 0 16px 48px rgb(21 15 35 / 12%); margin-bottom: 48px; }
-.projects-page .film-workbench .film-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 12px; margin: 0; border-bottom: 1px solid #362d59; }
-.projects-page .film-workbench .film-step { min-width: 0; min-height: 100px; padding: 16px 18px; background: transparent; border: 1px solid transparent; border-radius: 14px; box-shadow: none; text-align: left; color: #efe8fb; }
-.projects-page .film-workbench .film-step .kicker { display: block; margin: 0 0 8px; color: #bdb8c0; font-size: 14px; letter-spacing: .08em; }
-.projects-page .film-workbench .film-step h2 { color: inherit; font-size: clamp(18px, 1.6vw, 24px); margin: 0; }
-.projects-page .film-workbench .film-step.on { background: var(--lime); color: #150f23; border-color: var(--lime); }
-.projects-page .film-workbench .film-step.on .kicker { color: #38451b; }
+/* Film step nav: cream rail atop the workbench; short centered pills (not 4×1fr stretch). */
+.projects-page .film-workbench .film-steps,
+.project-workspace > .film-steps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  margin: 0;
+  padding: 6px 8px;
+  gap: 4px;
+  background: #fffdf8;
+  border: 0;
+  border-bottom: 1px solid #d8d2c4;
+  border-radius: 24px 24px 0 0;
+}
+.project-workspace > .film-steps {
+  margin: 0 0 16px;
+  border: 1px solid #d8d2c4;
+  border-radius: 14px;
+}
+.projects-page .film-workbench .film-steps .film-step,
+.project-workspace > .film-steps .film-step {
+  flex: 0 0 auto;
+  width: auto;
+  min-height: 0;
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  box-shadow: none;
+  color: #150f23;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.projects-page .film-workbench .film-steps .film-step.on,
+.project-workspace > .film-steps .film-step.on {
+  background: var(--lime);
+  color: #150f23;
+  border-color: var(--lime);
+  box-shadow: none;
+}
+.projects-page .film-workbench .film-steps .film-step:not(.on):hover,
+.project-workspace > .film-steps .film-step:not(.on):hover {
+  background: #f0ebe3;
+  border-color: #d8d2c4;
+}
 .projects-page .film-workbench section.film-stage { padding: 32px; margin: 0; border: 0; border-radius: 0 0 24px 24px; background: #150f23; box-shadow: none; color: #efe8fb; }
 .projects-page .film-workbench .film-topic { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: stretch; gap: 28px; padding: 16px 20px; }
 .film-topic-col-left, .film-topic-col-right { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
@@ -181,6 +222,8 @@
 .projects-page .film-workbench .film-stage-empty p { color: #cfc8d6; font-size: 0.95rem; }
 .projects-page .film-workbench .film-stage:not(.is-topic) { background: #150f23; color: #efe8fb; }
 .projects-page .film-workbench .film-stage:not(.is-topic) .film-stage-empty :is(h2,p) { color: #efe8fb; }
+.projects-page .film-workbench .film-stage.is-topic .film-stage-empty h2 { color: #fffdf8 !important; }
+.projects-page .film-workbench .film-stage.is-topic .film-stage-empty p { color: #cfc8d6 !important; }
 .projects-page .films-shelf-head { padding-bottom: 20px; border-bottom: 1px solid #d8d2c4; margin-bottom: 24px; }
 .projects-page .films-grid { gap: 22px; }
 .projects-page .films-grid .project-card { box-shadow: var(--panel-shadow); overflow: hidden; }
@@ -190,7 +233,8 @@
 .projects-page :is(.project-scene-edit, .project-cast-scene, .project-script, .project-actions) { box-shadow: var(--panel-shadow); }
 .nle { --nle-bg: #150f23; --nle-panel: #1f192c; --nle-panel2: #282035; --nle-accent: #c2ef4e; }
 @media (hover: hover) and (pointer: fine) {
-  .projects-page .film-workbench .film-step:not(.on):hover { background: #2d253b; border-color: #50465f; }
+  .projects-page .film-workbench .film-step:not(.on):hover,
+  .project-workspace > .film-steps .film-step:not(.on):hover { background: #f0ebe3; border-color: #d8d2c4; }
   .projects-page .films-grid .project-card:hover { border-color: var(--lime) !important; }
   .studio .project-primary:not(:disabled):hover, .nav .nav-cta:hover { background: #d1f77c !important; }
 }
@@ -221,8 +265,6 @@
   .nav .nav-menu.is-wide { flex-wrap: wrap; }
   .nav .nav-col { flex: 1 1 180px; }
   .mcp-desk { grid-template-columns: 1fr; }
-  .projects-page .film-workbench .film-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 8px; }
-  .projects-page .film-workbench .film-step { min-height: 76px; padding: 12px; }
   .projects-page .film-workbench section.film-stage { padding: 16px; }
   .projects-page .film-workbench .film-topic { padding: 0; }
   .film-topic-fields { padding: 16px; }
@@ -323,45 +365,39 @@ main.projects-page:has(.nle-page) {
 }
 .projects-page:has(.nle-page) .film-workbench .film-steps,
 .project-workspace.in-studio > .film-steps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   flex: 0 0 auto;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  padding: 4px;
-  gap: 4px;
-  margin: 0;
-  max-width: none;
   width: 100%;
+  margin: 0;
+  padding: 6px 8px;
+  gap: 4px;
+  background: #fffdf8;
+  border: 0;
+  border-bottom: 1px solid #d8d2c4;
+  border-radius: 12px 12px 0 0;
 }
-.projects-page:has(.nle-page) .film-workbench .film-step .kicker,
-.project-workspace.in-studio > .film-steps .film-step .kicker { display: none; }
-.projects-page:has(.nle-page) .film-workbench .film-step,
+.projects-page:has(.nle-page) .film-workbench .film-steps .film-step,
 .project-workspace.in-studio > .film-steps .film-step {
+  flex: 0 0 auto;
+  width: auto;
   min-height: 0;
-  padding: 6px 10px;
-  background: #1f192c;
-  color: #efe8fb;
-  border-color: #362d59;
+  padding: 8px 14px;
+  background: transparent;
+  color: #150f23;
+  border: 1px solid transparent;
+  border-radius: 999px;
   box-shadow: none;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
 }
-.projects-page:has(.nle-page) .film-workbench .film-step h2,
-.project-workspace.in-studio > .film-steps .film-step h2 { color: #efe8fb; }
-.projects-page:has(.nle-page) .film-workbench .film-step .kicker,
-.project-workspace.in-studio > .film-steps .film-step .kicker { color: #bdb8c0; }
-.projects-page:has(.nle-page) .film-workbench .film-step.on,
+.projects-page:has(.nle-page) .film-workbench .film-steps .film-step.on,
 .project-workspace.in-studio > .film-steps .film-step.on {
   background: var(--lime);
   color: #150f23;
   border-color: var(--lime);
-}
-.projects-page:has(.nle-page) .film-workbench .film-step.on h2,
-.project-workspace.in-studio > .film-steps .film-step.on h2 { color: #150f23; }
-.projects-page:has(.nle-page) .film-workbench .film-step.on .kicker,
-.project-workspace.in-studio > .film-steps .film-step.on .kicker { color: #38451b; }
-.projects-page:has(.nle-page) .film-workbench .film-step h2,
-.project-workspace.in-studio > .film-steps .film-step h2 { font-size: 14px; }
-.projects-page:has(.nle-page) .film-workbench .film-step .kicker,
-.project-workspace.in-studio > .film-steps .film-step .kicker {
-  font-size: 10px;
-  margin-bottom: 2px;
 }
 .projects-page .film-workbench section.film-stage.is-mix:has(.nle-page) {
   display: flex;
@@ -444,10 +480,8 @@ main.projects-page:has(.nle-page) {
   .nle-mid { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
   .nle-bin-list { min-height: 64px; height: 64px; flex: 0 0 auto; }
   .nle-media { flex-basis: 96px; }
-  .projects-page:has(.nle-page) .film-workbench .film-step,
-  .project-workspace.in-studio > .film-steps .film-step { padding: 6px; }
-  .projects-page:has(.nle-page) .film-workbench .film-step h2,
-  .project-workspace.in-studio > .film-steps .film-step h2 { font-size: 12px; }
+  .projects-page:has(.nle-page) .film-workbench .film-steps .film-step,
+  .project-workspace.in-studio > .film-steps .film-step { padding: 6px 10px; font-size: 12px; }
   .nle-hit { min-height: 32px; }
   .nle-transport { padding: 4px 8px; gap: 4px; display: flex; flex-wrap: nowrap; align-items: center; overflow-x: auto; }
 }

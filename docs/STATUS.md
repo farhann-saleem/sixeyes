@@ -1,3 +1,7 @@
+## Film step nav: cream rail + short pills — 2026-09-19
+
+- `/projects` film steps: cream rail atop the workbench; **short centered title pills** (not full-width equal tabs). Lime `.on`; dark inactive text. Stage under it stays midnight. Rule: `.cursor/rules/documentary-shots-ui.mdc`.
+
 ## Mix: gapless clip cuts + VO-length timeline — 2026-09-19
 
 - **Black flash between Mix clips:** Preview uses dual `<video>` buffers and only reveals the next clip after `loadeddata`/seek, so remounting no longer flashes black on cut 2+.
