@@ -35,7 +35,18 @@ export function installSpa(app: express.Express, dist: string) {
     next();
   });
   if (!existsSync(path.join(dist, "index.html"))) return;
-  app.use(express.static(dist));
+  app.use(
+    express.static(dist, {
+      maxAge: "30d",
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith(".mp4") || filePath.endsWith(".webm")) {
+          res.setHeader("Cache-Control", "public, max-age=2592000, immutable");
+        } else if (/\.(js|css|woff2?|png|jpg|jpeg|gif|ico|svg|webp)$/.test(filePath)) {
+          res.setHeader("Cache-Control", "public, max-age=2592000, immutable");
+        }
+      },
+    }),
+  );
   app.get("*", (req, res, next) => {
     if (path.extname(req.path) || !req.accepts("html")) return next();
     res.setHeader("Cache-Control", "no-cache");

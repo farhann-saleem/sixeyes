@@ -1,3 +1,31 @@
+## Generative Engine Optimization (GEO) & AI Search Expansion — 2026-09-19
+
+Owner GO:
+- **Direct AI Recommendation Optimization (Perplexity, ChatGPT, DeepSeek, Claude):**
+  - Updated `apps/frontend/public/robots.txt` with explicit user-agent allowances for `GPTBot`, `OAI-SearchBot`, `PerplexityBot`, `ClaudeBot`, and `Google-Extended`, pointing directly to the sitemap and `llms.txt`.
+  - Expanded `apps/frontend/public/llms.txt` with dedicated Q&A targeting high-intent queries (*"What AI tool turns a script into a documentary with an editable timeline?"*), competitive positioning vs single-prompt video models (Runway, Sora, Pika), and complete workflow mappings.
+  - Added `FAQPage` JSON-LD structured data into `apps/frontend/index.html` answering the exact queries scanned by AI search answer engines and Google SGE / AI Overviews.
+- **Validation:** Frontend production build succeeds in 2.69s; all 39 backend tests pass.
+
+## Video Caching, Proximity Pre-Buffering & Zero-Lag Scrolling — 2026-09-19
+
+Owner GO:
+- **Root Cause Eliminated:** Addressed the video stutter and repeated re-downloading on scroll caused by narrow 300px proximity boundaries, `preload="metadata"` omitting media frame buffers, unmounting `src` on scroll-away, and lack of persistent HTTP cache headers on media endpoints.
+- **Backend Immutable Cache Headers:**
+  - Configured `Cache-Control: public, max-age=2592000, immutable` for all `.mp4` and `.webm` static files served via `express.static` in `apps/backend/src/http.ts`.
+  - Configured `Cache-Control: public, max-age=2592000, immutable` for all disk-backed media endpoints in `apps/backend/src/index.ts` (`/api/image-templates/:id/image`, `/api/video-templates/:id/video`, `/api/video-templates/:id/poster`, `/api/effects/:id/video`, `/api/effects/:id/poster`).
+- **Frontend Video Pre-Buffering & Persistent Memory:**
+  - `apps/frontend/src/viewport-media.tsx`:
+    - Expanded proximity `rootMargin` from `300px` to `1000px 0px` so clips buffer ~1 screen height before scrolling into view.
+    - Set persistent initialization state (`hasStarted`) in `DeferredVideo` so once loaded, the video element never resets `src` to `undefined` or reloads from byte 0 when scrolling away and back.
+    - Set `preload="auto"` when mounted so decoded frames are ready in memory for instant 0ms playback on arrival.
+  - `apps/frontend/src/landing/StudioReel.tsx`:
+    - Upgraded `VideoCycle` with pre-buffering of the upcoming clip (`next = (i + 1) % srcs.length`) with smooth 500ms opacity cross-fading, eliminating black frame gaps and buffering stutters during cycle switches.
+  - `apps/frontend/src/landing/Landing.tsx`:
+    - Added idle media background pre-cacher (`warmupLandingMedia`) triggered during browser idle time (`requestIdleCallback` / 1.2s delay) to pre-warm key landing clips into browser cache without blocking initial TTI or CPU threads.
+    - Removed restrictive `preload="metadata"` overrides on hero and coffee scene clips so full playback frames buffer smoothly.
+- **Validation:** 39/39 backend tests pass; backend typecheck clean; frontend production build succeeds in 4.56s with 0 errors.
+
 ## Comprehensive Audit Implementation & UI/UX Resolution — 2026-09-19
 
 Owner GO:

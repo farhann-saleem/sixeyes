@@ -11,7 +11,7 @@ export function useMediaVisibility<T extends HTMLElement>(eager = false) {
     if (!element) return;
     const proximity = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) { setNear(true); proximity.disconnect(); }
-    }, { rootMargin: "300px" });
+    }, { rootMargin: "1000px 0px" });
     const viewport = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting));
     proximity.observe(element);
     viewport.observe(element);
@@ -28,13 +28,40 @@ export function useMediaVisibility<T extends HTMLElement>(eager = false) {
   return { ref, near, active: visible && foreground && !reduced, reduced };
 }
 
-export function DeferredVideo({ src, eager = false, autoPlay = true, ...props }: VideoHTMLAttributes<HTMLVideoElement> & { eager?: boolean }) {
+export function DeferredVideo({
+  src,
+  eager = false,
+  autoPlay = true,
+  preload: customPreload,
+  ...props
+}: VideoHTMLAttributes<HTMLVideoElement> & { eager?: boolean }) {
   const { ref, near, active, reduced } = useMediaVisibility<HTMLVideoElement>(eager);
+  const [hasStarted, setHasStarted] = useState(eager);
+
+  useEffect(() => {
+    if (near && !hasStarted) setHasStarted(true);
+  }, [near, hasStarted]);
+
   useEffect(() => {
     const video = ref.current;
     if (!video) return;
-    if (near && active && autoPlay) void video.play().catch(() => { /* Browser autoplay policy; keep the reserved frame. */ });
-    else video.pause();
-  }, [near, active, autoPlay, src]);
-  return <video {...props} ref={ref} src={near && !reduced ? src : undefined} preload={near ? "metadata" : "none"} />;
+    if (near && active && autoPlay && !reduced) {
+      if (video.ended) video.currentTime = 0;
+      void video.play().catch(() => { /* Browser autoplay policy; keep the reserved frame. */ });
+    } else {
+      video.pause();
+    }
+  }, [near, active, autoPlay, src, reduced]);
+
+  const shouldMount = (eager || near || hasStarted) && !reduced;
+  const resolvedPreload = shouldMount ? (customPreload ?? "auto") : "none";
+
+  return (
+    <video
+      {...props}
+      ref={ref}
+      src={shouldMount ? src : undefined}
+      preload={resolvedPreload}
+    />
+  );
 }

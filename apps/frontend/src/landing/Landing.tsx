@@ -346,12 +346,38 @@ const HERO_CLIPS = [
   { src: "/landing/hero-3.mp4", label: "Clones" },
 ];
 
+function warmupLandingMedia() {
+  if (typeof window === "undefined") return;
+  const clips = [
+    "/landing/docs/coffee-1.mp4",
+    "/landing/docs/coffee-2.mp4",
+    "/landing/docs/coffee-3.mp4",
+    "/landing/docs/coffee-4.mp4",
+    "/landing/hero-2.mp4",
+  ];
+  const run = () => {
+    clips.forEach((url) => {
+      try {
+        fetch(url, { priority: "low" } as RequestInit).catch(() => {});
+      } catch {
+        // Ignore background pre-warm failures
+      }
+    });
+  };
+  if ("requestIdleCallback" in window) {
+    (window as any).requestIdleCallback(run, { timeout: 2000 });
+  } else {
+    setTimeout(run, 1200);
+  }
+}
+
 export function Landing({ onGo }: { onGo: (next: Route) => void }) {
   const motionRef = useLandingMotion();
   const [studioOn, setStudioOn] = useState("i2i");
 
   useEffect(() => {
     document.documentElement.classList.add("lp-root");
+    warmupLandingMedia();
     return () => document.documentElement.classList.remove("lp-root");
   }, []);
 
@@ -375,7 +401,6 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
               loop
               playsInline
               autoPlay
-              preload="metadata"
             />
           ))}
         </div>
@@ -487,7 +512,7 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
                 onClick={go({ name: "projects" })}
               >
                 <div className="hf-frame hf-a-vid">
-                  <DeferredVideo src={scene.src} muted loop playsInline autoPlay preload="metadata" />
+                  <DeferredVideo src={scene.src} muted loop playsInline autoPlay />
                 </div>
                 <div className="hf-why-shot-meta">
                   <em>{scene.n}</em>
@@ -681,7 +706,7 @@ export function Landing({ onGo }: { onGo: (next: Route) => void }) {
                 </div>
               </div>
               <div className="hf-screen">
-                <DeferredVideo src="/landing/hero-2.mp4" muted loop playsInline autoPlay preload="metadata" />
+                <DeferredVideo src="/landing/hero-2.mp4" muted loop playsInline autoPlay />
                 <div className="hf-hud">
                   <div className="hf-hud-row">
                     <span className="hf-hud-chip" style={{ color: "#c2ef4e", border: "1px solid rgba(194,239,78,0.5)" }}>

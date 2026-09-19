@@ -333,6 +333,7 @@ app.get("/api/image-templates/:id/image", async (req, res) => {
   if (key) { res.status(302).setHeader("Location", await r2SignedUrl(key)); res.setHeader("Cache-Control", "no-store"); res.end(); return; }
   const file = t.abs_path;
   if (!file || !existsSync(file)) { res.status(404).json({ error: "file missing" }); return; }
+  res.setHeader("Cache-Control", "public, max-age=2592000, immutable");
   res.type(t.mime).sendFile(path.resolve(file));
 });
 
@@ -387,6 +388,7 @@ app.get("/api/video-templates/:id/video", async (req, res) => {
   if (key) { res.status(302).setHeader("Location", await r2SignedUrl(key)); res.setHeader("Cache-Control", "no-store"); res.end(); return; }
   const file = t.abs_path;
   if (!file || !existsSync(file)) { res.status(404).json({ error: "file missing" }); return; }
+  res.setHeader("Cache-Control", "public, max-age=2592000, immutable");
   res.type(t.mime).sendFile(path.resolve(file));
 });
 
@@ -397,6 +399,7 @@ app.get("/api/video-templates/:id/poster", async (req, res) => {
   if (key) { res.status(302).setHeader("Location", await r2SignedUrl(key)); res.setHeader("Cache-Control", "no-store"); res.end(); return; }
   const file = t.poster_path;
   if (!file || !existsSync(file)) { res.status(404).json({ error: "file missing" }); return; }
+  res.setHeader("Cache-Control", "public, max-age=2592000, immutable");
   res.type("image/jpeg").sendFile(path.resolve(file));
 });
 
@@ -415,6 +418,7 @@ app.get("/api/effects/:id/video", async (req, res) => {
   if (key) { res.status(302).setHeader("Location", await r2SignedUrl(key)); res.setHeader("Cache-Control", "no-store"); res.end(); return; }
   const file = t.abs_path;
   if (!file || !existsSync(file)) { res.status(404).json({ error: "file missing" }); return; }
+  res.setHeader("Cache-Control", "public, max-age=2592000, immutable");
   res.type(t.mime).sendFile(path.resolve(file));
 });
 
@@ -425,6 +429,7 @@ app.get("/api/effects/:id/poster", async (req, res) => {
   if (key) { res.status(302).setHeader("Location", await r2SignedUrl(key)); res.setHeader("Cache-Control", "no-store"); res.end(); return; }
   const file = t.poster_path;
   if (!file || !existsSync(file)) { res.status(404).json({ error: "file missing" }); return; }
+  res.setHeader("Cache-Control", "public, max-age=2592000, immutable");
   res.type("image/jpeg").sendFile(path.resolve(file));
 });
 

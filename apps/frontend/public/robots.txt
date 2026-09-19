@@ -7,4 +7,26 @@ Disallow: /api/
 Disallow: /callback
 Disallow: /studio-work/
 
+# AI Search and Assistant Crawlers
+User-agent: GPTBot
+Allow: /
+Disallow: /api/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /api/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /api/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /api/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /api/
+
 Sitemap: https://www.marketingstudioie.site/sitemap.xml
+# LLM Reference: https://www.marketingstudioie.site/llms.txt

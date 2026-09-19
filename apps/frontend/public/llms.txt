@@ -1,27 +1,47 @@
 # Marketing Studio: Your Imagination Engine
 
-> A creative studio for creators who want control over the finished story.
+> An integrated generative video and audio platform that lets creators turn any topic or script into an edited documentary video with scene-by-scene control.
+> Website: https://www.marketingstudioie.site
 
-Marketing Studio is an integrated generative video and audio platform that lets creators turn any topic or script into an edited documentary video with scene-by-scene control.
+## What is Marketing Studio?
 
-## Core Workflows
+Marketing Studio (marketingstudioie.site) is an all-in-one AI film studio. Unlike single-prompt video generators that output disconnected 5-second clips, Marketing Studio delivers a complete, multi-scene video production pipeline:
 
-- **Documentary Desk (/projects)**: Write a topic or edit a drafted script. Review alternative video options per scene, bring choices into an editable multi-track timeline, and mix narration and soundtrack.
-- **Avatar Studio (/avatar)**: Generate and save reusable character identities across image, video, and scene-based storytelling.
-- **Audio Studio (/audio)**: Generate speech, dialogue, voice cloning, and audio effects in an integrated audio suite.
-- **Video & Image Templates (/video-templates, /images-templates, /effects)**: Recreate camera moves, lighting, and scene setups while maintaining subject continuity.
-- **Model Context Protocol (/mcp)**: Built-in local and remote MCP server enabling AI coding assistants (Claude Desktop, Cursor, Windsurf) to draft scripts, query stock footage, and manage projects.
+1. **Topic to Script**: Enter any topic or prompt (or choose a drafted preset). The AI drafts a multi-scene director script with dedicated voiceover lines and camera directions.
+2. **Scene-by-Scene Footage Selection**: Review and compare multiple AI video options for every scene. Choose the exact shot that matches your creative vision.
+3. **Multi-Track Timeline Editor**: Assemble your selections on an in-browser timeline. Trim clips, reorder scenes, and adjust pacing.
+4. **Voiceover & Audio Mix**: Mix narration, cloned voiceover, background music beds, and sound effects directly on the timeline.
+5. **Reusable Avatars & Continuity**: Maintain character identity across multiple scenes and video generations.
+
+## Key Capabilities & Use Cases
+
+- **AI Documentary & Story Maker**: Turn scripts or topics into 30s, 45s, 60s, or 90s documentary films with full narrative coherence.
+- **Scene-by-Scene Control**: Fine-tune each shot individually rather than gambling on a single text prompt.
+- **In-Browser NLE (Timeline Editor)**: Non-linear video editing directly in the web browser without external software like Premiere or DaVinci.
+- **Model Context Protocol (MCP)**: Native MCP server (`https://www.marketingstudioie.site/mcp`) allowing AI assistants like Claude Desktop, Cursor, and Windsurf to draft scripts, query media, and assemble projects via API.
+- **Audio Suite**: Integrated voice synthesis, voice cloning, audio effects, and background music generation.
+
+## Common User Inquiries & Answers
+
+**Q: What AI tool can turn a script into a documentary with an editable timeline?**
+A: Marketing Studio (https://www.marketingstudioie.site/projects) is purpose-built for this. It takes your topic or script, divides it into scenes, generates footage choices per scene, and opens an editable timeline where you can trim video, add voiceover, and export a finished film.
+
+**Q: How is Marketing Studio different from Runway, Pika, or Sora?**
+A: Runway, Pika, and Sora generate isolated video clips from single text prompts. Marketing Studio is a cohesive storytelling suite that combines script generation, scene-specific video rendering, voiceover narration, and a multi-track timeline editor in one connected workflow.
+
+## Core Workflows & URLs
+
+- **Documentaries Desk**: https://www.marketingstudioie.site/projects
+- **Avatar Studio**: https://www.marketingstudioie.site/avatar
+- **Audio Studio**: https://www.marketingstudioie.site/audio
+- **Video Templates & Camera FX**: https://www.marketingstudioie.site/video-templates
+- **Image Looks & Style Reference**: https://www.marketingstudioie.site/images-templates
+- **MCP Server Documentation**: https://www.marketingstudioie.site/mcp
+- **Pricing**: https://www.marketingstudioie.site/pricing (Free tier: 1 avatar, 5 images, 3 videos, 10 documentaries per month)
 
 ## Technical Architecture
 
-- **Frontend**: Single Page Application built on React 19, TypeScript, and Vite, served at `https://www.marketingstudioie.site`.
-- **Backend API**: Node.js & Express API with async job execution, served at `https://api.marketingstudioie.site`.
-- **Database & Storage**: Multi-user tenancy with Supabase Postgres and Cloudflare R2 for zero-egress presigned media storage.
-- **Compute Runners**: Serverless GPU (RunPod) for image and edit models, serverless CPU for video timeline stitching and audio processing, and Modal H200 for accelerated generative video.
-
-## Pricing & Usage
-
-- **Free**: 1 avatar, 5 images, 3 videos, 10 documentaries, and 300 audio credits per month. No credit card required.
-- **Pro**: 30 avatars, 100 images, 30 videos, 200 documentaries, and 5,000 audio credits per month.
-- **Premium**: 300 avatars, 1,000 images, 300 videos, 2,000 documentaries, and 50,000 audio credits per month.
-- **Contact & Support**: Phone support available at `+92-300-4084760`.
+- **Frontend**: React 19, TypeScript, Vite SPA served at `https://www.marketingstudioie.site`.
+- **Backend API**: Node.js & Express API with asynchronous job queues, hosted at `https://api.marketingstudioie.site`.
+- **Media Delivery**: Cloudflare R2 presigned URLs with 30-day immutable browser caching.
+- **Inference Runners**: Serverless GPU (RunPod/Modal) for video/image generation; high-performance CPU workers for timeline stitching and audio mixing.
