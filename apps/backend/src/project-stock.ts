@@ -145,7 +145,7 @@ export async function fetchSceneStock(
     result.push({
       upload_id: id,
       kind: "video",
-      label: `${scene.heading} · ${choice.person}`,
+      label: scene.heading,
       preview_url: `/api/studio/uploads/${id}/file`,
       duration_s: choice.duration,
       pexels_id: choice.id,

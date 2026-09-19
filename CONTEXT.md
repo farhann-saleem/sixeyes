@@ -1,3 +1,10 @@
+# Current handoff — Voice preview + shot engine labels (2026-09-19)
+
+1. **Narration voice Preview:** Cast assemble row has a **Preview / Stop** control beside the voice `<select>`; plays vendor `preview_url` via shared `togglePreview` (same as Audio library).
+2. **Shot cards:** Restored rotating engine labels from `DOC_SHOT_MODELS` (Seedance 1.5 Pro · Kling 3.0 · LTX-2.5 · …) — display tags, not photographer names. Duration stays on the card.
+
+---
+
 # Current handoff — Mix black flash + VO vs picture length (2026-09-19)
 
 1. **Black window on clip 2+:** Mix Preview dual-buffers video elements (`Preview.tsx` + `.nle-stage-video`) so the outgoing frame stays until the next clip is seek-ready.
