@@ -55,6 +55,14 @@ function friendlyError(raw: string) {
   if (/stock query/i.test(raw)) return "The director sent a weak shot list. Retry the script: each scene needs a short filmable prompt.";
   return raw;
 }
+function sceneStatusLabel(status: string) {
+  if (status === "picked") return "selected";
+  if (status === "skipped") return "skipped";
+  if (status === "fetched") return "ready";
+  if (status === "pending") return "waiting";
+  if (status === "failed") return "failed";
+  return status;
+}
 function projectStep(p: StudioProject): Step { return ["studio", "exported"].includes(p.phase) ? "studio" : p.phase === "cast" ? "cast" : "script"; }
 
 function filmStill(p: StudioProject): { src: string; video: boolean } | null {
@@ -293,12 +301,20 @@ export function ProjectWorkspace({ id, step, onStep, onHome, chrome = "full" }: 
   useEffect(() => {
     if (step !== "cast") return;
     let alive = true;
-    api<{ data?: CastVoice[] }>("/api/audio/voices?provider=edge&locale=en-US&page_size=100")
+    // ElevenLabs premade demos expose free preview_url — never enqueue TTS for audition.
+    api<{ data?: CastVoice[] }>("/api/audio/voices?provider=elevenlabs&category=premade&page_size=30")
       .then(b => {
         if (!alive) return;
         const rows = (b.data || []).filter(v => v.voice_id);
-        setVoices(rows);
-        setVoiceId((current) => current || rows[0]?.voice_id || "");
+        const withPreview = rows.filter(v => Boolean(v.preview_url));
+        const list = withPreview.length ? withPreview : rows;
+        setVoices(list);
+        setVoiceId((current) => {
+          if (current && list.some(v => v.voice_id === current)) return current;
+          return list[0]?.voice_id || "";
+        });
+        if (!withPreview.length) setVoiceError("Catalog loaded, but no free preview clips were returned.");
+        else setVoiceError("");
       })
       .catch(e => { if (alive) setVoiceError(message(e)); });
     return () => { alive = false; };
@@ -409,7 +425,7 @@ export function ProjectWorkspace({ id, step, onStep, onHome, chrome = "full" }: 
     </section> : step === "cast" ? <section className="project-content">
       <div className="project-section-heading"><div><p className="project-eyebrow">03 / AI SHOTS</p><h1>Pick generated shots</h1><p>Every candidate is labeled with a scene engine — Seedance 1.5 Pro, Kling 3.0, LTX-2.5. Pick one per beat, or skip it.</p></div><span>{scenes.filter(s => s.status === "picked").length} picked · {scenes.filter(s => s.status === "skipped").length} skipped</span></div>
       {!["cast", "studio", "exported"].includes(project.phase) ? <button onClick={() => onStep("script")}>Review your script first</button> : scenes.map((scene, index) => <article className={`cast-scene ${scene.status === "skipped" ? "skipped" : ""}`} key={scene.id}>
-        <header><span className="scene-number">{String(index + 1).padStart(2, "0")}</span><div><h2>{scene.heading}</h2><p>{scene.voiceover_line}</p><small>{scene.stock_query} · {scene.duration_sec}s · {scene.status}</small></div><button disabled={disabled || assembled} onClick={() => void action(`scenes/${scene.id}/pick`, { skip: true })}>{scene.status === "skipped" ? "Skipped" : "Skip scene"}</button></header>
+        <header><span className="scene-number">{String(index + 1).padStart(2, "0")}</span><div><h2>{scene.heading}</h2><p>{scene.voiceover_line}</p><small>{scene.stock_query} · {scene.duration_sec}s · {sceneStatusLabel(scene.status)}</small></div><button disabled={disabled || assembled} onClick={() => void action(`scenes/${scene.id}/pick`, { skip: true })}>{scene.status === "skipped" ? "Skipped" : "Skip scene"}</button></header>
         <div className="cast-candidates">{scene.candidates.filter((c) => c.kind === "video").map((c, ci) => <div className={`cast-candidate ${c.upload_id === scene.picked_upload_id ? "picked" : ""}`} key={c.upload_id}>
           <div className="cast-preview-frame">
             <video
@@ -471,20 +487,21 @@ export function ProjectWorkspace({ id, step, onStep, onHome, chrome = "full" }: 
                     type="button"
                     className={`cast-voice-preview${previewPlaying ? " on" : ""}`}
                     disabled={disabled || !previewUrl}
-                    title={previewUrl ? (previewPlaying ? "Stop preview" : "Play voice preview") : "No preview for this voice"}
+                    title={previewUrl ? (previewPlaying ? "Stop free preview" : "Play free preview — 0 credits") : "No free preview for this voice"}
                     aria-label={previewPlaying ? "Stop voice preview" : "Play voice preview"}
                     onClick={() => {
                       if (!selectedVoice || !previewUrl) return;
+                      // Catalog demo only — never POST /api/audio/tts here.
                       togglePreview(selectedVoice.voice_id, previewUrl, { title: voiceLabel });
                     }}
                   >
-                    {previewPlaying ? <WaveBars active /> : null}
-                    {previewPlaying ? "Stop" : "Preview"}
+                    {previewPlaying ? <WaveBars active /> : <span className="cast-voice-play" aria-hidden="true">▶</span>}
+                    {previewPlaying ? "Stop" : "Play"}
                   </button>
                 </div>
               </label>
               {voiceError && <small role="alert">Voice catalog: {voiceError}</small>}
-              <small>Timeline length follows your spoken narration. Picture shrinks to match if the voice is shorter; the last pick holds if the voice runs longer.</small>
+              <small>Play is a free catalog demo (0 credits). Assemble is when narration is generated.</small>
             </div>
             {project.status !== "running" && scenes.some(s => ["pending", "failed"].includes(s.status)) && <button disabled={busy} onClick={() => void action("fetch-stock")}>Retry scene generate</button>}
             <div>

@@ -1,3 +1,10 @@
+# Current handoff — Shots midnight stage + free Play voice (2026-09-19)
+
+1. **Cream-on-light bug:** Script/Shots stage was cream with near-invisible headings. Forced `.is-script` / `.is-cast` to midnight `#150f23` + light type; film-steps match Topic (transparent / lime `.on`). Keep title **Generate footage**.
+2. **Voice Play:** Cast uses ElevenLabs premade catalog `preview_url` + **Play/Stop** (0 credits). Never TTS for audition. Rule: `.cursor/rules/documentary-shots-ui.mdc`.
+
+---
+
 # Current handoff — Voice preview + shot engine labels (2026-09-19)
 
 1. **Narration voice Preview:** Cast assemble row has a **Preview / Stop** control beside the voice `<select>`; plays vendor `preview_url` via shared `togglePreview` (same as Audio library).

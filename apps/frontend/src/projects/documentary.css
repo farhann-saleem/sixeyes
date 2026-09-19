@@ -219,25 +219,25 @@ button.film-step {
   min-height: 0;
   width: 100%;
   padding: 10px 12px;
-  background: #fffdf8;
-  border: 1px solid #d8d2c4;
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: 10px;
-  color: #150f23;
-  box-shadow: 0 3px 0 0 #150f23;
+  color: #efe8fb;
+  box-shadow: none;
   cursor: pointer;
   font: inherit;
 }
 
 button.film-step.on {
-  background: #150f23;
-  border-color: #362d59;
-  color: #efe8fb;
-  box-shadow: 0 4px 0 0 #110b1f;
+  background: #c2ef4e;
+  border-color: #c2ef4e;
+  color: #150f23;
+  box-shadow: none;
 }
 
 .film-step .kicker {
   margin: 0;
-  color: #422082;
+  color: #bdb8c0;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -245,18 +245,18 @@ button.film-step.on {
 }
 
 button.film-step.on .kicker {
-  color: #c2ef4e;
+  color: #38451b;
 }
 
 .film-step h2 {
   margin: 0;
   font-family: "Space Grotesk", ui-sans-serif, sans-serif;
   font-size: 1.05rem;
-  color: #150f23;
+  color: #efe8fb;
 }
 
 button.film-step.on h2 {
-  color: #fffdf8;
+  color: #150f23;
 }
 
 .film-step p {
@@ -264,7 +264,7 @@ button.film-step.on h2 {
 }
 
 button.film-step.on p {
-  color: #e4dcf2 !important;
+  color: #38451b !important;
 }
 
 .studio section.film-stage,
@@ -272,20 +272,22 @@ button.film-step.on p {
   align-self: stretch;
   width: 100%;
   box-sizing: border-box;
-  background: #fffdf8;
-  border: 1px solid #d8d2c4;
+  background: #150f23;
+  border: 1px solid #362d59;
   border-radius: 14px;
-  box-shadow: 0 4px 0 0 #150f23;
+  box-shadow: none;
   padding: 22px 28px 28px;
   margin: 0 0 32px;
-  color: #150f23;
+  color: #efe8fb;
   min-height: 0;
 }
 
-.film-stage.is-topic {
+.film-stage.is-topic,
+.film-stage.is-script,
+.film-stage.is-cast {
   background: #150f23;
   border-color: #362d59;
-  box-shadow: 0 4px 0 0 #110b1f;
+  box-shadow: none;
   color: #efe8fb;
 }
 
@@ -422,7 +424,7 @@ button.film-step.on p {
 
 .film-stage .project-content h1,
 .film-stage .project-section-heading h1 {
-  color: #150f23;
+  color: #fffdf8;
 }
 
 .project-workspace .film-steps {
@@ -798,6 +800,11 @@ button.film-step.on p {
   cursor: not-allowed;
 }
 
+.cast-voice-preview .cast-voice-play {
+  font-size: 11px;
+  line-height: 1;
+}
+
 .cast-voice-preview .wave-bars {
   display: inline-flex;
   align-items: flex-end;
@@ -1132,4 +1139,57 @@ button.film-step.on p {
   .scene-shot-row {
     grid-template-columns: 1fr 88px;
   }
+}
+
+/* Lock: Script + Shots stay midnight like Topic. Never cream stage + light text. */
+.projects-page .film-workbench section.film-stage:is(.is-script, .is-cast),
+.projects-page .film-workbench section.film-stage.is-topic {
+  background: #150f23 !important;
+  color: #efe8fb !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-content h1,
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-section-heading h1,
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .cast-scene h2 {
+  color: #fffdf8 !important;
+}
+
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-content p,
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-section-heading p,
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .cast-scene p {
+  color: #cfc8d6 !important;
+}
+
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-section-heading > span,
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .cast-scene small,
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .cast-candidate-meta,
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .cast-voice-block small {
+  color: #9a93a8 !important;
+}
+
+.projects-page .film-workbench .film-steps button.film-step {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: #efe8fb !important;
+  box-shadow: none !important;
+}
+
+.projects-page .film-workbench .film-steps button.film-step.on {
+  background: #c2ef4e !important;
+  border-color: #c2ef4e !important;
+  color: #150f23 !important;
+}
+
+.projects-page .film-workbench .film-steps button.film-step h2 {
+  color: inherit !important;
+}
+
+.projects-page .film-workbench .film-steps button.film-step .kicker {
+  color: #bdb8c0 !important;
+}
+
+.projects-page .film-workbench .film-steps button.film-step.on .kicker {
+  color: #38451b !important;
 }
