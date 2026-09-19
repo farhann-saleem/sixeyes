@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { VIDEO_MODELS } from "./model-catalog";
 import { ModelStrip } from "./ModelStrip";
 import { formatClip, isLive, isVideoJob, type Catalog, type SwapJob, type Template } from "./studio";
