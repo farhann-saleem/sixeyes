@@ -12,9 +12,9 @@ type Video = {
   user: { name: string };
   video_files: { file_type: string; width: number; height: number; link: string }[];
 };
-type Photo = { id: number; url: string; photographer: string; src: { large: string; landscape: string } };
 
 export const PEXELS_VIDEO_SEARCH = "https://api.pexels.com/videos/search";
+/** Kept for tests / docs — documentary stock no longer fetches photos. */
 export const PEXELS_PHOTO_SEARCH = "https://api.pexels.com/v1/search";
 
 export function stockUrlAllowed(url: string): boolean {
@@ -42,8 +42,8 @@ const PEXELS_HEADERS = {
   "User-Agent": "MarketingStudio/1.0 (documentary stock fetch)",
 };
 
-async function search<T>(url: string, query: string, signal: AbortSignal): Promise<T> {
-  const res = await fetch(`${url}?${new URLSearchParams({ query, per_page: "3", orientation: "landscape" })}`, {
+async function search<T>(url: string, query: string, signal: AbortSignal, perPage = "3"): Promise<T> {
+  const res = await fetch(`${url}?${new URLSearchParams({ query, per_page: perPage, orientation: "landscape" })}`, {
     headers: PEXELS_HEADERS,
     signal: AbortSignal.any([signal, AbortSignal.timeout(30_000)]),
   });
@@ -92,20 +92,23 @@ export async function fetchSceneStock(
   if (!PEXELS_API_KEY) {
     throw new Error("PEXELS_API_KEY missing. Add it to .env and restart the backend, then retry stock.");
   }
-  const body = await search<{ videos: Video[] }>(PEXELS_VIDEO_SEARCH, scene.stock_query, signal);
+  // Video only — never pad with Pexels photos (still images look like empty/broken previews).
+  const body = await search<{ videos: Video[] }>(PEXELS_VIDEO_SEARCH, scene.stock_query, signal, "15");
   const choices: {
     id: number;
-    kind: "video" | "image";
+    kind: "video";
     url: string;
     page: string;
     person: string;
     duration: number | null;
   }[] = [];
   for (const video of body.videos || []) {
+    if (choices.length >= 3) break;
     const file = video.video_files
       .filter((f) => f.file_type === "video/mp4" && f.width <= 1920 && f.height <= 1080 && stockUrlAllowed(f.link))
       .sort((a, b) => Math.abs(a.height - 720) - Math.abs(b.height - 720))[0];
-    if (file && video.duration >= scene.duration_sec) {
+    // Accept usable clips; assemble trims/loops to scene length. Require at least 2s.
+    if (file && video.duration >= 2) {
       choices.push({
         id: video.id,
         kind: "video",
@@ -116,30 +119,14 @@ export async function fetchSceneStock(
       });
     }
   }
-  if (choices.length < 3) {
-    const photos = await search<{ photos: Photo[] }>(PEXELS_PHOTO_SEARCH, scene.stock_query, signal);
-    for (const photo of photos.photos || []) {
-      if (choices.length === 3) break;
-      const url = photo.src.landscape || photo.src.large;
-      if (!stockUrlAllowed(url)) continue;
-      choices.push({
-        id: photo.id,
-        kind: "image",
-        url,
-        page: photo.url,
-        person: photo.photographer,
-        duration: null,
-      });
-    }
-  }
   const result: StockCandidate[] = [];
   for (const choice of choices.slice(0, 3)) {
     signal.throwIfAborted();
     const bytes = await download(choice.url, signal);
     signal.throwIfAborted();
     const id = randomUUID();
-    const ext = choice.kind === "video" ? ".mp4" : ".jpg";
-    const mime = choice.kind === "video" ? "video/mp4" : "image/jpeg";
+    const ext = ".mp4";
+    const mime = "video/mp4";
     const key = `studio/projects/${projectId}/uploads/${id}${ext}`;
     await r2Put(key, bytes, mime);
     writeFileSync(studioUploadPath(id, ext), bytes);
@@ -149,7 +136,7 @@ export async function fetchSceneStock(
       filename: `${scene.heading.slice(0, 70).replace(/[^\w -]/g, "")}-${choice.id}${ext}`,
       mime,
       bytes: bytes.length,
-      kind: choice.kind,
+      kind: "video",
       duration_s: choice.duration,
       r2_key: key,
       created_at: new Date().toISOString(),
@@ -157,7 +144,7 @@ export async function fetchSceneStock(
     });
     result.push({
       upload_id: id,
-      kind: choice.kind,
+      kind: "video",
       label: `${scene.heading} · ${choice.person}`,
       preview_url: `/api/studio/uploads/${id}/file`,
       duration_s: choice.duration,

@@ -174,8 +174,8 @@
 .film-topic-action-group { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-top: 4px; }
 .projects-page .film-workbench .project-library-opt { font-size: 13px !important; margin: 0; display: inline-flex; align-items: center; gap: 8px; color: #cfc8d6; cursor: pointer; }
 .projects-page .film-workbench .project-primary { background: var(--lime) !important; border-color: var(--lime) !important; color: #150f23 !important; -webkit-text-fill-color: #150f23 !important; border-radius: 8px; box-shadow: none; padding: 10px 20px; font-size: 14px !important; font-weight: 700; cursor: pointer; }
-.film-library-jump-btn { font-size: 13px !important; padding: 9px 18px !important; white-space: nowrap; color: #150f23 !important; background: #fffdf8 !important; border: 1px solid #d8d2c4 !important; border-radius: 999px !important; font-weight: 600; }
-.film-library-jump-btn:hover { background: #f0eee6 !important; border-color: #150f23 !important; }
+.film-library-jump-btn { font-size: 13px !important; padding: 9px 18px !important; white-space: nowrap; color: #f0ede6 !important; background: #150f23 !important; border: 1px solid #150f23 !important; border-radius: 999px !important; font-weight: 600; }
+.film-library-jump-btn:hover { background: #000 !important; border-color: #000 !important; color: #fff !important; }
 .projects-page .film-workbench .film-stage-empty { color: #efe8fb; padding: 48px 20px; text-align: center; }
 .projects-page .film-workbench .film-stage-empty h2 { color: #fffdf8; font-size: 1.4rem; margin-bottom: 8px; }
 .projects-page .film-workbench .film-stage-empty p { color: #cfc8d6; font-size: 0.95rem; }
@@ -685,6 +685,9 @@ main.studio.mcp-page { padding: 16px 22px 40px; }
 }
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-content {
   padding: 0;
+  max-width: none;
+  width: 100%;
+  margin: 0;
 }
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-section-heading {
   margin-bottom: 12px;
@@ -710,11 +713,11 @@ main.studio.mcp-page { padding: 16px 22px 40px; }
   font-size: 13px;
 }
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) label {
-  font-size: 14px !important;
-  gap: 4px;
+  font-size: 13px !important;
+  gap: 6px;
 }
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) :is(input, textarea, select) {
-  font-size: 15px !important;
+  font-size: 14px !important;
   padding: 8px 10px;
 }
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-primary,
@@ -723,51 +726,102 @@ main.studio.mcp-page { padding: 16px 22px 40px; }
   padding: 8px 14px;
 }
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-script {
-  padding: 12px;
+  padding: 14px 16px;
   gap: 10px;
+  margin-bottom: 4px;
 }
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-vo {
   min-height: 88px !important;
   line-height: 1.45;
 }
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-scene-list {
-  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 14px;
+  width: 100%;
 }
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-scene-edit {
-  grid-template-columns: 28px minmax(0, 1fr);
-  padding: 8px 0;
-  gap: 8px 10px;
-  border-bottom-width: 1px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  margin: 0;
+  border: 1px solid #3c334d;
+  border-radius: 14px;
+  background: #1a1428;
+  box-shadow: 0 8px 24px rgb(8 5 16 / 35%);
+  min-width: 0;
 }
-.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-scene-edit > div {
-  gap: 6px;
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .scene-edit-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .scene-number {
+  font-family: var(--font-display, "Space Grotesk", ui-sans-serif, sans-serif);
+  font-size: clamp(2.2rem, 3vw, 2.8rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: #c2ef4e;
+  font-variant-numeric: tabular-nums;
+  padding: 0;
+}
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .scene-edit-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9a90ab;
+}
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .scene-edit-body {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-scene-edit > div,
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-scene-edit .scene-edit-body {
+  gap: 10px;
 }
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-scene-edit textarea {
-  min-height: 52px !important;
-  line-height: 1.35;
+  min-height: 72px !important;
+  line-height: 1.4;
 }
-.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-scene-edit .project-row {
-  gap: 8px;
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-scene-edit .project-row,
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .scene-shot-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px;
+  gap: 10px;
   margin-top: 0;
   align-items: end;
 }
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .scene-duration {
-  max-width: 88px;
-}
-.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .scene-number {
-  font-size: 12px;
-  padding-top: 6px;
+  max-width: none;
+  width: 100%;
 }
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-script label > span {
   font-size: 11px !important;
 }
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-actions {
-  padding: 8px 10px;
-  margin-top: 10px;
+  padding: 10px 12px;
+  margin-top: 14px;
   gap: 8px;
 }
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-actions span {
   font-size: 12px !important;
+}
+@media (min-width: 1280px) {
+  .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-scene-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 820px) {
+  .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-scene-list {
+    grid-template-columns: 1fr;
+  }
 }
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .cast-scene {
   padding: 10px;
@@ -801,26 +855,48 @@ main.studio.mcp-page { padding: 16px 22px 40px; }
   font-size: 11px !important;
 }
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .cast-candidates {
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
 }
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .cast-candidate {
-  padding: 5px;
-  gap: 6px;
-  border-radius: 8px;
+  padding: 10px;
+  gap: 10px;
+  border-radius: 12px;
 }
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .cast-preview-frame {
+  aspect-ratio: 16 / 9;
+  min-height: 200px;
+  width: 100%;
+  background: #0a0712;
+}
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .cast-preview-frame video,
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .cast-preview-frame img,
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .cast-candidate img,
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .cast-candidate video {
-  aspect-ratio: 16 / 9;
-  max-height: 120px;
-  object-fit: cover;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  aspect-ratio: auto !important;
+  object-fit: contain;
+  background: #0a0712;
 }
-.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .cast-candidate > div {
-  font-size: 10px;
-  gap: 4px;
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .cast-candidate-meta,
+.projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .cast-candidate > .cast-candidate-meta {
+  font-size: 12px;
+  gap: 6px;
 }
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .cast-candidate > button {
-  font-size: 12px !important;
-  padding: 6px 8px !important;
+  font-size: 13px !important;
+  padding: 8px 10px !important;
+}
+@media (max-width: 900px) {
+  .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .cast-candidates {
+    grid-template-columns: 1fr;
+  }
+  .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .cast-preview-frame {
+    min-height: 220px;
+  }
 }
 .projects-page .film-workbench .film-stage:is(.is-script, .is-cast) .project-empty {
   padding: 24px 12px;

@@ -1,3 +1,9 @@
+## Mix: gapless clip cuts + VO-length timeline — 2026-09-19
+
+- **Black flash between Mix clips:** Preview uses dual `<video>` buffers and only reveals the next clip after `loadeddata`/seek, so remounting no longer flashes black on cut 2+.
+- **VO shorter than picture:** `assembleClips` scales scene spans to the measured TTS duration when narration is shorter than script timings (still holds the last shot when VO runs longer).
+- **Word budgets:** Generated narration floors raised to ~2.5 words/sec (90s aims 210–240 words, min 180) so TTS can fill the chosen film length. Spec 22 updated. `scriptVo` prompt cap raised to 3200 chars (was 1800, too tight for 270 words). Cast assemble hint updated. Re-assemble (and regenerate script + new TTS if VO was already short) to pick this up on existing projects.
+
 ## Generative Engine Optimization (GEO) & AI Search Expansion — 2026-09-19
 
 Owner GO:

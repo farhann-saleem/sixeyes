@@ -77,9 +77,11 @@ export function Lightbox({
           <span className="muted">{item.subtitle}</span>
         </div>
         <div className="lightbox-actions">
-          <a className="btn ghost" href={item.download} download>
-            Download
-          </a>
+          {item.download ? (
+            <a className="btn ghost" href={item.download} download>
+              Download
+            </a>
+          ) : null}
           {onDelete ? (
             <button
               type="button"
@@ -97,9 +99,23 @@ export function Lightbox({
 
       <figure className="lightbox-stage" onClick={(e) => e.stopPropagation()}>
         {item.kind === "video" ? (
-          <video key={item.id} src={item.src} controls playsInline autoPlay />
+          <video
+            key={item.id}
+            src={item.src}
+            controls
+            controlsList={item.download ? undefined : "nodownload noremoteplayback"}
+            disablePictureInPicture={!item.download}
+            playsInline
+            autoPlay
+            onContextMenu={item.download ? undefined : (e) => e.preventDefault()}
+          />
         ) : (
-          <img src={item.src} alt={item.title} />
+          <img
+            src={item.src}
+            alt={item.title}
+            draggable={Boolean(item.download)}
+            onContextMenu={item.download ? undefined : (e) => e.preventDefault()}
+          />
         )}
       </figure>
 

@@ -1,3 +1,11 @@
+# Current handoff — Mix black flash + VO vs picture length (2026-09-19)
+
+1. **Black window on clip 2+:** Mix Preview dual-buffers video elements (`Preview.tsx` + `.nle-stage-video`) so the outgoing frame stays until the next clip is seek-ready.
+2. **VO ~23s vs ~90s picture:** Assembly now shrinks visuals to measured TTS length; generated word budgets raised (~2.5 wps) so new 90s scripts aim for ~210–240 words. Existing short VO: regenerate script, then re-assemble.
+3. Spec: `spec/22-brief-stock-documentary.md`. Tests: `projects.test.ts` (8/8).
+
+---
+
 # Current handoff — Documentaries Header & 4-Stage Pipeline Consistency Lock (2026-09-19)
 
 Owner GO: Thoroughly audited the Documentaries desk header, wizard flow, and step numbering across `DocumentaryFlow.tsx`, `documentary.css`, and `product-polish.css`. Identified and resolved all structural, copy, and styling inconsistencies.
@@ -363,7 +371,7 @@ Owner GO: **FaceFusion is internal only.** User-facing copy on landing **and** p
 
 Landing T2V tiles play **documentary studio-upload clips** (`public/landing/docs/`), not effects T2V. Audio cards have logo covers (`public/landing/audio/*.svg`). Hero keeps **MARKETING STUDIO** + **Your Imagination Engine**. **What’s inside** (`#why-us`): documentary block is **Coffee shop morning only** — hero cycle + four scene tiles (dawn / baristas / friends / cups). Copy: type a topic, edit the script, pick shots, mix voice. Do not mix Coastal village / seagulls. Lime squiggle above Looks. No login. No MCP product.
 
-**Projects documentary (still true):** topic → text script → per-scene 2–3 Pexels picks → same-id Studio timeline → RunPod CPU stitch. No GPU B-roll. Spec: [spec/22-brief-stock-documentary.md](spec/22-brief-stock-documentary.md).
+**Projects documentary (still true):** topic → text script → per-scene up to **3 Pexels videos only** (no photo fallback) → same-id Studio timeline → RunPod CPU stitch. Spec: [spec/22-brief-stock-documentary.md](spec/22-brief-stock-documentary.md).
 
 ---
 

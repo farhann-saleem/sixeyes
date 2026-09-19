@@ -76,7 +76,7 @@ async function runOperation(id: string, token: string) {
         p = await current(id, token);
         const target = p.script!.scenes.find(s => s.id === scene.id)!;
         target.candidates = candidates; target.status = candidates.length ? "fetched" : "skipped";
-        target.error = candidates.length ? null : "No stock found — scene skipped";
+        target.error = candidates.length ? null : "No Pexels videos found — edit the shot prompt and retry";
         await saveProject(p);
       }
       p = await current(id, token);
@@ -141,17 +141,43 @@ async function runOperation(id: string, token: string) {
 export async function assembleClips(p: StudioProject, audioId: string, audioDuration: number): Promise<StudioClip[]> {
   const picks = p.script!.scenes.filter(s => s.status === "picked");
   if (!picks.length) throw new Error("Pick at least one scene");
-  const clips: StudioClip[] = []; let start = 0;
+  const rows: Array<{ heading: string; kind: StudioClip["kind"]; uploadId: string; sourceDuration: number; natural: number }> = [];
   for (const s of picks) {
     const u = await getUpload(s.picked_upload_id!);
     if (!u || u.project_id !== p.id) throw new Error("Picked upload is not in this project");
-    const span = Math.min(s.duration_sec, u.duration_s ?? s.duration_sec);
-    clips.push({ id: randomUUID(), track_id: "v1", kind: u.kind, source: { type: "upload", id: u.id }, label: s.heading,
-      start_sec: start, duration: u.duration_s ?? span, crop_start: 0, crop_end: span, volume: 0, muted: false });
+    const sourceDuration = u.duration_s ?? s.duration_sec;
+    const natural = Math.min(s.duration_sec, sourceDuration);
+    rows.push({ heading: s.heading, kind: u.kind, uploadId: u.id, sourceDuration, natural });
+  }
+  const visualTotal = rows.reduce((n, row) => n + row.natural, 0);
+  // Fit picture to measured narration. Shrink proportionally when VO is shorter than
+  // scene timings; hold the last shot when VO runs longer (skipped visuals keep words).
+  const scale = visualTotal > 0 && audioDuration < visualTotal - 0.001 ? audioDuration / visualTotal : 1;
+  const clips: StudioClip[] = [];
+  let start = 0;
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const remaining = rows.length - i - 1;
+    const span =
+      scale < 1 && remaining === 0
+        ? Math.max(0.05, audioDuration - start)
+        : Math.max(0.05, row.natural * scale);
+    const cropEnd = Math.min(span, row.sourceDuration);
+    clips.push({
+      id: randomUUID(),
+      track_id: "v1",
+      kind: row.kind,
+      source: { type: "upload", id: row.uploadId },
+      label: row.heading,
+      start_sec: start,
+      duration: row.sourceDuration,
+      crop_start: 0,
+      crop_end: cropEnd,
+      volume: 0,
+      muted: false,
+    });
     start += span;
   }
-  // Keep the owner's full VO, even when a visual scene is skipped. Repeat the final
-  // selected shot if necessary; no black tail and no narration truncation.
   const last = clips[clips.length - 1];
   const holdLen = footprint(last);
   while (start < audioDuration - 0.001) {
@@ -166,8 +192,19 @@ export async function assembleClips(p: StudioProject, audioId: string, audioDura
     });
     start += span;
   }
-  clips.push({ id: randomUUID(), track_id: "a1", kind: "audio", source: { type: "upload", id: audioId }, label: "Narration",
-    start_sec: 0, duration: audioDuration, crop_start: 0, crop_end: audioDuration, volume: 1, muted: false });
+  clips.push({
+    id: randomUUID(),
+    track_id: "a1",
+    kind: "audio",
+    source: { type: "upload", id: audioId },
+    label: "Narration",
+    start_sec: 0,
+    duration: audioDuration,
+    crop_start: 0,
+    crop_end: audioDuration,
+    volume: 1,
+    muted: false,
+  });
   return clips;
 }
 export async function cancelProject(id: string, ownerEmail?: string) {

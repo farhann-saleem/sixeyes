@@ -9,6 +9,8 @@ export type FilmLengthPlan = {
   sceneMax: number;
   totalMin: number;
   totalMax: number;
+  /** Minimum words for generated scripts so spoken length can fill the film (~2.5 wps). */
+  wordsMin: number;
   wordsMax: number;
   wordsAim: string;
 };
@@ -25,16 +27,17 @@ export function parseFilmLength(value: unknown): FilmLengthSec {
 }
 
 export function filmLengthPlan(sec: FilmLengthSec): FilmLengthPlan {
+  // Word budgets track ~2.5 words/sec documentary TTS so narration fills the chosen length.
   if (sec === 30) {
-    return { target: 30, scenesMin: 4, scenesMax: 6, sceneMin: 4, sceneMax: 8, totalMin: 24, totalMax: 36, wordsMax: 90, wordsAim: "40–70" };
+    return { target: 30, scenesMin: 4, scenesMax: 6, sceneMin: 4, sceneMax: 8, totalMin: 24, totalMax: 36, wordsMin: 55, wordsMax: 100, wordsAim: "65–85" };
   }
   if (sec === 45) {
-    return { target: 45, scenesMin: 5, scenesMax: 7, sceneMin: 4, sceneMax: 8, totalMin: 38, totalMax: 52, wordsMax: 120, wordsAim: "70–100" };
+    return { target: 45, scenesMin: 5, scenesMax: 7, sceneMin: 4, sceneMax: 8, totalMin: 38, totalMax: 52, wordsMin: 85, wordsMax: 140, wordsAim: "100–120" };
   }
   if (sec === 90) {
-    return { target: 90, scenesMin: 8, scenesMax: 12, sceneMin: 5, sceneMax: 15, totalMin: 70, totalMax: 90, wordsMax: 180, wordsAim: "140–175" };
+    return { target: 90, scenesMin: 8, scenesMax: 12, sceneMin: 5, sceneMax: 15, totalMin: 70, totalMax: 90, wordsMin: 180, wordsMax: 270, wordsAim: "210–240" };
   }
-  return { target: 60, scenesMin: 6, scenesMax: 8, sceneMin: 4, sceneMax: 8, totalMin: 45, totalMax: 65, wordsMax: 160, wordsAim: "95–130" };
+  return { target: 60, scenesMin: 6, scenesMax: 8, sceneMin: 4, sceneMax: 8, totalMin: 45, totalMax: 65, wordsMin: 110, wordsMax: 180, wordsAim: "140–160" };
 }
 
 function clamp(n: number, min: number, max: number) {

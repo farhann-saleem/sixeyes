@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { ensureAuthed } from "../auth";
 import { FILM_LENGTH_OPTIONS, sceneDurationBounds, type FilmLengthSec } from "../film-length";
 import { promptIssue } from "../prompt-guard";
-import { DOC_SHOT_MODELS } from "../model-catalog";
 import { SecureLine, SecurePrompt } from "../SecurePrompt";
 import { api, type StudioProject, type ProjectScript } from "../video-studio/model";
 import { VideoStudio } from "../video-studio/VideoStudio";
@@ -18,7 +17,7 @@ type Desk = "topic" | Step;
 const FILM_NAV: Array<{ id: Desk; kicker: string; title: string; hint: string }> = [
   { id: "topic", kicker: "01 · Topic", title: "Start a film", hint: "Topic, name, and length." },
   { id: "script", kicker: "02 · Script", title: "Director writes", hint: "AI narration and scenes." },
-  { id: "cast", kicker: "03 · Shots", title: "Generate footage", hint: "AI clips per scene: Seedance, Kling, and LTX." },
+  { id: "cast", kicker: "03 · Shots", title: "Pick footage", hint: "Up to three Pexels videos per scene." },
   { id: "studio", kicker: "04 · Mix", title: "Assemble", hint: "Narration on A1. Music on A2." },
 ];
 
@@ -332,38 +331,98 @@ export function ProjectWorkspace({ id, step, onStep, onHome, chrome = "full" }: 
     {running && <div className="project-progress" role="status"><span className="project-spinner" />{project.operation === "script" ? "Director is writing your script…" : project.operation === "stock" ? `Generating AI scenes · ${scenes.filter(s => s.status !== "pending").length}/${scenes.length}` : "Building voice and timeline…"}<button onClick={() => void action("cancel")} disabled={busy}>Stop</button></div>}
     {step === "script" ? <section className="project-content">
       <div className="project-section-heading"><div><p className="project-eyebrow">02 / SCRIPT</p><h1>Shape your script</h1><p>{project.topic || "This existing project starts in Studio."} Aimed at {project.target_duration_sec ?? 60}s. Full AI pipeline: Topic → Script → Shots → Mix.</p></div>{draft && <span style={scriptDuration > 90 ? { color: "#fa7faa", fontWeight: 700 } : undefined}>{draft.scenes.length} scenes · {scriptDuration}s{scriptDuration > 90 ? " (exceeds 90s cap)" : ""}</span>}</div>
-      {!draft ? <div className="project-empty"><h2>{running ? "A story is taking shape" : "Your script isn’t ready yet"}</h2><p>Scene footage generates only after you approve the script: Seedance, Kling, and LTX for every beat.</p>{!running && project.topic && <button className="project-primary" disabled={busy} onClick={() => void action("retry-script")}>Retry script</button>}{!project.topic && <button onClick={() => onStep("studio")}>Open Studio</button>}</div> : <>
+      {!draft ? <div className="project-empty"><h2>{running ? "A story is taking shape" : "Your script isn’t ready yet"}</h2><p>After you approve the script, each scene gets up to three Pexels stock videos to pick from.</p>{!running && project.topic && <button className="project-primary" disabled={busy} onClick={() => void action("retry-script")}>Retry script</button>}{!project.topic && <button onClick={() => onStep("studio")}>Open Studio</button>}</div> : <>
         <div className="project-script"><label>Title<SecureLine kind="title" value={draft.title} disabled={!editable} onChange={next => edit({ ...draft, title: next })} /></label><label>Full voiceover <span>Used for narration, including when visuals are skipped</span><SecurePrompt kind="scriptVo" className="project-vo" value={draft.voiceover_full} disabled={!editable} onChange={next => edit({ ...draft, voiceover_full: next })} /></label></div>
-        <div className="project-scene-list">{draft.scenes.map((scene, index) => <article className="project-scene-edit" key={scene.id}><span className="scene-number">{String(index + 1).padStart(2, "0")}</span><div>
-          <label>Scene heading<SecureLine kind="heading" disabled={!editable} value={scene.heading} onChange={next => edit({ ...draft, scenes: draft.scenes.map(s => s.id === scene.id ? { ...s, heading: next } : s) })} /></label>
-          <label>Scene narration<SecurePrompt kind="sceneVo" disabled={!editable} value={scene.voiceover_line} onChange={next => { const nextScenes = draft.scenes.map(s => s.id === scene.id ? { ...s, voiceover_line: next } : s); const followsScenes = draft.voiceover_full === draft.scenes.map(s => s.voiceover_line).join(" "); edit({ ...draft, scenes: nextScenes, voiceover_full: followsScenes ? nextScenes.map(s => s.voiceover_line).join(" ") : draft.voiceover_full }); }} /></label>
-          <div className="project-row"><label>Shot prompt<SecureLine kind="stock" disabled={!editable} value={scene.stock_query} onChange={next => edit({ ...draft, scenes: draft.scenes.map(s => s.id === scene.id ? { ...s, stock_query: next } : s) })} /></label><label className="scene-duration">Seconds<input type="number" min={sceneDurationBounds(project.target_duration_sec).min} max={sceneDurationBounds(project.target_duration_sec).max} step={0.5} disabled={!editable} value={scene.duration_sec} onChange={e => edit({ ...draft, scenes: draft.scenes.map(s => s.id === scene.id ? { ...s, duration_sec: Number(e.target.value) } : s) })} /></label></div>
-        </div></article>)}</div>
+        <div className="project-scene-list">
+          {draft.scenes.map((scene, index) => (
+            <article className="project-scene-edit" key={scene.id}>
+              <header className="scene-edit-head">
+                <span className="scene-number">{String(index + 1).padStart(2, "0")}</span>
+                <span className="scene-edit-label">Scene</span>
+              </header>
+              <div className="scene-edit-body">
+                <label>
+                  Scene heading
+                  <SecureLine
+                    kind="heading"
+                    disabled={!editable}
+                    value={scene.heading}
+                    onChange={next => edit({ ...draft, scenes: draft.scenes.map(s => s.id === scene.id ? { ...s, heading: next } : s) })}
+                  />
+                </label>
+                <label>
+                  Scene narration
+                  <SecurePrompt
+                    kind="sceneVo"
+                    disabled={!editable}
+                    value={scene.voiceover_line}
+                    onChange={next => {
+                      const nextScenes = draft.scenes.map(s => s.id === scene.id ? { ...s, voiceover_line: next } : s);
+                      const followsScenes = draft.voiceover_full === draft.scenes.map(s => s.voiceover_line).join(" ");
+                      edit({ ...draft, scenes: nextScenes, voiceover_full: followsScenes ? nextScenes.map(s => s.voiceover_line).join(" ") : draft.voiceover_full });
+                    }}
+                  />
+                </label>
+                <div className="project-row scene-shot-row">
+                  <label>
+                    Shot prompt
+                    <SecureLine
+                      kind="stock"
+                      disabled={!editable}
+                      value={scene.stock_query}
+                      onChange={next => edit({ ...draft, scenes: draft.scenes.map(s => s.id === scene.id ? { ...s, stock_query: next } : s) })}
+                    />
+                  </label>
+                  <label className="scene-duration">
+                    Seconds
+                    <input
+                      type="number"
+                      min={sceneDurationBounds(project.target_duration_sec).min}
+                      max={sceneDurationBounds(project.target_duration_sec).max}
+                      step={0.5}
+                      disabled={!editable}
+                      value={scene.duration_sec}
+                      onChange={e => edit({ ...draft, scenes: draft.scenes.map(s => s.id === scene.id ? { ...s, duration_sec: Number(e.target.value) } : s) })}
+                    />
+                  </label>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
         {project.phase === "script" && <footer className="project-actions"><span>{hasEdits ? "Unsaved script changes" : "Script saved"}</span><button disabled={!editable || !hasEdits} onClick={() => { setBusy(true); void saveScript().catch(e => setError(message(e))).finally(() => setBusy(false)); }}>Save script</button><button className="project-primary" disabled={disabled || scriptDuration > 90} onClick={() => void approve()}>Approve & generate scenes →</button></footer>}
       </>}
     </section> : step === "cast" ? <section className="project-content">
-      <div className="project-section-heading"><div><p className="project-eyebrow">03 / AI SHOTS</p><h1>Pick generated shots</h1><p>Every candidate is AI-generated scene footage (Seedance 1.5 Pro, Kling 3.0, LTX-2.5). Pick one per beat, or skip it.</p></div><span>{scenes.filter(s => s.status === "picked").length} picked · {scenes.filter(s => s.status === "skipped").length} skipped</span></div>
+      <div className="project-section-heading"><div><p className="project-eyebrow">03 / AI SHOTS</p><h1>Pick stock videos</h1><p>Each beat gets up to three Pexels video clips for the shot prompt. Pick one per scene, or skip it. Still photos are never used.</p></div><span>{scenes.filter(s => s.status === "picked").length} picked · {scenes.filter(s => s.status === "skipped").length} skipped</span></div>
       {!["cast", "studio", "exported"].includes(project.phase) ? <button onClick={() => onStep("script")}>Review your script first</button> : scenes.map((scene, index) => <article className={`cast-scene ${scene.status === "skipped" ? "skipped" : ""}`} key={scene.id}>
         <header><span className="scene-number">{String(index + 1).padStart(2, "0")}</span><div><h2>{scene.heading}</h2><p>{scene.voiceover_line}</p><small>{scene.stock_query} · {scene.duration_sec}s · {scene.status}</small></div><button disabled={disabled || assembled} onClick={() => void action(`scenes/${scene.id}/pick`, { skip: true })}>{scene.status === "skipped" ? "Skipped" : "Skip scene"}</button></header>
-        <div className="cast-candidates">{scene.candidates.map((c, ci) => <div className={`cast-candidate ${c.upload_id === scene.picked_upload_id ? "picked" : ""}`} key={c.upload_id}>
+        <div className="cast-candidates">{scene.candidates.filter((c) => c.kind === "video").map((c) => <div className={`cast-candidate ${c.upload_id === scene.picked_upload_id ? "picked" : ""}`} key={c.upload_id}>
           <div className="cast-preview-frame">
-            {c.kind === "video" ? <video src={c.preview_url} controls preload="metadata" playsInline /> : <img src={c.preview_url} alt={c.label} loading="lazy" />}
+            <video
+              src={c.preview_url}
+              controls
+              controlsList="nodownload noremoteplayback"
+              disablePictureInPicture
+              preload="metadata"
+              playsInline
+              onContextMenu={(e) => e.preventDefault()}
+            />
             <button
               type="button"
               className="cast-inspect-btn"
               title="Inspect larger"
               aria-label="Inspect candidate clip"
-              onClick={() => setInspectItem({ id: c.upload_id, src: c.preview_url, download: c.preview_url, title: scene.heading, subtitle: c.label || "AI Scene", kind: c.kind })}
+              onClick={() => setInspectItem({ id: c.upload_id, src: c.preview_url, download: "", title: scene.heading, subtitle: c.label || "Pexels video", kind: "video" })}
             >
               ⤢
             </button>
           </div>
-          <div className="cast-candidate-meta"><span className="cast-ai-tag">{DOC_SHOT_MODELS[ci % DOC_SHOT_MODELS.length]}</span><span>AI scene</span></div>
+          <div className="cast-candidate-meta"><span className="cast-ai-tag">{c.photographer || "Pexels"}</span><span>Stock video{c.duration_s ? ` · ${c.duration_s}s` : ""}</span></div>
           <button disabled={disabled || assembled} className={c.upload_id === scene.picked_upload_id ? "project-primary" : ""} onClick={() => void action(`scenes/${scene.id}/pick`, { upload_id: c.upload_id })}>{c.upload_id === scene.picked_upload_id ? "✓ Selected" : "Pick this shot"}</button>
         </div>)}</div>
-        {!scene.candidates.length && <p className="project-empty-small">{scene.status === "skipped" ? "No visual selected. This scene is skipped." : scene.error || "Generated scene options will appear here."}</p>}
+        {!scene.candidates.filter((c) => c.kind === "video").length && <p className="project-empty-small">{scene.status === "skipped" ? "No visual selected. This scene is skipped." : scene.error || "No Pexels videos found for this shot prompt. Edit the prompt and retry scene generate."}</p>}
       </article>)}
-      {!assembled && <footer className="project-actions cast-actions"><div><label>Narration voice<select value={voiceId} disabled={disabled || !!project.tts_job_id} onChange={e => setVoiceId(e.target.value)}><option value="">First available English voice</option>{voices.map(v => <option key={v.voice_id} value={v.voice_id}>{v.name || v.voice_name || v.voice_id}</option>)}</select></label>{voiceError && <small role="alert">Voice catalog: {voiceError}</small>}<small>Your full narration stays intact. The final pick repeats if needed to cover it.</small></div>
+      {!assembled && <footer className="project-actions cast-actions"><div><label>Narration voice<select value={voiceId} disabled={disabled || !!project.tts_job_id} onChange={e => setVoiceId(e.target.value)}><option value="">First available English voice</option>{voices.map(v => <option key={v.voice_id} value={v.voice_id}>{v.name || v.voice_name || v.voice_id}</option>)}</select></label>{voiceError && <small role="alert">Voice catalog: {voiceError}</small>}<small>Timeline length follows your spoken narration. Picture shrinks to match if the voice is shorter; the last pick holds if the voice runs longer.</small></div>
         {project.status !== "running" && scenes.some(s => ["pending", "failed"].includes(s.status)) && <button disabled={busy} onClick={() => void action("fetch-stock")}>Retry scene generate</button>}
         <div>
           <button className="project-primary" disabled={disabled || !castReady} onClick={() => void action("assemble", { voice_id: voiceId })}>{project.tts_job_id ? "Resume assembly →" : "Assemble timeline →"}</button>

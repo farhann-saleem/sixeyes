@@ -8,8 +8,9 @@ export const PROMPT_LIMITS: Record<PromptKind, PromptLimit> = {
   heading: { min: 1, max: 160, label: "Scene heading" },
   stock: { min: 1, max: 120, label: "Shot prompt" },
   speech: { min: 1, max: 1_000_000, label: "Script" },
-  scriptVo: { min: 1, max: 1800, label: "Narration" },
-  sceneVo: { min: 1, max: 500, label: "Scene narration" },
+  // Keep in sync with apps/backend/src/prompt-guard.ts (90s VO headroom).
+  scriptVo: { min: 1, max: 3200, label: "Narration" },
+  sceneVo: { min: 1, max: 800, label: "Scene narration" },
   sfx: { min: 3, max: 450, label: "Sound description" },
   music: { min: 1, max: 500, label: "Music description" },
   lyrics: { min: 0, max: 5000, label: "Lyrics" },
